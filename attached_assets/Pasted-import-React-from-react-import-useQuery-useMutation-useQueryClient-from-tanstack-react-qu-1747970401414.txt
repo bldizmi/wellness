@@ -1,0 +1,125 @@
+import React from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/apiRequest';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectItem } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+
+const lifeStages = ["student", "adult", "parent", "single parent", "entrepreneur", "employee"];
+const valuesList = ["growth", "rest", "freedom", "connection", "achievement", "play"];
+const aiNudgeLevels = ["none", "light", "moderate", "coach"];
+const tonePreferences = ["friendly", "direct", "gentle"];
+
+export default function Profile() {
+  const queryClient = useQueryClient();
+
+  const { data: profile, isLoading, isError } = useQuery({
+    queryKey: ['profile'],
+    queryFn: () => apiRequest('/api/profile'),
+  });
+
+  const mutation = useMutation({
+    mutationFn: (updatedProfile) => apiRequest('/api/profile', {
+      method: 'PATCH',
+      body: JSON.stringify(updatedProfile),
+    }),
+    onSuccess: () => queryClient.invalidateQueries(['profile']),
+  });
+
+  const handleChange = (field, value) => {
+    mutation.reset();
+    mutation.mutate({ ...profile, [field]: value });
+  };
+
+  const toggleValue = (value) => {
+    const current = profile.values || [];
+    const updated = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value];
+    handleChange('values', updated);
+  };
+
+  if (isLoading) return <div className="p-4">Loading profile...</div>;
+  if (isError || mutation.isError) return <div className="p-4 text-red-500">Failed to load or update profile</div>;
+
+  return (
+    <div className="max-w-xl mx-auto p-4 space-y-4">
+      <h1 className="text-xl font-bold">My Profile</h1>
+
+      <Input
+        placeholder="Display Name"
+        value={profile.display_name || ''}
+        onChange={(e) => handleChange('display_name', e.target.value)}
+      />
+
+      <Select
+        label="Life Stage"
+        value={profile.life_stage || ''}
+        onValueChange={(val) => handleChange('life_stage', val)}
+      >
+        {lifeStages.map(stage => (
+          <SelectItem key={stage} value={stage}>{stage}</SelectItem>
+        ))}
+      </Select>
+
+      <div>
+        <p className="font-medium">Personal Values</p>
+        <div className="flex flex-wrap gap-2">
+          {valuesList.map(value => (
+            <Checkbox
+              key={value}
+              label={value}
+              checked={profile.values?.includes(value) || false}
+              onCheckedChange={() => toggleValue(value)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <Textarea
+        placeholder="Overall goals (comma-separated)"
+        value={profile.overall_goals?.join(', ') || ''}
+        onChange={(e) => handleChange('overall_goals', e.target.value.split(',').map(g => g.trim()))}
+      />
+
+      <Select
+        label="AI Nudge Level"
+        value={profile.ai_nudge_level || ''}
+        onValueChange={(val) => handleChange('ai_nudge_level', val)}
+      >
+        {aiNudgeLevels.map(level => (
+          <SelectItem key={level} value={level}>{level}</SelectItem>
+        ))}
+      </Select>
+
+      <Select
+        label="Tone Preference"
+        value={profile.tone_preference || ''}
+        onValueChange={(val) => handleChange('tone_preference', val)}
+      >
+        {tonePreferences.map(tone => (
+          <SelectItem key={tone} value={tone}>{tone}</SelectItem>
+        ))}
+      </Select>
+
+      <div className="flex gap-2">
+        <Input
+          placeholder="Wake Time (e.g. 07:30)"
+          value={profile.wake_time || ''}
+          onChange={(e) => handleChange('wake_time', e.target.value)}
+        />
+        <Input
+          placeholder="Sleep Time (e.g. 22:00)"
+          value={profile.sleep_time || ''}
+          onChange={(e) => handleChange('sleep_time', e.target.value)}
+        />
+      </div>
+
+      <Button onClick={() => mutation.mutate(profile)} disabled={mutation.isPending}>
+        {mutation.isPending ? 'Saving...' : 'Save Profile'}
+      </Button>
+    </div>
+  );
+}

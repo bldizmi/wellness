@@ -1,0 +1,27 @@
+Find why PH1 logs don’t show (prove handler + logger path). No restarts, no code/TTL changes.
+
+Do not restart, clear cache, or change code/TTLs/flags. Scope: runtime introspection only.
+
+A) Runtime route mapping (read-only)
+
+Dump the Express router stack to show which handler serves POST /api/item/:id/complete right now (file path + function name/order).
+
+Paste output of a runtime snippet that prints app._router.stack filtered for that POST path (or equivalent in your routing lib).
+
+Print the resolved file path and mtime for the loaded module that exports that handler (from require.cache / module cache).
+
+B) Logger plumbing (read-only)
+3) Print the current logger config (level/transport). Confirm that INFO does go to the workflow/application log we’re watching.
+4) Show that the strings PH1_ENTRY, PH1_INVALIDATE_START, PH1_INVALIDATE_END exist in the loaded JS bundle/file that is actually serving the route (e.g., grep -n on the compiled file path you printed in A2).
+
+C) Single controlled dry-run (no completion, read-only)
+5) Hit POST /api/item/test-health/complete with an invalid token and paste the server line proving the handler entry log (whatever pre-auth logging you have). If nothing prints, explain why (auth blocks before handler? different router?).
+
+D) If (and only if) INFO isn’t reaching our log sink
+6) Without changing behavior, add a temporary log pass-through that mirrors PH1_* lines to console.log in the same locations (entry, effective date, keys, invalidate start/end). Confirm this is logging-only, no behavior change.
+
+If you need this, say so explicitly before doing it; otherwise do not edit code.
+
+Acceptance: You paste (1) the active route→file mapping, (2) the compiled file path that contains PH1_* strings, and (3) a server log line we can definitely see at handler entry. Only then we redo a single completion and expect to see PH1_ENTRY → PH1_INVALIDATE_START/END → MISS → SET.
+
+If any step fails (different handler, wrong file loaded, INFO not emitted), stop and report precisely which part failed—no restarts, no behavior changes.

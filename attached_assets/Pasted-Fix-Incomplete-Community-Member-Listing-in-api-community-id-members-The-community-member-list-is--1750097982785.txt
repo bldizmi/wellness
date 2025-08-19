@@ -1,0 +1,53 @@
+Fix Incomplete Community Member Listing in /api/community/:id/members
+
+The community member list is not displaying correctly in the Community detail view — even though the member count shows the correct number (e.g. “2 members”), the actual list of members shown is incomplete or empty.
+
+✅ Here’s what should be happening:
+	•	Community members are stored in community_members table
+	•	/api/community/:id/members endpoint should return all active members (removed_at IS NULL)
+	•	Each member should be joined with the users table using user_id = firebase_uid to get email, display_name, etc.
+
+⚠️ The Issue:
+	•	The member count query is working (so the data is there)
+	•	But the /members endpoint is not returning the full list
+	•	This is most likely due to incorrect user permissions or broken JOIN logic
+
+⸻
+
+🔧 What to Fix
+	1.	Fix the backend route logic in server/routes/community.ts:
+
+Make sure the /api/community/:id/members route:
+	•	Uses community_id = req.params.id
+	•	Filters with removed_at IS NULL
+	•	Joins on users.firebase_uid = community_members.user_id
+	•	Returns: user_id, email, display_name, role, joined_at
+
+	2.	Fix permission checks:
+
+	•	✅ Only allow access to this route for:
+	•	Users who are part of the community (community_members)
+	•	Or users with app-level admin role
+	•	❌ Do NOT silently return empty data — if the requester is unauthorized, return 403 Forbidden
+	•	✅ If the requester is a member, return the full visible list of current members
+
+	3.	Fix frontend logic to:
+
+	•	Properly map members array from res.data.members
+	•	Render fallback text if empty (e.g., “No active members yet”)
+
+	4.	Confirm Soft-Deleted Members Are Not Returned
+
+	•	removed_at IS NULL must be respected in both:
+	•	Member list query
+	•	Member count query
+	•	This ensures that removed users don’t show up in the count or list
+
+⸻
+
+✅ Test This With:
+	•	A community with 2+ members
+	•	One member soft-deleted (should not show)
+	•	Request made by:
+	•	A member ✅ (should see full list)
+	•	A non-member ❌ (should be blocked)

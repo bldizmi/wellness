@@ -1,0 +1,86 @@
+Community Sharing – Full Frontend Implementation
+
+We already have complete backend support for item sharing, community structure, and photo verification. The goal now is to finish the frontend implementation and improve UX clarity for shared items. Use only existing endpoints, routes, and models. Do not create duplicates.
+
+⸻
+
+✅ What Already Exists (Do Not Rebuild)
+	•	/api/item/:id/share — share items with specific users
+	•	/api/community/shared — get shared items from my community
+	•	shared_with, created_by, verified_by fields exist in the database
+	•	Verify flow is fully built (photo upload, AI analysis, feedback stored)
+
+⸻
+
+✅ What Needs to Be Built (Frontend Only)
+
+1. Community Management (Profile Page)
+	•	Create a Community Settings section in Profile
+	•	Let users:
+	•	Create a community (with name)
+	•	Invite members by email
+	•	View and manage members
+	•	Use backend community/member infrastructure already in place
+
+⸻
+
+2. Item Sharing (Create & Edit Modals)
+	•	Add “Share with…” field (autocomplete style)
+	•	Show only community members the user has access to
+	•	Selected users are saved to shared_with[] field
+	•	Use existing API routes:
+	•	POST /api/item or PATCH /api/item/:id/share
+
+⸻
+
+3. Today Page Improvements
+
+Tab Structure:
+	•	My Items — only items created by or assigned to current user
+	•	Shared with Me — items shared with this user from their community
+
+In Shared View:
+	•	Each card should show:
+	•	Shared by [Name]
+	•	Due date
+	•	If item is verify_required:
+	•	Show photo + AI result if already uploaded
+	•	Show “Awaiting Verification” if not yet submitted
+	•	Display AI judgment (✅ Complete, ❌ Not Complete, 🤔 Unclear)
+	•	Only show photos if user taps “View Photo”
+
+⸻
+
+4. Plans Page Updates
+
+Tab Structure:
+	•	My Plans — items user created
+	•	Shared with Me — items others shared with user
+
+Item Card Labels:
+	•	Show Shared by [User] in Shared with Me
+	•	Show You shared this in My Plans for items I created and shared
+
+Photo Verification Display:
+	•	Inline camera icon for verify_required: true items
+	•	Show results from ai_verification_result, verified_by, verified_at, and image
+
+⸻
+
+5. UX Behavior + Permissions
+	•	Users can share tasks with any subset of their community — not just “all”
+	•	Do not allow sharing with users outside my community
+	•	If I verify a shared Verify task:
+	•	Save to verified_by, verified_by_user_id, verified_at
+	•	If I unshare an item, remove shared access cleanly
+	•	Maintain security: only allow view access if created_by, assigned_to, or in shared_with[]
+
+⸻
+
+🔁 Technical Clarifications
+	•	Use queryClient.invalidateQueries(['items']) to sync changes
+	•	Do not duplicate routing or create new endpoints
+	•	All logic must integrate with:
+	•	/api/items
+	•	/api/community/shared
+	•	/api/item/:id/share

@@ -1,0 +1,103 @@
+Build Admin Dashboard (User Management)
+
+We already have a complete Firebase Auth system + database-backed user records, including:
+	•	/login page for login and signup
+	•	Firebase-based email/password registration
+	•	Automatic backend user creation via createUser() method
+	•	Auth middleware that verifies Firebase tokens
+
+Do not create duplicate signup flows or new user schema — reuse all existing logic.
+
+⸻
+
+🧠 Goal: Admin Dashboard for Managing All Users
+
+We need an Admin-only dashboard to manage all user accounts and support future moderation, insights, and analytics.
+
+⸻
+
+✳️ Features to Implement
+
+1. Admin Dashboard Page
+	•	New route: /admin/users
+	•	Accessible only to users with role = admin
+	•	Add link to this route from user dropdown or nav menu (only if role = admin)
+
+⸻
+
+2. View All Users (Data Table)
+	•	Query the users table (or view) from PostgreSQL
+	•	Display:
+	•	display_name
+	•	email
+	•	role (admin, member, pilot, etc.)
+	•	status (active, terminated, invited)
+	•	created_at
+	•	last_login
+	•	verified (if applicable)
+	•	Add filters for:
+	•	Role
+	•	Status
+	•	Add search bar for name or email
+
+⸻
+
+3. Create New User (Admin Only)
+	•	Modal for creating a user manually:
+	•	display_name
+	•	email
+	•	role
+	•	Optional: generate a temp password or send invite email
+	•	On save: create Firebase account via Admin SDK (if active), and insert into DB via existing createUser() logic
+
+✅ Reuse backend logic — do not recreate auth flows.
+
+⸻
+
+4. Edit / Update User
+	•	Click on user row → open edit drawer or modal:
+	•	Change role
+	•	Change status (Active / Terminated)
+	•	Optional: reset password (via Firebase)
+	•	On submit: update users table and log the action
+
+⸻
+
+5. Soft Terminate User
+	•	Set status = 'terminated'
+	•	Add terminated_at timestamp
+	•	Do not delete records (preserve audit/history)
+
+⸻
+
+🔐 Access Control
+	•	Protect /admin/users route with middleware
+	•	Only allow access to users where role = 'admin'
+
+⸻
+
+🔮 Future Enhancements (Optional but plan for)
+	•	Track number of items created per user
+	•	Mood check-in streaks or history
+	•	Export CSV of users or logs
+	•	Community membership and roles
+	•	Action logs per admin user
+
+⸻
+
+📦 Backend Data
+
+Your existing users table already includes:
+	•	id, display_name, email, role, status, created_at, last_login, etc.
+Do not modify the table schema — reuse what exists.
+
+If needed:
+	•	Add terminated_at TIMESTAMP and verified BOOLEAN to support soft-deletion and status display.
+
+⸻
+
+🛠️ Technical Notes
+	•	✅ Use existing Firebase user creation and auth token middleware
+	•	✅ Use existing Drizzle ORM and validation
+	•	✅ Use React + Tailwind + ShadCN components for the table UI
+	•	✅ Use React Query or similar to manage backend sync

@@ -1,0 +1,50 @@
+{
+  "test-user-123": [
+    {
+      "title": "Complete MindDouble setup",
+      "item_type": "task",
+      "recurrence_type": "once",
+      "due_date": "2025-05-22T01:34:57.623Z",
+      "time_frame": 30,
+      "is_chore": false,
+      "why_it_matters": "To have a functional wellness app",
+      "id": "item_BWntoe6FvpN-d6anS9tl3",
+      "created_at": "2025-05-22T01:34:57.648Z",
+      "completed_at": "2025-05-22T02:00:28.498Z"
+    },
+    {
+      "title": "Complete MindDouble setup",
+      "item_type": "task",
+      "recurrence_type": "once",
+      "due_date": "2025-05-22T01:54:38.824Z",
+      "time_frame": 30,
+      "is_chore": false,
+      "why_it_matters": "To have a functional wellness app",
+      "id": "item_HkVzkWg1hRAyyOIN_CinZ",
+      "created_at": "2025-05-22T01:54:38.844Z",
+      "completed_at": "2025-05-22T02:00:26.740Z"
+    },
+    {
+      "title": "Call mom",
+      "item_type": "task",
+      "due_date": "2023-10-06T15:00:00",
+      "time_frame": 30,
+      "is_chore": false,
+      "id": "item_tkZkGR6QcBfHibS7fcEFO",
+      "created_at": "2025-05-23T01:25:50.116Z",
+      "completed_at": "2025-05-23T01:26:01.559Z",
+      "verified": true,
+      "verified_by": "ai",
+      "verified_at": "2025-05-23T01:26:01.559Z"
+    },
+    {
+      "title": "Do laundry",
+      "item_type": "task",
+      "due_date": "2023-10-15",
+      "time_frame": 90,
+      "is_chore": true,
+      "id": "item_dfhNB1nhrnAST6XHrEMcf",
+      "created_at": "2025-05-23T01:36:36.001Z"
+    }
+  ]
+}

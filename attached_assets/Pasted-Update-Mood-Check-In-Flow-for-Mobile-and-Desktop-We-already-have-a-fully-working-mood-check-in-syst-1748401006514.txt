@@ -1,0 +1,53 @@
+Update Mood Check-In Flow for Mobile and Desktop
+
+We already have a fully working mood check-in system implemented, including the following:
+
+✅ Existing Functionality
+	•	/api/mood/check-in POST endpoint to save mood (emoji, timestamp, user_id)
+	•	Mood history UI
+	•	Mood AI reflection (reflectOnMood service)
+	•	Validation with Zod
+	•	Clean frontend in MoodCheck.tsx
+	•	Stored in PostgreSQL with proper user isolation
+	•	Logged mood data includes emoji, timestamp, creation date
+	•	Recheck-ins allowed (multiple mood entries per day allowed)
+	•	10 emoji options (currently yellow emoji icons): 😊😌😐😕😢😠😴🤔🥳🤯
+
+⸻
+
+🎨 New Visual/UX Update
+	1.	Replace the yellow emoji faces with custom art
+	•	We now use new flat, minimalistic color-based emotion icons (already generated)
+	•	Replace the emoji component in the mood grid with these image assets
+	•	Do not create a new component; update the existing one
+	2.	Mobile (Welcome Screen)
+	•	When a user opens the app and is already logged in:
+	•	Show Welcome Mood Check-In screen as full-page
+	•	Title: “How are you feeling today?”
+	•	Display the mood icon grid with new art
+	•	Optional AI mood reflection field remains hidden until mood is selected
+	•	Button: Check In becomes active once mood is selected
+	•	Option: Skip for now at the bottom, which navigates to /today
+	3.	Desktop (Login Check-In Popup)
+	•	After user logs in, show a centered modal popup for mood check-in
+	•	Keep /today visible behind the popup
+	•	Do not block navigation
+	•	User can check in or skip
+	•	Use same grid, styling, and mood logic as mobile
+	•	After check-in, modal closes and user remains on /today
+
+⸻
+
+📘 Data Behavior (Same as existing, just confirmed)
+	•	Every check-in (even multiple per day) is stored (no overwriting)
+	•	The AI mood reflection runs after each check-in
+	•	Reflections are tied to each check-in and stored in the database
+
+⸻
+
+⚠️ Notes
+	•	✅ Do not recreate API routes
+	•	✅ Do not duplicate mood logic
+	•	✅ Use existing MoodCheck.tsx as the base component
+	•	✅ Mobile and desktop views can conditionally render the flow via screen size (responsive)
+	•	✅ Store mood logs exactly as before (no data loss)

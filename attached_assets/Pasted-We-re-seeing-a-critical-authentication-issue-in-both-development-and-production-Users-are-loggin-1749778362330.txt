@@ -1,0 +1,52 @@
+We’re seeing a critical authentication issue in both development and production:
+	•	Users are logging in with correct credentials but are being logged into the wrong account
+	•	Some users are being prompted to log in twice
+	•	The backend is returning mood data and item data for the wrong user
+	•	In development, this seems related to the use of dev-user-123
+	•	But the same login inconsistency is also happening in production
+
+⸻
+
+Please review and fix the following:
+
+1. Authentication Middleware (server/middleware/auth.ts):
+	•	✅ Ensure Firebase Admin SDK is properly initialized in both environments
+	•	✅ In production:
+	•	Always extract the Authorization header and verify the Firebase token using admin.auth().verifyIdToken()
+	•	Extract the correct Firebase uid from the decoded token
+	•	Use firebase_uid to query the users table for the matching user
+	•	✅ Do not fall back to dev-user-123 in any production scenario
+	•	✅ In development:
+	•	Only use dev-user-123 if no Authorization header is present
+	•	Otherwise, verify the Firebase token just like production
+
+⸻
+
+2. User Mapping:
+	•	Check for users in the users table where firebase_uid is misassigned (e.g., typos or reused IDs)
+	•	Make sure that login always maps to the correct database user record
+	•	✅ On login:
+	•	Use Firebase UID to find the matching database record
+	•	Auto-create the user if no match is found
+
+⸻
+
+3. AuthContext + SmartRouter Frontend Fix:
+	•	Verify that the AuthContext and SmartRouter logic waits for onAuthStateChanged to complete before routing
+	•	Prevent premature redirects that cause double login
+
+⸻
+
+4. Debug Logging (temporary):
+	•	Add console logs in auth middleware showing:
+	•	decodedToken.uid
+	•	mapped database user.id
+	•	user.email
+	•	This will help trace user identity conflicts
+
+⸻
+
+Final Notes:
+	•	✅ Do not make assumptions based on email (e.g. avoid assigning admin role if email contains “admin”)
+	•	✅ Ensure user isolation is strict and enforced through Firebase UID
+	•	✅ All endpoints must trust the Firebase token, not fallback users or incorrect session logic

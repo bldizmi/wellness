@@ -1,0 +1,24 @@
+“I want to improve authentication and user consistency across Firebase and my PostgreSQL database. Here’s what I need you to implement and check:
+	1.	Ensure that all users are automatically created in the database when they sign in with any provider (email/password, Google, Apple).
+	•	Use firebase_uid from Firebase UID as the primary user identifier.
+	•	Use email from Firebase as the value for both the email and username fields in my users table.
+	•	Role should default to 'member'.
+	•	Support existing roles like 'admin', 'pilot', etc.
+	2.	Update the server/middleware/auth.ts authentication middleware to:
+	•	Look up users by firebase_uid (from Firebase token).
+	•	If not found, create a new user with the email as username.
+	•	Ensure this applies across all sign-in providers (email/password, Google, Apple).
+	•	Fix any code still using the deprecated user_id field.
+	•	Use Firebase UID consistently for permission checks and record creation.
+	3.	Ensure correct user mapping across the app:
+	•	All item creation, mood check-ins, and planning features must use the correct firebase_uid-linked user.
+	•	Confirm that the /api/items, /api/mood/check-in, and /api/ai/create-item-from-prompt endpoints respect this mapping.
+	4.	Prevent any accidental cross-user login (critical!):
+	•	Confirm that logging in with one email cannot load another user’s data.
+	•	Fix any logic that incorrectly maps users due to cached or fallback IDs.
+	5.	✅ Use the email as the value for username in my users table — but allow a separate editable display_name field (already implemented in user_profiles) for future personalization.
+	6.	🔐 Optional: Add support for is_verified or status = ‘active’ in the users table for future onboarding logic — but don’t enforce anything yet.
+
+📌 Use the existing Firebase Auth integration — do not change my sign-in method. Just ensure correct user creation, mapping, and syncing.
+📌 Don’t create duplicate routes or fields — use the existing schema and logic already implemented in the app.
+📌 All changes must work with Firebase Auth + PostgreSQL sync.”

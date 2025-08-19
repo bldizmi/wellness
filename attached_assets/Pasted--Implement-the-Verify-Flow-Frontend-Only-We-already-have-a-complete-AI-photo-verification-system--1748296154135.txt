@@ -1,0 +1,82 @@
+ Implement the Verify Flow (Frontend Only)
+
+We already have a complete AI photo verification system implemented in the backend. Do not create new endpoints or storage methods. Instead, fully integrate the existing verification flow into the item completion experience.
+
+⸻
+
+🧠 What Already Exists (Use This)
+	•	POST /api/item/:itemId/verify-photo: API endpoint for uploading images for AI verification
+	•	verifyItemWithPhoto() already implemented in storage layer
+	•	Database fields:
+	•	verify_required (boolean)
+	•	verified, verified_at, verified_by_user_id
+	•	ai_verification_result (enum: complete | not_complete | unclear)
+	•	ai_feedback (string), image_url (string)
+	•	Create/Edit Item modal already includes “Verify with photo” checkbox with explanation
+
+⸻
+
+🧩 Your Task — Frontend Flow (Implement this)
+
+✅ 1. Trigger: When a user tries to complete a task
+	•	If verify_required = true:
+	•	Block default completion behavior
+	•	Instead, open a modal or side sheet prompting the user to upload a photo
+	•	Show helpful text:
+“Upload a photo so our AI assistant can verify that this item is complete.”
+
+⸻
+
+📸 2. Upload Photo + Trigger Verification
+	•	Upload the image via POST /api/item/:itemId/verify-photo (already exists)
+	•	Show loading indicator (“Analyzing with AI…”)
+	•	On response, show AI result and feedback:
+	•	✅ Complete
+	•	Green badge: “Verified Complete”
+	•	Toast: “This item has been verified successfully by AI.”
+	•	Mark verified = true, completed_at = now
+	•	❌ Not Complete
+	•	Red badge: “Not Complete”
+	•	Show ai_feedback (e.g., “There are still dishes in the sink”)
+	•	Allow the user to re-upload or edit the item
+	•	🤔 Unclear
+	•	Orange badge: “Unclear”
+	•	Show ai_feedback (e.g., “The photo was too blurry to confirm.”)
+	•	Allow re-upload
+
+⸻
+
+👨‍👩‍👧 3. If item is shared with a community
+	•	Show the image_url, result badge, and AI feedback to shared users
+	•	Tooltip (on Verify toggle in Create/Edit):
+“If shared with your community, others can see the uploaded photo and verification result.”
+
+⸻
+
+🪪 4. Visual Indicators in Task List
+	•	For each item with verify_required = true, show:
+	•	“Verify” badge or icon in the item card
+	•	If completed and verified: green check + Verified label
+	•	If not verified: show subtle dot or icon indicating pending verification
+
+⸻
+
+📝 5. Edit Flow for Verified Items
+	•	If AI marked item not_complete or unclear, show option to:
+	•	Re-upload photo
+	•	Mark as complete manually
+	•	Edit title, type, due date, etc.
+
+⸻
+
+🚫 Do Not:
+	•	❌ Do not create a new verify endpoint or storage method
+	•	❌ Do not modify existing backend verification logic
+
+⸻
+
+✅ Completion Criteria
+	•	Items requiring verification must prompt for photo on completion
+	•	AI feedback must be visible
+	•	Verified tasks should be shown as completed only after successful verification
+	•	All UI should use existing verification metadata fields

@@ -1,0 +1,22 @@
+{
+  "test-user-123": [
+    {
+      "mood_emoji": "😊",
+      "timestamp": "2025-05-22T01:54:38.799Z",
+      "id": "mood_2phM4lITpr7Z01SBdx1nM",
+      "created_at": "2025-05-22T01:54:38.820Z"
+    },
+    {
+      "mood_emoji": "😊",
+      "timestamp": "2025-05-22T01:34:57.600Z",
+      "id": "mood_putnKpQPB-Nz-zMWM66Nw",
+      "created_at": "2025-05-22T01:34:57.617Z"
+    },
+    {
+      "mood_emoji": "🥳",
+      "timestamp": "2025-05-22T02:00:15.889Z",
+      "id": "mood_KlyXJY_wg7GW_jp0uyrIz",
+      "created_at": "2025-05-22T02:00:15.973Z"
+    }
+  ]
+}

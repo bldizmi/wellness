@@ -1,0 +1,52 @@
+I just completed a new test item and the issue persists. Please provide evidence from that exact run. Do not change any code/flags. No global cache flush.
+
+Scope: my user only, today’s date, the completion I just triggered.
+
+Correlated trace (this run only)
+
+Give me a single traceId for my completion click → API write → invalidation → personal-progress READ.
+
+Paste the ordered log lines with timestamps for that traceId.
+
+Exact cache key actually READ/SET
+
+Paste the full key strings used on READ and on SET for personal-progress in this run (include env prefix, userId, date, and version suffix).
+
+Paste the log line that shows ttl_ms on SET (must be 120000).
+
+If the READ key differs from the keys you purged earlier, call it out explicitly.
+
+Endpoint & instance proof
+
+Which completion endpoint handled this run (/api/item-completion/:id/complete, /api/item/:id/complete, etc.)?
+
+Which handler served personal-progress (file:line)?
+
+Pod/instance ID and commit SHA for both requests.
+
+Batch/first-read source
+
+For this same item, show whether the first batch pass after completion read DB/no-cache or cache. Paste the log line that states the source.
+
+Upstream/proxy cache check (no code changes)
+
+Run and paste the output of:
+
+bash
+Copy
+Edit
+curl -s -D - "https://<api-host>/personal-progress?...(my user/date params)..." -o /dev/null
+Include response headers (Cache-Control, Age, Vary, X-Cache, Surrogate-Control).
+If an API gateway/CDN is caching this route, call it out.
+
+Key namespace audit (read-only)
+
+List any other personal-progress key variants hit in the last 5 minutes for my user (e.g., personal-progress-*, personal-progress-v3-*, today-progress-*).
+
+Confirm whether any of those still have ttl_ms=300000.
+
+Acceptance (this run):
+
+Logs show the exact READ key and SET key (same date/version), ttl_ms=120000 on SET, invalidation includes that key, batch’s first read = DB/no-cache.
+
+If the READ key differs from what you purged, purge that exact key (my user only) and re-test once—no other changes.

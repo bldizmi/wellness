@@ -1,0 +1,52 @@
+Phase 1 failed because the completion handler isn’t executing (11 TS errors).
+Do not change TTLs, flags (except toggling my Phase-1 flag), or unrelated code. No global cache flush.
+
+A) Freeze + compile proof (no behavior changes)
+
+Turn Phase-1 flag OFF.
+
+Run TypeScript in check mode and paste all errors (filename:line:col + message):
+
+pnpm -w tsc --noEmit (or npm run tsc -- --noEmit)
+
+Paste git show --name-only --stat for the last commit(s) touching server/routes/itemCompletion.ts.
+
+State explicitly: no behavioral changes will be made while fixing these errors (only typing/import/logging fixes).
+
+B) Fix errors without changing behavior
+5) Fix the 11 TS errors in itemCompletion.ts and any imports it touches. No logic changes.
+6) Re-run tsc --noEmit → must be clean (0 errors). Paste the command output.
+
+C) Prove the completion route is actually registered
+7) On server startup, log a single line:
+ROUTE_REGISTERED {"method":"POST","path":"/api/item/:id/complete","file":"server/routes/itemCompletion.ts"}
+8) From the server shell, hit the route once and show entry log (no business logic):
+
+nginx
+Copy
+Edit
+curl -s -X POST "http://localhost:5000/api/item/test-health/complete" -H "Authorization: Bearer test"
+Paste the server log line: HANDLER_ENTRY {"path":"/api/item/test-health/complete","correlationId":"..."}
+
+D) Re-enable my flag and re-run Phase 1 on a fresh item (#P1C)
+9) Turn Phase-1 flag ON for my account only. No restarts during the run.
+10) I will complete #P1C. Return ordered server logs (one correlationId) showing:
+
+DB commit → invalidation with:
+• effectiveDate (PT) used for keys
+• exact full key invalidated: development:<userId>:personal-progress-v2-<effectiveDate>:
+• invalidation_duration_ms, timeout_hit=false|true
+
+Next GET /today/personal-progress:
+• Cache READ MISS for that key
+• Cache SET for that key with "ttl_ms":120000
+
+Batch first read: line showing source=DB/no-cache for that item/date
+
+Acceptance for #P1C:
+– Main list does not revert for 3 minutes.
+– Server logs show invalidate → MISS → SET (ttl_ms=120000) for the correct full key.
+– Batch first read = DB/no-cache.
+– No restarts during the run.
+
+If any step fails, stop and report exactly which step (compile, route registration, invalidation order, cache MISS/SET, or batch source) without making new behavioral changes.

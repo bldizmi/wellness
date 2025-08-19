@@ -1,0 +1,64 @@
+Add “Share With” Functionality to Create Item Modal (Tasks, Habits, Goals, Projects)
+
+We want to add a “Share With” feature to the Create Item modal for both One-time and Recurring items.
+
+This will allow users to share a Task, Habit, Goal, or Project with one or more members of their communities during item creation.
+
+⸻
+
+📍 Where This Should Appear
+
+Add a “Share with” dropdown field:
+	•	Just below the existing “Verify with photo” toggle
+	•	Maintain consistent spacing, alignment, and styling with other form fields
+	•	Should be included on both One-time and Recurring item creation views
+
+⸻
+
+✅ Functionality
+	•	Dropdown with multi-select capability (use checkboxes or pills)
+	•	Default placeholder: "Share with..."
+
+🔐 Member Filtering:
+	•	Show only users from active communities the current user is a member of
+	•	Exclude users who have removed_at (soft-deleted)
+	•	Exclude users from communities the user doesn’t belong to
+	•	Include users only once, even if they are in multiple communities
+
+💡 Display Format:
+	•	Show each community member’s:
+	•	display_name
+	•	Badge or label for the community they belong to
+(e.g., “Sally Ann · Familia”, “Fred None · Work”)
+
+📤 Submission:
+	•	Send selected user Firebase UIDs as a shared_with array in the item creation request
+	•	Do not allow duplicate submissions or blank selections
+	•	Maintain existing item schema:
+	•	shared_with: JSONB array
+	•	community_id: if item is tied to an entire community (optional)
+
+⸻
+
+🔁 Backend & Logic Integration
+	•	DO NOT create new endpoints — use existing logic:
+	•	/api/item POST and PATCH for creating/updating items
+	•	shared_with field already supported in item model
+	•	Use itemVisibilityService to enforce correct visibility
+	•	Respect existing permission structure:
+	•	Only item creator or assigned user can share
+	•	Shared users can view (not edit or complete unless assigned)
+
+⸻
+
+✅ UI Notes
+	•	Match visual style of existing modal fields (like Due Date, Time, etc.)
+	•	If no available users (user is in no communities), disable the field with tooltip:
+“To share items, create or join a community from your profile.”
+
+⸻
+
+🚫 Do Not:
+	•	Do not show all platform users
+	•	Do not allow typing in arbitrary emails (only allow selection from verified members)
+	•	Do not duplicate existing backend logic — use current schema and visibility rules

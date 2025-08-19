@@ -1,0 +1,138 @@
+Phase 2: All Completion Endpoints
+Duration: 1 week | Risk: MEDIUM
+Endpoint Migration Order:
+2.1 Create New Completion Endpoints:
+* POST /api/recurring/:templateId/instances/:instanceId/complete
+* DELETE /api/recurring/:templateId/instances/:instanceId/complete
+* GET /api/recurring/:templateId/instances/:instanceId/history
+2.2 Feature Flag Implementation:
+const useNewRecurringSystem = process.env.FEATURE_NEW_RECURRING === 'true';
+if (useNewRecurringSystem && item.is_recurring_template) {
+return handleNewRecurringCompletion(instanceId);
+} else {
+return handleLegacyCompletion(itemId, date);
+}
+
+2.3 Gradual Migration:
+* Start with new items only
+* Migrate existing items in batches
+* Rollback capability at any point
+
+Phase 3: Calendar Queries
+Duration: 1 week | Risk: MEDIUM
+Query Simplification:
+Before (Complex):
+-- Current: Complex joins across multiple tables
+SELECT items.*,
+CASE WHEN completions.completion_date = '2025-07-03'
+THEN true ELSE false END as is_completed_for_date
+FROM items
+LEFT JOIN item_completions completions ON...
+WHERE shouldItemAppearOnDate(...)
+
+After (Simple):
+-- New: Direct status lookup
+SELECT * FROM recurring_instances
+WHERE occurrence_date = '2025-07-03'
+AND (assigned_to = ? OR created_by = ?)
+
+Performance Benefits:
+* 90% fewer database queries for calendar rendering
+* Instant progress ring calculations (no aggregation needed)
+* Real-time updates without cache invalidation complexity
+
+Phase 4: Metrics Calculations
+Duration: 2 weeks | Risk: MEDIUM
+Metrics Transformation:
+4.1 Completion Rate Calculations:
+-- Before: Complex date-range aggregation
+SELECT COUNT(DISTINCT completion_date) / days_in_range
+FROM item_completions WHERE...
+ 
+-- After: Simple status counting
+SELECT COUNT(*) FILTER (WHERE status = 'completed') / COUNT(*)
+FROM recurring_instances WHERE occurrence_date BETWEEN...
+
+4.2 Streak Calculations:
+-- Before: Complex consecutive date logic
+WITH date_series AS (...complex CTE...)
+ 
+-- After: Sequential status check
+SELECT * FROM recurring_instances
+WHERE template_id = ? ORDER BY occurrence_date
+-- Simple iteration for streak counting
+
+4.3 Trust Score Improvements:
+* Per-occurrence verification history
+* Clear verification/completion ratios
+* Historical verification accuracy tracking
+
+Phase 5: Community Sharing Logic
+Duration: 1 week | Risk: LOW-MEDIUM
+Sharing Model Changes:
+5.1 Template vs Instance Sharing:
+* Share Template: "Share this daily habit with community"
+* Share Instance: "Share today's completion with community"
+* Share Progress: "Share this week's progress"
+5.2 Assignment Clarity:
+-- Before: Ambiguous assignment
+UPDATE items SET assigned_to = 'user123' WHERE id = 'daily-habit'
+-- Which occurrences are assigned?
+ 
+-- After: Clear occurrence assignment
+UPDATE recurring_instances SET assigned_to = 'user123'
+WHERE template_id = 'daily-habit' AND occurrence_date >= '2025-07-03'
+
+5.3 Community Verification:
+* Each occurrence can be independently verified
+* Community members see specific attempts, not entire series
+* Clear verification history per occurrence
+
+Phase 6: Mobile App Compatibility
+Duration: 1 week | Risk: LOW
+API Backwards Compatibility:
+6.1 Legacy Endpoint Wrappers:
+// Maintain existing /api/today endpoint
+GET /api/today?date=2025-07-03
+// Internally queries new recurring_instances table
+// Returns data in existing format for mobile compatibility
+
+6.2 Gradual Mobile Migration:
+* Phase 1: Mobile continues using legacy endpoints
+* Phase 2: New mobile endpoints with enhanced features
+* Phase 3: Deprecate legacy endpoints after mobile app update
+6.3 Enhanced Mobile Features:
+* Faster calendar loading (no complex aggregation)
+* Real-time progress updates
+* Per-occurrence verification history
+
+Migration Strategy Details
+Data Migration Script:
+-- Step 1: Create templates from existing recurring items
+INSERT INTO recurring_templates
+SELECT id, title, item_type, recurrence_type, created_by, verify_required
+FROM items WHERE recurrence_type != 'once';
+ 
+-- Step 2: Generate instances for historical date ranges
+-- Step 3: Migrate completion records to instance status
+-- Step 4: Verify data integrity
+
+Rollback Plan:
+* Feature flags allow instant rollback to legacy system
+* Dual-write ensures no data loss
+* Database snapshots before each phase
+* Automated testing validates both systems during transition
+Testing Strategy:
+* Unit Tests: Each endpoint in isolation
+* Integration Tests: Full user flows (create→complete→view)
+* Performance Tests: Calendar loading under load
+* User Acceptance Tests: Real user scenarios
+Implementation Timeline:
+* Week 1-2: Phase 1 (Schema + Dual-write)
+* Week 3: Phase 2 (Completion endpoints)
+* Week 4: Phase 3 (Calendar queries)
+* Week 5-6: Phase 4 (Metrics)
+* Week 7: Phase 5 (Community sharing)
+* Week 8: Phase 6 (Mobile compatibility)
+Total Duration: 8 weeks with rollback capability at each phase.
+Would you like me to elaborate on any specific phase or provide more technical details for implementation?

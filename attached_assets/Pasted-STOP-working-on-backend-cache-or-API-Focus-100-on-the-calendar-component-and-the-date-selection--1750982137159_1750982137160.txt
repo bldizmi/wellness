@@ -1,0 +1,37 @@
+STOP working on backend, cache, or API.
+Focus 100% on the calendar component and the date selection logic in the frontend.
+	1.	Instrument the Calendar Component:
+	•	For each day rendered in the calendar view, add a label or log that prints BOTH:
+	•	The date displayed in the cell (e.g., what the user sees: “6/21”)
+	•	The actual value or date string attached to the cell (e.g., what is sent in the API call if the user clicks it)
+	•	When the user clicks a day, log BOTH:
+	•	The date label (what the UI says you clicked)
+	•	The value of the date string sent to the API
+	2.	Show Me the Logs:
+	•	For the sequence where you click “6/21”, show:
+	•	What date label is shown in the calendar cell
+	•	What date string is sent to the backend
+	3.	Audit Date Construction:
+	•	Find every line in your calendar component that creates a new date (with new Date(...), dayjs(), moment(), etc.).
+	•	For each, explain what time zone and what format it uses.
+	•	If you see new Date(year, month, day), remember:
+	•	JS interprets this as local time, not UTC.
+	•	If you see new Date("YYYY-MM-DD"), JS interprets this as UTC at midnight.
+	4.	Find the Off-By-One Error:
+	•	If clicking a cell labeled “6/21” triggers an API call for “6/22”, then your date generation is off-by-one in the UI logic.
+	•	This could be because:
+	•	You use UTC dates for display but local dates for value
+	•	Or you add/subtract a day somewhere in your calendar builder
+	5.	Fix the Root Cause:
+	•	Ensure that the date string sent to the API matches the date displayed to the user—they should always be identical.
+	•	Use a single source of truth: if your calendar starts with a JS Date object, always display and use its .toISOString().substring(0,10) or date.toLocaleDateString('en-CA'), and use that string everywhere.
+	•	Avoid mixing UTC and local time unless you know exactly what you’re doing.
+	6.	Prove the Fix:
+	•	After the fix, show logs for:
+	•	Date label shown in calendar: “6/21”
+	•	Date string sent to backend: “2025-06-21”
+	•	Backend response: only items with due_date “2025-06-21”
+
+⸻
+
+Do not work on caching, backend, or DB logic until you can prove the date string from the calendar cell matches the date label exactly. The UI and API must use the same date string. Show me proof with console logs.

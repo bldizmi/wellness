@@ -1,0 +1,63 @@
+Create a Node.js Express backend for a mobile/web wellness productivity app called **MindDouble**.
+
+MindDouble is a user-facing product. The experience should be minimalist, emotionally intelligent, and mobile-first. This API backend is not for the end user to interact with directly — it is for authenticated admin usage by the app only.
+
+---
+
+🔐 Authentication (Required)
+- Use Firebase Admin SDK to validate ID tokens
+- I will upload the service account file (store as FIREBASE_SERVICE_ACCOUNT_PATH in .env)
+- Every request should be validated using the Authorization header (Bearer token)
+- Only authenticated users can access the routes
+- Attach `user_id` to requests after verification
+
+---
+
+📁 Storage (Replit-Compatible)
+- No external database like Supabase
+- Use flat file storage (e.g., JSON files inside `data/`)
+- Use `fs/promises` with async/await to read/write mood check-ins and items per user
+- Later we can swap in Supabase or Postgres without breaking the logic
+
+---
+
+🧠 AI Integration (Core to Product)
+- Use OpenAI's API (I'll provide `OPENAI_API_KEY` in .env)
+- Add an OpenAI service file to centralize prompt logic
+- Use for:
+  - Estimating task time
+  - Reordering the day
+  - Mood reflections
+  - Optional: value-based encouragement
+
+---
+
+📦 API Endpoints
+
+### 1. `POST /api/mood/check-in`
+- Auth required
+- Body: `mood_emoji`, `timestamp`
+- Save to `data/moods.json` scoped by `user_id`
+- Support multiple check-ins per day
+
+### 2. `POST /api/item`
+- Auth required
+- Body: `title`, `item_type`, `recurrence_type`, optional `due_date`, `time_frame`, `is_chore`, `why_it_matters`
+- Save to `data/items.json` scoped by `user_id`
+
+### 3. `GET /api/today`
+- Return all tasks, goals, habits, and projects due today
+- Group results by type
+- Must be filtered per `user_id`
+
+### 4. `POST /api/ai/estimate-time`
+- Body: `title`
+- Return AI-estimated duration (e.g. “Do dishes” → 10 min)
+
+### 5. `POST /api/ai/plan-my-day`
+- Accept mood + task context
+- Return a prioritized task list for the user
+
+---
+
+🧱 Project Structure

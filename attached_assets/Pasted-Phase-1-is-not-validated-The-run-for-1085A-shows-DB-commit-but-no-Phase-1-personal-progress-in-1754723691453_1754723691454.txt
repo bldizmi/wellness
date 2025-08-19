@@ -1,0 +1,33 @@
+Phase 1 is not validated. The run for #1085A shows: DB commit ✅, but no Phase-1 personal-progress invalidation logs, and subsequent reads are HIT instead of MISS. I also see a shared-items MISS, which suggests Phase 2 behavior leaked in.
+Do not change TTLs or unrelated code. Do not enable Phase 2. No restarts unless required to turn on logging.
+
+A) Assert flags & branches (this endpoint, this run only)
+
+At completion handler entry, log (INFO) in one line:
+PH1_ENTRY {"userId":"…","itemId":"…","phase1Flag":<bool>,"phase2Flag":<bool>,"route":"POST /api/item/:id/complete"}
+
+Log the computed effectiveDate (PT) and the output of getCacheKeysForItem(userId,effectiveDate,itemId). Paste that array.
+
+B) Prove we’re invalidating the exact key
+3) Show the line(s) that call cacheService.invalidate for personal-progress with the full key (same env/user/date/version as GET). Paste the code snippet (a few lines) and the emitted log:
+PH1_INVALIDATE {"keys":[ "...personal-progress-v2-YYYY-MM-DD:" ],"awaited":true}
+4) Confirm we await Promise.all(invalidatePromises) (or equivalent) and log invalidation_duration_ms + timeout_hit.
+
+C) Show the GET proves a MISS then SET (this run)
+5) Paste the server log lines immediately after completion showing:
+
+Cache READ MISS for that exact personal-progress full key (include target_date, cache_key, full_key)
+
+Cache SET for that key with "ttl_ms":120000
+
+D) Guard against leakage
+6) Confirm Phase 2 is OFF (no invalidation of shared-items or week-progress in this phase). If any shared/week invalidations occurred, say where that path is wired and disable it for Phase 1.
+
+Acceptance (one new test item):
+– Logs show PH1_ENTRY with phase1Flag=true, phase2Flag=false.
+– PH1_INVALIDATE includes my personal-progress full key for the item’s PT date.
+– Next GET is MISS → SET (ttl_ms=120000) for that same key.
+– No shared/week invalidation in this phase.
+– UI does not revert for 3 minutes.
+
+If any step fails (wrong date, wrong namespace, missing await, Phase 2 leakage), stop and report exactly which step failed without adding new behavior.

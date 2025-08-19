@@ -1,0 +1,66 @@
+Please fully restore the CreateOrEditItemModal.tsx component to its complete, working state as it was prior to your recent simplification. Do not simplify, restructure, or remove any sections. Instead, re-enable the full set of features as previously implemented in the development environment.
+
+Do not write new backend endpoints or logic. All functionality already exists and must be reconnected or re-rendered, not duplicated.
+
+🔁 This applies to both Create and Edit modes of the modal. The restored component must support:
+
+⸻
+
+🧩 Required Functional Sections:
+
+📍 Core Tabs and Layout:
+	•	Top-level Tabs:
+	•	“Details”
+	•	“Verification History” (only shown for existing/edited items with verification enabled)
+	•	One-time vs Recurring Toggle
+	•	Recurrence Selection (when Recurring is active):
+	•	Daily, Weekly, Monthly, Yearly, Custom (with appropriate nested config)
+
+📌 Item Core Fields:
+	•	Title
+	•	Type: Task / Habit / Goal / Project
+	•	Due Date
+	•	Time Estimate (in minutes)
+
+📸 Verification:
+	•	Toggle: “Verify with photo”
+	•	If enabled: Ensure correct AI verification logic is wired
+
+👥 Community Sharing Section:
+	•	Label: “Share with community members”
+	•	Dropdown: “Share with…” should show only active community members
+	•	Pulled from the user’s connected communities
+	•	Members should be selectable as pills (multi-select)
+	•	Dropdown should not show users outside their communities
+
+👤 Assignment Section:
+	•	“Open for anyone to complete” toggle (optional)
+	•	If off: Show dropdown to assign to a specific member (filtered from above list)
+
+💬 Motivation:
+	•	Textarea: “Why does this matter to you?” (optional)
+
+🔍 Footer:
+	•	Item ID (lower-left corner for editing mode only)
+	•	Buttons: Delete, Cancel, Save/Update
+	•	Loading spinner when submitting
+
+⸻
+
+🛑 Must Not:
+	•	❌ Add new endpoints (use existing ones)
+	•	❌ Replace Drizzle queries or modify backend behavior
+	•	❌ Remove or simplify community sharing, verification, or recurrence logic
+	•	❌ Introduce new conditional rendering logic that wasn’t previously working
+
+⸻
+
+✅ After restoration, confirm:
+	•	All form fields are working and persist to the backend correctly
+	•	Items shared to users show up in their Today and Plans views
+	•	Verification logic is connected to the correct toggle
+	•	Verification History appears only on existing verified items
+	•	No syntax errors or JSX misalignment
+	•	Fully tested in both Create and Edit modes
+
+Please let me know when the full feature set has been restored and tested.

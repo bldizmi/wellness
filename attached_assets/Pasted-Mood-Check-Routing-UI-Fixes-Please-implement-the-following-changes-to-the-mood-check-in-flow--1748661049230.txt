@@ -1,0 +1,50 @@
+Mood Check Routing + UI Fixes
+
+Please implement the following changes to the mood check-in flow:
+
+⸻
+
+🧠 Mood Check Routing Logic
+
+Problem:
+Currently, the mood check-in (vibe check) page at / displays every time the user visits the app — even if they’ve already checked in or skipped earlier in the day.
+
+Goal:
+Only show the mood check-in screen once per day, unless the user explicitly chooses to access it later.
+
+⸻
+
+✅ Requirements
+	1.	New Logic for Mood Check Display
+	•	If a user has already checked in today, or tapped “Skip for now,” do not route to /.
+	•	Instead, route directly to /today.
+	•	Use the existing /api/mood/check-in GET endpoint to determine whether the user has submitted a check-in today.
+	•	Save “Skip for now” choice in localStorage (e.g., moodSkippedDate) to avoid repeat prompts on the same day.
+	2.	Trigger Mood Check Only Once Per Day
+	•	Reset skip or check-in logic each calendar day based on client local date (YYYY-MM-DD).
+	•	If neither check-in nor skip has occurred yet, display the mood check-in screen (/).
+	•	Once mood is submitted or skipped, route to /today.
+	3.	Manual Mood Check Option
+	•	Keep the existing MoodCheck component accessible via the header/logo dropdown or nav (already exists).
+	•	If a user wants to check in again, they can trigger it manually from there.
+
+⸻
+
+🎨 UI Centering Fix
+
+Issue:
+The mood check-in card is visually off-center vertically on most screens.
+
+Fix:
+	•	Center the MoodCheck component vertically and horizontally.
+	•	Use flexbox with justify-content: center and align-items: center.
+	•	Add min-height: 100vh to the wrapper/container.
+	•	Ensure the “Check In” and “Skip for now” buttons are always visible without overflow or squish.
+
+⸻
+
+⚠️ Important Notes
+	•	Don’t remove or duplicate existing endpoints.
+	•	Use the / route for the check-in as it exists, but override its visibility using today’s check-in status.
+	•	Avoid hardcoded time comparisons — use the client’s local YYYY-MM-DD date for all routing and mood logic.
+	•	Preserve the mood check-in history functionality and AI reflection integration.

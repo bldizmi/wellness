@@ -1,0 +1,35 @@
+Do not change TTLs, code behavior, or flags (besides enabling logging). No global cache flush. Scope: my user only and one new test run.
+
+A) Handler entry & flag proof (this endpoint, this run only)
+
+At the first line of the completion handler (before any early returns), emit one INFO log:
+PH1_ENTRY {"userId":"<resolvedUserId>","itemId":"<id>","route":"POST /api/item/:id/complete","phase1Flag":<bool>,"phase2Flag":<bool>,"correlationId":"<id>"}
+– Log the actual boolean values as computed at runtime.
+
+Log the raw values used to compute the Phase-1 flag, e.g.:
+PH1_FLAG_INPUTS {"userId":"…","targetSetContains":<bool>,"env":"…","featureFlagName":"…"}
+
+B) Effective date & keys (before invalidate)
+3) Log PH1_EFFECTIVE_DATE_PT and the exact key strings Phase-1 intends to invalidate for personal-progress for my user/date, e.g.:
+PH1_CACHE_KEYS {"keys":["development:<userId>:personal-progress-v2-YYYY-MM-DD:"]}
+
+C) Invalidate call site logging (this run)
+4) At the Phase-1 invalidate call site, log right before the call and right after awaiting it:
+
+PH1_INVALIDATE_START {"keys":[...],"awaiting":true,"timeout_ms":200}
+
+PH1_INVALIDATE_END {"duration_ms":<int>,"timeout_hit":false,"keys":[...]}
+
+D) Invalidate wrapper echo (no behavior change)
+5) In cacheService.invalidate(...), add a non-blocking INFO echo (only when a ctx.correlationId is present) that logs:
+CACHE_INVALIDATE_CALL {"full_key":"…","caller":"itemCompletion.ts","correlationId":"…"}
+
+E) Correlated GET evidence (this run)
+6) Next GET /today/personal-progress must show Cache READ MISS for that same full key, then Cache SET with "ttl_ms":120000. Include target_date, cache_key, full_key, and correlationId.
+
+F) Branch map (read-only code snippet)
+7) Paste the if/else snippet that decides between: Phase-1 path, legacy path, any other completion paths. Highlight the exact condition that should put my user into Phase-1.
+
+Acceptance (one new test item):
+– Logs show PH1_ENTRY phase1Flag=true for my user, PH1_CACHE_KEYS includes my personal-progress key, PH1_INVALIDATE_START/END around the awaited call, CACHE_INVALIDATE_CALL from the service, and GET shows MISS→SET for that same key.
+– If phase1Flag=false in PH1_ENTRY, explain why (show the actual userId string you’re checking vs. what’s stored in the allow-set), fix the flag configuration only, and re-run.
