@@ -36,7 +36,7 @@ app.get("/debug/uploads/:filename", (req, res) => {
       .slice(0, 5),
   });
 });
-
+//console.log("ENV KEYS", process.env);
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
