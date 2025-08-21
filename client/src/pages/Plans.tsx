@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { CreateOrEditItemModal } from '@/components/CreateOrEditItemModal';
 import { PhotoVerificationModal } from '@/components/PhotoVerificationModal';
-import { Repeat, Calendar, Clock, Camera, Share2, Users, ChevronDown, ChevronUp, AlertCircle, ClockIcon, CalendarDays, Check } from 'lucide-react';
+import { Repeat, Calendar, Clock, Camera, Share2, Users, ChevronDown, ChevronUp, AlertCircle, ClockIcon, CalendarDays, Check, Menu } from 'lucide-react';
 import { ItemStreakBadge } from '@/components/ItemStreakBadge';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -217,7 +217,11 @@ export default function Plans() {
   }, [items, filter, itemTypeFilter, statusFilter, user?.uid]);
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading your plans...</div>;
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center py-8 text-white">Loading your plans...</div>
+      </div>
+    );
   }
 
   if (isError) {
@@ -274,463 +278,262 @@ export default function Plans() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-4">
-      <div className="sticky top-0 z-10 bg-background pb-2 pt-2">
-        <h1 className="text-2xl font-bold">Your Plans</h1>
-        <p className="text-sm text-muted-foreground">Everything you've created</p>
+    <div className="min-h-screen bg-gray-950">
+      <div className="w-full max-w-sm mx-auto bg-gray-950 min-h-screen text-white">
         
-        {/* Overdue Section */}
-        {overdueItems.length > 0 && (
-          <div className="mt-3 p-3 border border-orange-200 rounded-lg bg-orange-50/50">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <ClockIcon className="h-4 w-4 text-orange-600" />
-                <h2 className="text-base font-semibold text-orange-800">Let's catch up on these</h2>
-                <Badge variant="outline" className="text-xs bg-orange-100 text-orange-700 border-orange-300 px-1.5 py-0.5">
-                  {overdueItems.length}
-                </Badge>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsOverdueCollapsed(!isOverdueCollapsed)}
-                className="h-6 w-6 p-0 text-orange-600 hover:bg-orange-100"
-              >
-                {isOverdueCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
-              </Button>
-            </div>
-            
-            {!isOverdueCollapsed && (
-              <div className="space-y-2">
-                {/* Combined overdue (1-7 days) */}
-                {overdueGroups.combined.length > 0 && (
-                  <div className="space-y-1">
-                    {(showAllOverdue ? overdueGroups.combined : overdueGroups.combined.slice(0, 5)).map((item: any) => (
-                      <div key={item.id} className="flex items-center justify-between p-2 bg-white rounded border border-orange-200">
-                        <div className="flex-1 cursor-pointer" onClick={() => setEditingItem(item)}>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-gray-900 text-sm">{item.title}</p>
-                              <Badge variant="outline" className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0">
-                                {getDaysOverdue(item)}d
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              <span className="capitalize">{item.item_type}</span>
-                              <span>• Due {(() => {
-                                const [year, month, day] = item.due_date.split('-');
-                                const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                              })()}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setEditingItem(item)}
-                          className="text-xs ml-2 h-6 px-2"
-                        >
-                          Reschedule
-                        </Button>
-                      </div>
-                    ))}
-                    
-                    {overdueGroups.combined.length > 5 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowAllOverdue(!showAllOverdue)}
-                        className="w-full h-6 text-xs text-orange-600 hover:bg-orange-100"
-                      >
-                        {showAllOverdue ? 'Show Less' : `Show ${overdueGroups.combined.length - 5} More`}
-                      </Button>
-                    )}
-                  </div>
-                )}
+        {/* Header Section */}
+        <div className="pt-4 px-4 pb-4">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold text-white">Plans</h1>
+            <Button variant="ghost" size="sm" className="p-2">
+              <Menu className="h-5 w-5 text-gray-400" />
+            </Button>
+          </div>
 
-                {/* Long-term overdue (over a week) */}
-                {overdueGroups.longterm.length > 0 && (
+          {/* Search Bar */}
+          <div className="mb-4">
+            <Input
+              placeholder="Search your plans..."
+              className="bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+            />
+          </div>
+
+          {/* Advanced Filters */}
+          <div className="mb-4">
+            <h3 className="text-white font-medium mb-3">Advanced Filters</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-gray-400 text-sm mb-1 block">Status</label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                    <SelectValue placeholder="All Items" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-700">
+                    <SelectItem value="open" className="text-white">All Items</SelectItem>
+                    <SelectItem value="completed" className="text-white">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-gray-400 text-sm mb-1 block">Priority</label>
+                <Select defaultValue="all">
+                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-700">
+                    <SelectItem value="all" className="text-white">All</SelectItem>
+                    <SelectItem value="high" className="text-white">High</SelectItem>
+                    <SelectItem value="medium" className="text-white">Medium</SelectItem>
+                    <SelectItem value="low" className="text-white">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-gray-400 text-sm mb-1 block">Due Date</label>
+                <Select defaultValue="all">
+                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                    <SelectValue placeholder="All Dates" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-700">
+                    <SelectItem value="all" className="text-white">All Dates</SelectItem>
+                    <SelectItem value="today" className="text-white">Today</SelectItem>
+                    <SelectItem value="week" className="text-white">This Week</SelectItem>
+                    <SelectItem value="month" className="text-white">This Month</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-gray-400 text-sm mb-1 block">Type</label>
+                <Select value={itemTypeFilter} onValueChange={setItemTypeFilter}>
+                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                    <SelectValue placeholder="All Types" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-700">
+                    <SelectItem value="all" className="text-white">All Types</SelectItem>
+                    <SelectItem value="task" className="text-white">Tasks</SelectItem>
+                    <SelectItem value="habit" className="text-white">Habits</SelectItem>
+                    <SelectItem value="goal" className="text-white">Goals</SelectItem>
+                    <SelectItem value="project" className="text-white">Projects</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Overdue Items Alert */}
+          {overdueItems.length > 0 && (
+            <div className="mb-4 p-3 bg-red-900/30 border border-red-800 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-red-500" />
                   <div>
-                    <h3 className="text-sm font-medium text-orange-700 mb-1 mt-3">Over a Week</h3>
-                    <div className="space-y-1">
-                      {overdueGroups.longterm.map((item: any) => (
-                        <div key={item.id} className="flex items-center justify-between p-2 bg-white rounded border border-red-200">
-                          <div className="flex-1 cursor-pointer" onClick={() => setEditingItem(item)}>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium text-gray-900 text-sm">{item.title}</p>
-                                <Badge variant="outline" className="text-xs bg-red-100 text-red-700 px-1.5 py-0">
-                                  {getDaysOverdue(item)}d
-                                </Badge>
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-gray-500">
-                                <span className="capitalize">{item.item_type}</span>
-                                <span>• Due {(() => {
-                                  const [year, month, day] = item.due_date.split('-');
-                                  const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                                  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                                })()}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingItem(item)}
-                            className="text-xs ml-2 h-6 px-2"
-                          >
-                            Reschedule
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-red-400 font-medium text-sm">{overdueItems.length} Overdue Items</p>
+                    <p className="text-red-300 text-xs">These need immediate attention</p>
                   </div>
-                )}
+                </div>
+                <div className="bg-red-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
+                  {overdueItems.length}
+                </div>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Success message when no overdue items */}
-        {overdueItems.length === 0 && items.length > 0 && (
-          <div className="mt-4 p-3 border border-green-200 rounded-lg bg-green-50/50">
-            <div className="flex items-center gap-2">
-              <Check className="h-5 w-5 text-green-600" />
-              <p className="text-green-800 font-medium">All caught up! Great job staying on top of things 🌟</p>
             </div>
+          )}
+
+          {/* Tab Navigation */}
+          <div className="flex gap-2 mb-4">
+            {[
+              { id: "all", label: "All" },
+              { id: "habit", label: "Habits" },
+              { id: "task", label: "Tasks" },
+              { id: "goal", label: "Goals" },
+              { id: "project", label: "Projects" },
+            ].map((tab) => (
+              <Button
+                key={tab.id}
+                variant={itemTypeFilter === tab.id ? "default" : "ghost"}
+                size="sm"
+                className={`rounded-full px-3 py-1 text-sm transition-all ${
+                  itemTypeFilter === tab.id
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                }`}
+                onClick={() => setItemTypeFilter(tab.id)}
+              >
+                {tab.label}
+              </Button>
+            ))}
           </div>
-        )}
-        
-        {/* Main Filter Tabs - Compact and Sticky */}
-        <div className="flex flex-wrap gap-1.5 mt-2 items-center">
-          <Button
-            variant={filter === 'one-time' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilter('one-time')}
-            className="rounded-full h-7 text-xs px-3"
-          >
-            One-time ({items.filter((item: any) => !item.recurrence_type || item.recurrence_type === 'once').length})
-          </Button>
-          <Button
-            variant={filter === 'recurring' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilter('recurring')}
-            className="rounded-full h-7 text-xs px-3"
-          >
-            <Repeat className="h-3 w-3 mr-1" />
-            Recurring ({items.filter((item: any) => item.recurrence_type && item.recurrence_type !== 'once').length})
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className="p-1 h-5 w-5 rounded-full"
-          >
-            {showAdvancedFilters ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-          </Button>
         </div>
 
-        {/* Collapsible Secondary Filters - Compact */}
-        {showAdvancedFilters && (
-          <div className="mt-1.5 space-y-1.5 pb-1">
-            {/* Status Toggle */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground min-w-[50px]">Status:</span>
-              <div className="flex gap-1">
-                <Button
-                  variant={statusFilter === 'open' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setStatusFilter('open')}
-                  className="rounded-full h-6 px-2 text-xs"
-                >
-                  Open
-                </Button>
-                <Button
-                  variant={statusFilter === 'completed' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setStatusFilter('completed')}
-                  className="rounded-full h-6 px-2 text-xs"
-                >
-                  Completed
-                </Button>
-              </div>
-            </div>
-
-            {/* Item Type Filter */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-muted-foreground min-w-[40px]">Type:</span>
-              <div className="flex flex-wrap gap-1">
-                <Button
-                  variant={itemTypeFilter === 'all' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setItemTypeFilter('all')}
-                  className="rounded-full h-6 px-2 text-xs"
-                >
-                  All
-                </Button>
-                <Button
-                  variant={itemTypeFilter === 'task' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setItemTypeFilter('task')}
-                  className="rounded-full h-6 px-2 text-xs"
-                >
-                  Tasks
-                </Button>
-                <Button
-                  variant={itemTypeFilter === 'habit' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setItemTypeFilter('habit')}
-                  className="rounded-full h-6 px-2 text-xs"
-                >
-                  Habits
-                </Button>
-                <Button
-                  variant={itemTypeFilter === 'goal' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setItemTypeFilter('goal')}
-                  className="rounded-full h-6 px-2 text-xs"
-                >
-                  Goals
-                </Button>
-                <Button
-                  variant={itemTypeFilter === 'project' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setItemTypeFilter('project')}
-                  className="rounded-full h-6 px-2 text-xs"
-                >
-                  Projects
-                </Button>
-                <Button
-                  variant={itemTypeFilter === 'shared' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setItemTypeFilter('shared')}
-                  className="rounded-full h-6 px-2 text-xs"
-                >
-                  <Users className="h-3 w-3 mr-1" />
-                  Shared ({items.filter((item: any) => {
-                    // Apply recurrence filter first, then check if shared
-                    let filteredForCount = [...items];
-                    if (filter === 'one-time') {
-                      filteredForCount = filteredForCount.filter((i: any) => !i.recurrence_type || i.recurrence_type === 'once');
-                    } else if (filter === 'recurring') {
-                      filteredForCount = filteredForCount.filter((i: any) => i.recurrence_type && i.recurrence_type !== 'once');
-                    }
-                    return filteredForCount.find((i: any) => i.id === item.id) && 
-                           item.shared_with && 
-                           item.shared_with.length > 0 && 
-                           item.created_by === user?.uid;
-                  }).length})
-                </Button>
-                <Button
-                  variant={itemTypeFilter === 'open' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setItemTypeFilter('open')}
-                  className="rounded-full h-6 px-2 text-xs"
-                >
-                  <Users className="h-3 w-3 mr-1" />
-                  Open ({items.filter((item: any) => {
-                    // Apply recurrence filter first, then check if open
-                    let filteredForCount = [...items];
-                    if (filter === 'one-time') {
-                      filteredForCount = filteredForCount.filter((i: any) => !i.recurrence_type || i.recurrence_type === 'once');
-                    } else if (filter === 'recurring') {
-                      filteredForCount = filteredForCount.filter((i: any) => i.recurrence_type && i.recurrence_type !== 'once');
-                    }
-                    return filteredForCount.find((i: any) => i.id === item.id) && item.assigned_to === null;
-                  }).length})
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-      </div>
-
-      <div className="space-y-2">
-        {filteredItems.map((item: any) => (
-          <Card key={item.id} className="p-4">
-            <div className="flex items-center justify-between">
-              <div 
-                className="flex-1 cursor-pointer" 
-                onClick={() => setEditingItem(item)}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="font-semibold">{item.title}</p>
-                  {/* Verification status badges */}
-                  {item.verify_required && (
-                    <>
-                      {(item.status === 'completed' || item.status === 'complete') && (
-                        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                          <Check className="w-3 h-3 mr-1" />
-                          Verified
-                        </Badge>
-                      )}
-                      {item.status === 'pending_manual_review' && (
-                        <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200 flex items-center">
-                          <span className="text-red-600 font-bold mr-1">!</span>
-                          Pending
-                        </Badge>
-                      )}
-                      {(!item.status || (item.status !== 'completed' && item.status !== 'complete' && item.status !== 'pending_manual_review')) && (item.ai_verification_result === 'not_complete' || item.ai_verification_result === 'unclear') && (
-                        <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
-                          <AlertCircle className="w-3 h-3 mr-1" />
-                          Pending
-                        </Badge>
-                      )}
-                      {(!item.status || (item.status !== 'completed' && item.status !== 'complete' && item.status !== 'pending_manual_review')) && !item.ai_verification_result && (
-                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                          <Camera className="w-3 h-3 mr-1" />
-                          Photo Required
-                        </Badge>
-                      )}
-                    </>
-                  )}
-                  {getRecurrenceBadge(item) && (
-                    <Badge variant={getRecurrenceBadge(item)?.variant} className="text-xs px-2 py-0.5">
-                      <Repeat className="h-3 w-3 mr-1" />
-                      {getRecurrenceBadge(item)?.label}
-                    </Badge>
-                  )}
-                  {/* Show streak badge for recurring items */}
-                  {item.recurrence_type && item.recurrence_type !== 'once' && (
-                    <ItemStreakBadge 
-                      itemId={item.id} 
-                      recurrenceType={item.recurrence_type}
-                    />
-                  )}
+        {/* Item List */}
+        <div className="px-4 space-y-3 pb-20">
+          {filteredItems.map((item: any) => (
+            <div 
+              key={item.id} 
+              className="flex items-center justify-between p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-750 transition-colors"
+              onClick={() => setEditingItem(item)}
+            >
+              <div className="flex items-center gap-3">
+                {/* Icon based on item type */}
+                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
+                  {item.item_type === 'habit' && <Repeat className="h-4 w-4 text-gray-400" />}
+                  {item.item_type === 'task' && <Check className="h-4 w-4 text-gray-400" />}
+                  {item.item_type === 'goal' && <Calendar className="h-4 w-4 text-gray-400" />}
+                  {item.item_type === 'project' && <CalendarDays className="h-4 w-4 text-gray-400" />}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="capitalize">{item.item_type}</span>
+                
+                <div className="flex-1">
+                  <p className="text-white font-medium text-sm">{item.title}</p>
                   {item.due_date && (
-                    <>
-                      <span>•</span>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {(() => {
-                          // Parse date without timezone conversion
-                          const [year, month, day] = item.due_date.split('-');
-                          const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                          return date.toLocaleDateString();
-                        })()}
-                      </div>
-                    </>
-                  )}
-                  {item.time_frame && (
-                    <>
-                      <span>•</span>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {item.time_frame}m
-                      </div>
-                    </>
+                    <p className="text-gray-400 text-xs">
+                      {(() => {
+                        const [year, month, day] = item.due_date.split('-');
+                        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      })()}
+                    </p>
                   )}
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2">
-                {/* Share button - only show for user's own items */}
-                {!item.shared_with_me && communities && communities.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="p-0 h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSharingItem(item);
-                    }}
-                  >
-                    <Share2 className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                  </Button>
+                {/* Warning badge for overdue items */}
+                {isItemOverdue(item) && (
+                  <div className="bg-yellow-500 text-black text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                    !
+                  </div>
                 )}
                 
-                <div className="flex items-center justify-center w-10 h-10" onClick={(e) => e.stopPropagation()}>
-                  {item.verify_required ? (
+                {/* Completion badge or count */}
+                {item.recurrence_type && item.recurrence_type !== 'once' ? (
+                  // For recurring items, show streak or count
+                  <ItemStreakBadge 
+                    itemId={item.id} 
+                    recurrenceType={item.recurrence_type}
+                  />
+                ) : (
+                  // For regular items, show verification icon if required
+                  item.verify_required && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="p-0 h-10 w-10 rounded-full border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm"
+                      className="p-0 h-8 w-8 rounded-full bg-blue-600 hover:bg-blue-700"
                       onClick={(e) => {
                         e.stopPropagation();
                         setVerifyingItem(item);
                       }}
                     >
-                      <Camera className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                      <Camera className="h-4 w-4 text-white" />
                     </Button>
-                  ) : (
-                    <div className="h-10 w-10 rounded-full border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center">
-                      <Checkbox 
-                        checked={isItemCompleted(item)}
-                        disabled={item.verify_required && isItemCompleted(item)}
-                        className={`h-4 w-4 rounded-full border-2 ${
-                          isItemCompleted(item)
-                            ? "border-green-500 bg-green-500 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500" 
-                            : "border-gray-400 dark:border-gray-500 bg-transparent"
-                        }`}
-                        onCheckedChange={async (checked) => {
-                          try {
-                            // Handle completion for recurring items or simple completion for non-recurring
-                            const today = new Date().toISOString().split('T')[0];
-                            if (item.recurrence_type && item.recurrence_type !== 'once') {
-                              // For recurring items, use the new completion system
-                              if (checked) {
-                                await apiRequest(`/api/item/${item.id}/complete`, {
-                                  method: 'POST',
-                                  body: JSON.stringify({ completion_date: today })
-                                });
-                              } else {
-                                await apiRequest(`/api/item/${item.id}/completions/${today}`, {
-                                  method: 'DELETE'
-                                });
-                              }
-                            } else {
-                              // For non-recurring items, use the traditional completion system
-                              const cleanData = {
-                                title: item.title,
-                                item_type: item.item_type,
-                                recurrence_type: item.recurrence_type || 'once',
-                                custom_recurrence: item.custom_recurrence || '',
-                                due_date: item.due_date,
-                                time_frame: item.time_frame || undefined,
-                                verify_required: !!item.verify_required,
-                                why_it_matters: item.why_it_matters || '',
-                                completed_at: checked ? new Date().toISOString() : null,
-                              };
+                  )
+                )}
 
-                              await apiRequest(`/api/item/${item.id}`, {
-                                method: 'PUT',
-                                body: JSON.stringify(cleanData)
-                              });
-                            }
-                            
-                            // Refresh all relevant queries
-                            queryClient.invalidateQueries({ queryKey: ['items'] });
-                            queryClient.invalidateQueries({ queryKey: ['/api/items'] });
-                            queryClient.invalidateQueries({ queryKey: ['/api/today'] });
-                          } catch (error: any) {
-                            toast({ 
-                              title: "Error", 
-                              description: error.message || "Failed to update completion", 
-                              variant: "destructive" 
+                {/* Completion checkbox */}
+                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox 
+                    checked={isItemCompleted(item)}
+                    disabled={item.verify_required && isItemCompleted(item)}
+                    className={`h-5 w-5 rounded-full border-2 ${
+                      isItemCompleted(item)
+                        ? "border-blue-500 bg-blue-500 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500" 
+                        : "border-gray-500 bg-transparent"
+                    }`}
+                    onCheckedChange={async (checked) => {
+                      try {
+                        const today = new Date().toISOString().split('T')[0];
+                        if (item.recurrence_type && item.recurrence_type !== 'once') {
+                          if (checked) {
+                            await apiRequest(`/api/item/${item.id}/complete`, {
+                              method: 'POST',
+                              body: JSON.stringify({ completion_date: today })
+                            });
+                          } else {
+                            await apiRequest(`/api/item/${item.id}/completions/${today}`, {
+                              method: 'DELETE'
                             });
                           }
-                        }}
-                      />
-                    </div>
-                  )}
+                        } else {
+                          const cleanData = {
+                            title: item.title,
+                            item_type: item.item_type,
+                            recurrence_type: item.recurrence_type || 'once',
+                            custom_recurrence: item.custom_recurrence || '',
+                            due_date: item.due_date,
+                            time_frame: item.time_frame || undefined,
+                            verify_required: !!item.verify_required,
+                            why_it_matters: item.why_it_matters || '',
+                            completed_at: checked ? new Date().toISOString() : null,
+                          };
+
+                          await apiRequest(`/api/item/${item.id}`, {
+                            method: 'PUT',
+                            body: JSON.stringify(cleanData)
+                          });
+                        }
+                        
+                        queryClient.invalidateQueries({ queryKey: ['items'] });
+                        queryClient.invalidateQueries({ queryKey: ['/api/items'] });
+                        queryClient.invalidateQueries({ queryKey: ['/api/today'] });
+                      } catch (error: any) {
+                        toast({ 
+                          title: "Error", 
+                          description: error.message || "Failed to update completion", 
+                          variant: "destructive" 
+                        });
+                      }
+                    }}
+                  />
                 </div>
               </div>
             </div>
-          </Card>
-        ))}
+          ))}
 
-        {filteredItems.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            {filter === 'all' && <p>No items yet. Create your first item with the + button!</p>}
-            {filter === 'one-time' && <p>No one-time items found.</p>}
-            {filter === 'recurring' && <p>No recurring items found.</p>}
-          </div>
-        )}
+          {filteredItems.length === 0 && (
+            <div className="text-center py-8 text-gray-400">
+              {itemTypeFilter === 'all' && <p>No items found.</p>}
+              {itemTypeFilter !== 'all' && <p>No {itemTypeFilter} items found.</p>}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Edit Modal - Using unified CreateOrEditItemModal */}

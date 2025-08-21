@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import BottomNavigation from "@/components/BottomNavigation";
 import NotFound from "@/pages/not-found";
@@ -17,6 +18,7 @@ import Login from "@/pages/Login";
 import CreateWithAI from "@/pages/CreateWithAI";
 import Plans from "@/pages/Plans";
 import Insights from "@/pages/Insights";
+import Rewards from "@/pages/Rewards";
 import AdminUsers from "@/pages/AdminUsers";
 import AccountStatus from "@/pages/AccountStatus";
 
@@ -170,6 +172,11 @@ function Router() {
                 <Insights />
               </ProtectedRoute>
             </Route>
+            <Route path="/rewards">
+              <ProtectedRoute>
+                <Rewards />
+              </ProtectedRoute>
+            </Route>
             <Route path="/404">
               <NotFound />
             </Route>
@@ -191,14 +198,16 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <SmartRouter>
-            <Router />
-          </SmartRouter>
-        </TooltipProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <SmartRouter>
+              <Router />
+            </SmartRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

@@ -22,6 +22,7 @@ import {
   LogOut,
   Settings,
   Zap,
+  Trophy,
 } from "lucide-react";
 import symbolPath from "@assets/symbol.png";
 
@@ -93,6 +94,7 @@ export default function DesktopSidebar() {
     { href: "/today", label: "Home", icon: Home },
     { href: "/plans", label: "Plans", icon: Layers },
     { href: "/insights", label: "Insights", icon: Zap },
+    { href: "/rewards", label: "Rewards", icon: Trophy },
     ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: Settings }] : []),
   ];
 

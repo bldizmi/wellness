@@ -10,18 +10,46 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { User, LogOut, Heart, Settings, Home, Layers, Zap } from "lucide-react";
+import { User, LogOut, Heart, Settings, Home, Layers, Zap, Trophy } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 import symbolPath from "@assets/symbol.png";
 
 export default function Header() {
   const { data: profile } = useQuery({ queryKey: ["/api/profile"] });
+  
+  // Get today's date for the query
+  const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
+  
+  const { data: personalProgressData } = useQuery({
+    queryKey: ["/api/today/personal-progress", today],
+    queryFn: async () => {
+      return await apiRequest(`/api/today/personal-progress?date=${today}`);
+    },
+    staleTime: 30000,
+  });
   const [location, navigate] = useLocation();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const initials = ((profile as any)?.display_name || "U")
     .charAt(0)
     .toUpperCase();
   const isAdmin = (profile as any)?.role === "admin";
+
+  // Calculate overall streak (same logic as Today page)
+  const getOverallStreak = () => {
+    if (!personalProgressData) {
+      return 0;
+    }
+
+    // Count completed habits for today
+    const allHabits = personalProgressData.habits || [];
+    const completedHabits = allHabits.filter(habit => {
+      // Use the same comprehensive completion logic as Today page
+      return habit.is_completed_for_date === true || habit.status === 'completed' || habit.status === 'complete';
+    });
+
+    return completedHabits.length;
+  };
 
   const handleLogout = async () => {
     setShowMobileMenu(false);
@@ -39,7 +67,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full bg-gray-900">
       <div className="container flex h-14 items-center">
         <div className="flex flex-1 items-center justify-between">
           {/* Mobile Logo with Dropdown - positioned ~20px from edges */}
@@ -106,47 +134,10 @@ export default function Header() {
           {/* <div className="md:hidden mr-[20px] text-sm text-gray-500">
             Hi, {(profile as any)?.display_name || 'there'}!
           </div> */}
-          {/* Mobile Avatar Dropdown - Replaces the welcome message */}
-          <div className="md:hidden mr-[20px]">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={(profile as any)?.avatar_url} />
-                    <AvatarFallback className="text-xs">
-                      {((profile as any)?.display_name || "U")
-                        .charAt(0)
-                        .toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={handleProfile}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <User className="h-4 w-4" />
-                  Profile
-                </DropdownMenuItem>
-                {isAdmin && (
-                  <DropdownMenuItem
-                    onClick={() => navigate("/admin")}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <Settings className="h-4 w-4" />
-                    Admin
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 cursor-pointer text-red-600"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          {/* Mobile Streak Indicator */}
+          <div className="md:hidden mr-[20px] flex items-center gap-1">
+            <span className="text-orange-500 text-lg">🔥</span>
+            <span className="text-orange-500 font-bold text-sm">{getOverallStreak()}</span>
           </div>
 
           {/* Desktop Logo with User Menu - positioned ~20px from edges */}
@@ -223,6 +214,15 @@ export default function Header() {
               >
                 <Zap className="h-4 w-4" />
                 Insights
+              </Button>
+            </Link>
+            <Link href="/rewards">
+              <Button
+                variant={location === "/rewards" ? "default" : "ghost"}
+                className="flex items-center gap-2"
+              >
+                <Trophy className="h-4 w-4" />
+                Rewards
               </Button>
             </Link>
           </nav>

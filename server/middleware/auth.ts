@@ -80,11 +80,14 @@ function getRoleForEmail(email: string | undefined): string {
 // Function to ensure user exists in database
 async function ensureUserExists(decodedToken: admin.auth.DecodedIdToken) {
   try {
+    console.log('DEBUG: Starting ensureUserExists for Firebase UID:', decodedToken.uid);
     // First check if user exists by Firebase UID
     let [existingUser] = await db
       .select()
       .from(users)
       .where(eq(users.firebase_uid, decodedToken.uid));
+      
+    console.log('DEBUG: Existing user by UID:', existingUser ? 'FOUND' : 'NOT FOUND');
 
     if (existingUser) {
       return existingUser;
@@ -104,6 +107,7 @@ async function ensureUserExists(decodedToken: admin.auth.DecodedIdToken) {
           .set({ 
             firebase_uid: decodedToken.uid,
             username: decodedToken.email, // Sync username to email
+            password: 'firebase_auth', // Required for database compatibility
             verified: decodedToken.email_verified || existingUser.verified
           })
           .where(eq(users.email, decodedToken.email))
@@ -124,13 +128,15 @@ async function ensureUserExists(decodedToken: admin.auth.DecodedIdToken) {
     const newUser = {
       firebase_uid: decodedToken.uid,
       username: decodedToken.email || `user_${Date.now()}`, // Use email as username
-      password: 'firebase_auth', // Placeholder since Firebase handles auth
+      password: 'firebase_auth', // Required for database compatibility
       display_name: decodedToken.name || decodedToken.email || 'User',
       email: decodedToken.email || null,
       role: getRoleForEmail(decodedToken.email),
       status: 'active',
       verified: decodedToken.email_verified || false,
     };
+
+    console.log('DEBUG: Creating user with data:', JSON.stringify(newUser, null, 2));
 
     const [createdUser] = await db
       .insert(users)

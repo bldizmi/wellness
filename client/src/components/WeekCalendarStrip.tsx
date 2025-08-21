@@ -18,7 +18,7 @@ export function WeekCalendarStrip({
   const { user } = useAuth();
 
   // Week labels for Sunday through Saturday
-  const weekLabels = ["S", "M", "T", "W", "T", "F", "S"];
+  const weekLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   // Local state for immediate visual feedback on date clicks
   const [localSelectedDate, setLocalSelectedDate] = useState(selectedDate);
@@ -251,20 +251,20 @@ export function WeekCalendarStrip({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 p-4 rounded-lg shadow-sm">
-      {/* Week navigation and days container */}
-      <div className="flex items-center justify-between mb-3">
+    <div className="bg-gray-950 py-3">
+      {/* Calendar strip with navigation - matching the reference image exactly */}
+      <div className="flex items-center justify-between px-4">
         {/* Previous week button */}
         <button
           onClick={goToPreviousWeek}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150 hover:scale-110 flex-shrink-0"
+          className="p-1 hover:bg-gray-800 rounded transition-colors"
           aria-label="Previous week"
         >
-          <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-400 transition-colors duration-150" />
+          <ChevronLeft className="h-4 w-4 text-gray-400" />
         </button>
 
-        {/* Days strip - responsive grid */}
-        <div className="flex-1 grid grid-cols-7 gap-1 sm:gap-2 max-w-md mx-auto">
+        {/* Days horizontal strip */}
+        <div className="flex items-center justify-center gap-3">
           {days.map((day, index) => {
             const status = getDayCompletionStatus(index);
             const isSelected = day.date === localSelectedDate;
@@ -276,99 +276,31 @@ export function WeekCalendarStrip({
               <button
                 key={day.date}
                 onClick={() => handleDateClick(day.date, index)}
-                aria-label={`${day.dayLabel}, ${day.displayNumber}${status.total > 0 ? `, ${status.completed} of ${status.total} tasks completed` : ", no tasks"}`}
-                className={cn(
-                  "group flex flex-col items-center p-1 sm:p-2 transition-all duration-300 cursor-pointer rounded-lg",
-                  "hover:bg-gray-50 dark:hover:bg-gray-800 hover:scale-105",
-                  "active:scale-95", // Bounce effect on click
-                  "min-h-[64px] sm:min-h-[74px]", // Consistent height with more space
-                  "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2", // Accessibility
-                  // Selected state styling
-                  isSelected &&
-                    "bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white shadow-lg scale-105",
-                )}
-                style={{
-                  transform: isSelected ? "scale(1.05)" : undefined,
-                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                }}
+                className="flex flex-col items-center transition-all duration-200 cursor-pointer"
               >
                 {/* Day letter */}
-                <div
-                  className={cn(
-                    "text-xs font-medium mb-1 pointer-events-none transition-colors duration-200",
-                    isSelected
-                      ? "text-white"
-                      : day.isToday
-                        ? "text-green-600 dark:text-green-400 font-semibold"
-                        : isFuture
-                          ? "text-gray-400 dark:text-gray-500"
-                          : "text-gray-600 dark:text-gray-400",
-                  )}
-                >
+                <div className="text-xs font-normal text-gray-400 mb-0.5">
                   {day.dayLabel}
                 </div>
 
-                {/* Progress Ring with date */}
-                <div className="relative group-hover:scale-110 transition-transform duration-200">
-                  {isLoading ? (
-                    <div className="relative w-9 h-9 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-full flex items-center justify-center">
-                      <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent animate-pulse opacity-50" />
-                      <span className="text-xs font-medium text-gray-400 pointer-events-none relative z-10">
+                {/* Date number with selection indicator - exactly matching reference */}
+                <div className="relative">
+                  {isSelected ? (
+                    /* Selected date - blue circle with white text */
+                    <div className="bg-blue-500 rounded-full w-6 h-6 flex items-center justify-center">
+                      <span className="text-white font-medium text-xs">
                         {day.displayNumber}
                       </span>
                     </div>
                   ) : (
-                    <ProgressRing
-                      percentage={status.percentage}
-                      size={36}
-                      strokeWidth={3}
-                      isToday={day.isToday}
-                      isSelected={isSelected}
-                      isFuture={isFuture}
-                      className="transition-transform duration-200"
-                      onCompletionCelebration={() => {
-                        console.log(
-                          `🎉 CELEBRATION: Day ${day.date} reached 100% completion!`,
-                        );
-                      }}
-                    >
-                      <span
-                        className={cn(
-                          "text-sm font-medium pointer-events-none transition-colors duration-200",
-                          isSelected
-                            ? "text-white font-semibold"
-                            : day.isToday
-                              ? "text-green-700 dark:text-green-300 font-semibold"
-                              : status.percentage === 100 && status.total > 0
-                                ? "text-blue-700 dark:text-blue-300 font-semibold"
-                                : isFuture
-                                  ? "text-gray-400 dark:text-gray-500"
-                                  : "text-gray-700 dark:text-gray-300",
-                        )}
-                      >
+                    /* Unselected dates - light gray circle with gray text */
+                    <div className="bg-gray-700 rounded-full w-6 h-6 flex items-center justify-center">
+                      <span className="text-gray-400 font-normal text-xs">
                         {day.displayNumber}
                       </span>
-                    </ProgressRing>
+                    </div>
                   )}
                 </div>
-
-                {/* Optional completion indicator */}
-                {!isLoading && status.total > 0 && (
-                  <div
-                    className={cn(
-                      "text-[10px] font-medium mt-0.5 transition-colors duration-200",
-                      isSelected
-                        ? "text-white/80"
-                        : day.isToday
-                          ? "text-green-600 dark:text-green-400"
-                          : status.percentage === 100
-                            ? "text-blue-600 dark:text-blue-400"
-                            : "text-gray-500 dark:text-gray-400",
-                    )}
-                  >
-                    {status.completed}/{status.total}
-                  </div>
-                )}
               </button>
             );
           })}
@@ -377,24 +309,12 @@ export function WeekCalendarStrip({
         {/* Next week button */}
         <button
           onClick={goToNextWeek}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150 hover:scale-110 flex-shrink-0"
+          className="p-1 hover:bg-gray-800 rounded transition-colors"
           aria-label="Next week"
         >
-          <ChevronRight className="h-5 w-5 text-gray-600 dark:text-gray-400 transition-colors duration-150" />
+          <ChevronRight className="h-4 w-4 text-gray-400" />
         </button>
       </div>
-
-      {/* Today button - only show when not on today's date */}
-      {!isSelectedDateToday() && (
-        <div className="flex justify-end">
-          <button
-            onClick={goToToday}
-            className="px-3 py-1 text-xs font-medium bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all duration-150 hover:scale-105 shadow-sm hover:shadow-md"
-          >
-            Today
-          </button>
-        </div>
-      )}
     </div>
   );
 }

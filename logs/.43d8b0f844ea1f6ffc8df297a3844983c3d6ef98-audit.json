@@ -179,6 +179,16 @@
             "date": 1755632912495,
             "name": "logs/audit-2025-08-19.log",
             "hash": "d603311e064f54048f74dea6426a79de16ef1ccd2274ed27bddf89facda72bb7"
+        },
+        {
+            "date": 1755638095471,
+            "name": "logs\\audit-2025-08-20.log",
+            "hash": "daf1cbf44bde1d499c5e32fcc41e6e4aacfadc05f0d94e97ab7b2d21a7b692f7"
+        },
+        {
+            "date": 1755761558926,
+            "name": "logs\\audit-2025-08-21.log",
+            "hash": "dec7460e8b554b31d698dd1ccbba0a4e30b9dd725e9d6ab1987be2f4c53741ff"
         }
     ],
     "hashType": "sha256"

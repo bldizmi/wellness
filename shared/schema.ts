@@ -20,6 +20,7 @@ export const users = pgTable(`${TABLE_PREFIX}users`, {
   id: serial("id").primaryKey(),
   firebase_uid: text("firebase_uid").unique().notNull(),
   username: text("username").notNull().unique(),
+  password: text("password").notNull(), // Required for database compatibility
   display_name: text("display_name"),
   email: text("email").unique(),
   role: text("role").notNull().default("member"), // admin, member, pilot

@@ -67,6 +67,7 @@ interface ItemData {
   ai_verification_result?: string;
   occurrence_date?: string;
   is_recurring?: boolean;
+  streak_count?: number; // Add streak data if available from backend
 }
 
 interface TodayData {
@@ -202,7 +203,8 @@ export default function Today() {
     enabled: !!selectedDate,
   });
 
-  console.log("Personal progress data:", personalProgressData);
+  // DEBUG: Log the actual data structure we're getting from the API
+  console.log("🔍 DEBUG: Personal progress data:", personalProgressData);
 
   // Fetch shared items for selected date - items shared with user but not assigned to them
   const {
@@ -243,6 +245,10 @@ export default function Today() {
 
   // Create a combined todayData object that matches the existing UI expectations
   const todayData = useMemo(() => {
+    // DEBUG: Log data after both queries are available
+    console.log("🔍 DEBUG: Personal progress data:", personalProgressData);
+    console.log("🔍 DEBUG: Shared data:", sharedData);
+    
     if (!personalProgressData && !sharedData) return null;
 
     // Personal progress data will be used for Habits and Focus tabs
@@ -355,12 +361,26 @@ export default function Today() {
     const data = todayData?.today || (todayData as any);
     if (!data) return [];
 
-    return [
+    const items = [
       ...(data.tasks || []),
       ...(data.habits || []),
       ...(data.goals || []),
       ...(data.projects || []),
     ];
+    
+    console.log("🔍 DEBUG: All items breakdown:", {
+      totalItems: items.length,
+      tasks: data.tasks?.length || 0,
+      habits: data.habits?.length || 0,
+      goals: data.goals?.length || 0,
+      projects: data.projects?.length || 0,
+      itemsByType: items.reduce((acc, item) => {
+        acc[item.item_type] = (acc[item.item_type] || 0) + 1;
+        return acc;
+      }, {})
+    });
+    
+    return items;
   }, [todayData]);
 
   // Filter items based on active tab - using separate endpoints for performance
@@ -369,20 +389,25 @@ export default function Today() {
 
     if (activeTab === "habits") {
       // Show habits assigned to the user from personal progress data
-      return allItems.filter(
-        (item) =>
-          item.item_type.toLowerCase() === "habit" &&
-          item.assigned_to === user.uid,
-      );
+      const habitsFromPersonal = personalProgressData?.habits || [];
+      console.log("🔍 DEBUG: Filtering for habits tab:", {
+        totalHabits: habitsFromPersonal.length,
+        habitDetails: habitsFromPersonal.map(h => ({ title: h.title, item_type: h.item_type }))
+      });
+      return habitsFromPersonal.filter(item => item.assigned_to === user.uid);
     }
     if (activeTab === "focus") {
       // Show tasks, goals, projects assigned to the user from personal progress data
-      const focusTypes = ["task", "project", "goal"];
-      return allItems.filter(
-        (item) =>
-          focusTypes.includes(item.item_type.toLowerCase()) &&
-          item.assigned_to === user.uid,
-      );
+      const focusItems = [
+        ...(personalProgressData?.tasks || []),
+        ...(personalProgressData?.goals || []),
+        ...(personalProgressData?.projects || [])
+      ];
+      console.log("🔍 DEBUG: Filtering for focus tab:", {
+        totalItems: focusItems.length,
+        itemDetails: focusItems.map(i => ({ title: i.title, item_type: i.item_type }))
+      });
+      return focusItems.filter(item => item.assigned_to === user.uid);
     }
     if (activeTab === "shared") {
       // Use shared data endpoint for shared items - exclude habits as they are not shareable
@@ -397,6 +422,24 @@ export default function Today() {
     }
     return allItems;
   }, [allItems, activeTab, user?.uid, sharedData]);
+
+  // DEBUG: Log filtered items after they're calculated
+  console.log("🔍 DEBUG: All filtered items:", filteredItems);
+  
+  // Debug individual items to see their completion status
+  if (filteredItems.length > 0) {
+    console.log("🔍 DEBUG: First item details:", {
+      id: filteredItems[0].id,
+      title: filteredItems[0].title,
+      item_type: filteredItems[0].item_type,
+      is_recurring: filteredItems[0].is_recurring,
+      recurrence_type: filteredItems[0].recurrence_type,
+      is_completed_for_date: filteredItems[0].is_completed_for_date,
+      status: filteredItems[0].status,
+      completed_at: filteredItems[0].completed_at,
+      occurrence_date: filteredItems[0].occurrence_date
+    });
+  }
 
   //console.log("Filtered items:", filteredItems);
 
@@ -489,87 +532,82 @@ export default function Today() {
     return null;
   };
 
-  // Simplified card design
-  const renderNewItem = (item: ItemData, index: number) => {
+  // New design card component matching the reference image
+  const renderNewDesignItem = (item: ItemData, index: number) => {
     const isCompleted = isItemCompleted(item);
     const isSkipped = (item as any).is_skipped_for_date;
-    const dueTime = formatDueTime(item);
 
     return (
       <div
         key={item.id}
-        className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.15)] border border-gray-100 dark:border-gray-700 hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:dark:shadow-[0_4px_12px_rgba(0,0,0,0.25)] transition-all duration-150 hover:scale-[1.02] cursor-pointer"
+        className="bg-gray-800 rounded-xl p-3 cursor-pointer transition-all duration-200 hover:bg-gray-750"
         onClick={() => setEditingItem(item)}
       >
         <div className="flex items-center justify-between">
-          {/* Left side: Title and due time */}
+          {/* Left side: Content */}
           <div className="flex-1 min-w-0">
             <h3
-              className={`text-base font-medium truncate ${
-                isCompleted
-                  ? "text-gray-400 dark:text-gray-500 line-through"
-                  : "text-gray-900 dark:text-gray-100"
+              className={`text-white font-medium text-sm mb-1 ${
+                isCompleted ? "line-through opacity-60" : ""
               }`}
             >
               {item.title}
             </h3>
-            {item.created_by !== user?.uid && item.created_by && (
-              <p className="text-xs italic text-gray-400 dark:text-gray-500 mt-1">
-                created by {getCommunityMemberName(item.created_by)}
-              </p>
-            )}
-            {dueTime && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                {dueTime}
-              </p>
-            )}
+            
+            {/* Metadata row */}
+            <div className="flex items-center gap-3 text-xs">
+              {/* Streak indicator - calculate for all recurring items */}
+              {(() => {
+                const streakCount = calculateStreak(item);
+                return streakCount > 0 ? (
+                  <div className="flex items-center gap-1">
+                    <span className="text-orange-500">🔥</span>
+                    <span className="text-orange-500 font-medium">
+                      {streakCount} day streak
+                    </span>
+                  </div>
+                ) : null;
+              })()}
+              
+              {/* Photo verification indicator */}
+              {item.verify_required && (
+                <div className="flex items-center gap-1">
+                  <span className="text-blue-400">📸</span>
+                  <span className="text-blue-400">View photos</span>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Right side: Completion status */}
+          {/* Right side: Status indicator */}
           <div
             className="flex items-center ml-3"
             onClick={(e) => e.stopPropagation()}
           >
             {item.verify_required && !isCompleted ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-150 hover:scale-110"
+              <button
+                className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center transition-all hover:bg-blue-700"
                 onClick={(e) => {
                   e.stopPropagation();
                   setVerifyingItem(item);
                 }}
               >
-                <Camera className="h-6 w-6 text-blue-600 dark:text-blue-400 transition-transform duration-150" />
-              </Button>
+                <Camera className="h-4 w-4 text-white" />
+              </button>
             ) : (
               <button
-                className={`p-2 rounded-lg transition-all duration-150 hover:scale-110 ${
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
                   isCompleted
-                    ? "text-white bg-blue-600 hover:bg-blue-700 shadow-md"
-                    : "text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-blue-600"
+                    ? "bg-blue-600 border-blue-600 hover:bg-blue-700"
+                    : "border-gray-500 bg-transparent hover:border-gray-400"
                 }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleItemCompletion(item, !isCompleted);
-
-                  // Add celebratory micro-interaction on completion
-                  if (!isCompleted) {
-                    // Create a temporary celebration effect
-                    const button = e.currentTarget;
-                    button.style.transform = "scale(1.2)";
-                    setTimeout(() => {
-                      button.style.transform = "";
-                    }, 200);
-                  }
                 }}
                 disabled={isSkipped}
               >
-                <Check
-                  className={`h-4 w-4 transition-all duration-200 ${
-                    isCompleted ? "scale-110" : ""
-                  }`}
-                />
+                {isCompleted && <Check className="h-4 w-4 text-white" />}
               </button>
             )}
           </div>
@@ -577,6 +615,86 @@ export default function Today() {
       </div>
     );
   };
+
+  // Group items by time categories
+  const groupItemsByTime = (items: ItemData[]) => {
+    const morning = items.filter(item => {
+      if (!item.due_date) return false;
+      const hour = new Date(item.due_date).getHours();
+      return hour >= 5 && hour < 12;
+    });
+    
+    const evening = items.filter(item => {
+      if (!item.due_date) return false;
+      const hour = new Date(item.due_date).getHours();
+      return hour >= 17 && hour < 24;
+    });
+    
+    const anytime = items.filter(item => {
+      if (!item.due_date) return true;
+      const hour = new Date(item.due_date).getHours();
+      return (hour >= 0 && hour < 5) || (hour >= 12 && hour < 17);
+    });
+    
+    return { morning, evening, anytime };
+  };
+
+  // Render time-based sections
+  const renderTimeBasedSections = () => {
+    const timeGroups = groupItemsByTime(filteredItems);
+    const sections = [
+      { key: 'morning', label: 'Morning', icon: '🌅', items: timeGroups.morning },
+      { key: 'evening', label: 'Evening', icon: '🌆', items: timeGroups.evening },
+      { key: 'anytime', label: 'Anytime', icon: '⏰', items: timeGroups.anytime }
+    ];
+
+    return sections
+      .filter(section => section.items.length > 0)
+      .map(section => (
+        <div key={section.key} className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
+              <span className="text-xs">{section.icon}</span>
+            </div>
+            <h2 className="text-white font-medium text-base">{section.label}</h2>
+          </div>
+          <div className="space-y-2">
+            {section.items.map((item, index) => renderNewDesignItem(item, index))}
+          </div>
+        </div>
+      ));
+  };
+
+  // Render assignment-based sections for shared items
+  const renderAssignmentSections = () => {
+    const sharedGroups = groupSharedItemsByAssignee(filteredItems);
+    
+    return sharedGroups.map((group, groupIndex) => (
+      <div key={`group-${groupIndex}`} className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+              <span className="text-white text-sm font-medium">
+                {group.assignee.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div>
+              <h2 className="text-white font-semibold">Assigned to {group.assignee}</h2>
+              <p className="text-gray-400 text-sm">
+                {group.completedCount}/{group.totalCount} complete • {group.percentage}%
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {group.items.map((item, index) => renderNewDesignItem(item, index))}
+        </div>
+      </div>
+    ));
+  };
+
+  // Keep original render function for backwards compatibility
+  const renderNewItem = renderNewDesignItem;
 
   // Helper function to check if item is completed
   const isItemCompleted = (item: any) => {
@@ -608,6 +726,78 @@ export default function Today() {
       item.completed_at ||
       (item.verified && item.ai_verification_result === "complete")
     );
+  };
+
+  // Calculate streak for recurring items (habits, tasks, goals, projects)
+  const calculateStreak = (item: ItemData) => {
+    console.log("🔥 DEBUG: Calculating streak for:", {
+      title: item.title,
+      item_type: item.item_type,
+      is_recurring: item.is_recurring,
+      recurrence_type: item.recurrence_type,
+      is_completed_for_date: (item as any).is_completed_for_date,
+      status: item.status
+    });
+
+    // Only calculate streaks for recurring items (habits, tasks, goals, projects)
+    if (!item.is_recurring && (!item.recurrence_type || item.recurrence_type === 'once')) {
+      console.log("🔥 DEBUG: Not recurring, returning 0");
+      return 0;
+    }
+
+    // Check if this item is completed today
+    const isCompletedToday = (item as any).is_completed_for_date === true || item.status === 'completed' || item.status === 'complete';
+    
+    console.log("🔥 DEBUG: Completion check result:", {
+      is_completed_for_date: (item as any).is_completed_for_date,
+      status: item.status,
+      isCompletedToday: isCompletedToday,
+      item_type: item.item_type
+    });
+
+    if (isCompletedToday) {
+      console.log("🔥 DEBUG: Recurring item is completed today, showing streak of 1 (can be enhanced with historical data)");
+      // For now, return 1 if completed today
+      // This can be enhanced to calculate actual historical streaks
+      return 1;
+    }
+
+    console.log("🔥 DEBUG: Recurring item not completed today, returning 0");
+    return 0;
+  };
+
+  // Calculate overall streak (for the yellow circle)
+  const getOverallStreak = () => {
+    console.log("🏆 DEBUG: Calculating overall streak");
+    
+    if (!personalProgressData) {
+      console.log("🏆 DEBUG: No personal progress data, returning 0");
+      return 0;
+    }
+
+    // Count completed habits for today
+    const allHabits = personalProgressData.habits || [];
+    const completedHabits = allHabits.filter(habit => {
+      // Use the correct completion field from the data structure
+      const completed = habit.is_completed_for_date === true || habit.status === 'completed' || habit.status === 'complete';
+      console.log("🏆 DEBUG: Habit completion check:", {
+        title: habit.title,
+        is_completed_for_date: habit.is_completed_for_date,
+        status: habit.status,
+        completed: completed
+      });
+      return completed;
+    });
+    
+    console.log("🏆 DEBUG: Overall streak calculation:", {
+      totalHabits: allHabits.length,
+      completedHabits: completedHabits.length,
+      completedHabitsCount: completedHabits.length
+    });
+
+    // Return the count of completed habits today
+    // This will show 0 if no habits are completed, or the actual count
+    return completedHabits.length;
   };
 
   // Share item mutation
@@ -875,31 +1065,49 @@ export default function Today() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-md mx-auto bg-white dark:bg-gray-800 min-h-screen">
-        {/* Month Label and Calendar */}
-        <div className="pt-10 px-6">
-          {/* Month label above calendar */}
-          <div className="mb-0">
-            <p className="text-base font-semibold text-gray-500 dark:text-gray-400">
+    <div className="min-h-screen bg-gray-950">
+      <div className="w-full max-w-sm mx-auto bg-gray-950 min-h-screen text-white">
+        {/* Header with Day Name and Date */}
+        <div className="pt-10 px-4 pb-4">
+          <div className="flex flex-col items-center justify-center mb-4">
+            <h1 className="text-2xl font-bold text-white mb-1">
+              {new Date(selectedDate).toLocaleDateString("en-US", { weekday: "long" })}
+            </h1>
+            <p className="text-gray-400 text-sm">
               {new Date(selectedDate).toLocaleDateString("en-US", {
                 month: "long",
+                day: "numeric", 
+                year: "numeric"
               })}
             </p>
           </div>
+        </div>
 
-          {/* 7-Day Calendar Strip */}
-          <div className="-mx-6 -mt-1">
-            <WeekCalendarStrip
-              selectedDate={selectedDate}
-              onDateSelect={handleDateSelect}
-            />
+        {/* 7-Day Calendar Strip */}
+        <div className="mb-6">
+          <WeekCalendarStrip
+            selectedDate={selectedDate}
+            onDateSelect={handleDateSelect}
+          />
+        </div>
+
+        {/* Progress indicator */}
+        <div className="px-4 mb-6">
+          <div className="text-right">
+            <span className="text-gray-400 text-sm">2/10</span>
+          </div>
+        </div>
+
+        {/* Colorful gradient line - colors only at beginning */}
+        <div className="px-4 mb-4">
+          <div className="h-0.5 w-full bg-gray-600 rounded-full relative">
+            <div className="h-0.5 w-16 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full absolute left-0"></div>
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <div className="px-6 pb-6 pt-2">
-          <div className="flex gap-3">
+        <div className="px-4 pb-6">
+          <div className="flex gap-2">
             {[
               { id: "habits", label: "Habits" },
               { id: "focus", label: "Focus" },
@@ -909,274 +1117,82 @@ export default function Today() {
               return (
                 <Button
                   key={tab.id}
-                  variant={activeTab === tab.id ? "default" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className={`rounded-full px-4 py-2 flex items-center gap-2 ${
+                  className={`rounded-full px-4 py-2 flex items-center gap-2 transition-all text-sm ${
                     activeTab === tab.id
                       ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200"
+                      : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                   }`}
                   onClick={() => setActiveTab(tab.id)}
                 >
                   <span>{tab.label}</span>
-                  {status.totalCount > 0 &&
-                    (status.isAllComplete ? (
-                      <span className="text-green-400 text-sm">✓</span>
-                    ) : status.incompleteCount > 0 ? (
-                      <span
-                        className="text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] h-5 flex items-center justify-center font-medium"
-                        style={{ backgroundColor: "#A18CFF" }}
-                      >
-                        {status.incompleteCount}
-                      </span>
-                    ) : null)}
+                  {status.totalCount > 0 && status.incompleteCount > 0 && (
+                    <span className="bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[16px] h-4 flex items-center justify-center font-bold text-[10px]">
+                      {status.incompleteCount}
+                    </span>
+                  )}
                 </Button>
               );
             })}
           </div>
         </div>
 
-        {/* Section Headers and Items */}
-        <div className="px-6 pb-20">
-          {/* All Done Celebration - when everything is completed */}
-          {filteredItems.length > 0 &&
-            filteredItems.every(
-              (item) =>
-                isItemCompleted(item) || (item as any).is_skipped_for_date,
-            ) && (
-              <div className="text-center py-16 px-6 mb-8">
-                <div className="max-w-sm mx-auto">
-                  <div className="text-7xl mb-6 animate-bounce">🎉</div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-                    Amazing work!
-                  </h2>
-                  <p className="text-base text-gray-600 dark:text-gray-300 mb-4">
-                    You crushed everything on your list today. Time to
-                    celebrate!
-                  </p>
-                  <div className="flex justify-center space-x-2 text-2xl">
-                    <span className="animate-pulse delay-100">✨</span>
-                    <span className="animate-pulse delay-200">🌟</span>
-                    <span className="animate-pulse delay-300">💫</span>
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Content Sections */}
+        <div className="px-4 pb-20">
+          {/* Time-based sections for habits and focus */}
+          {(activeTab === "habits" || activeTab === "focus") && (
+            <div className="space-y-6">
+              {renderTimeBasedSections()}
+            </div>
+          )}
+          
+          {/* Assignment-based sections for shared */}
+          {activeTab === "shared" && (
+            <div className="space-y-6">
+              {renderAssignmentSections()}
+            </div>
+          )}
 
-          {/* To Do Section */}
-          {activeTab === "shared"
-            ? // Shared items grouped by assignee
-              (() => {
-                const sharedGroups = groupSharedItemsByAssignee(
-                  filteredItems.filter(
-                    (item) =>
-                      !isItemCompleted(item) &&
-                      !(item as any).is_skipped_for_date,
-                  ),
-                );
-                return (
-                  sharedGroups.length > 0 && (
-                    <div className="mb-8">
-                      <div className="text-center mb-6">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                          To Do
-                        </h2>
-                      </div>
-                      <div className="space-y-6">
-                        {sharedGroups.map((group, groupIndex) => (
-                          <div
-                            key={`group-${groupIndex}`}
-                            className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4"
-                          >
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Assigned to {group.assignee}
-                              </h3>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                  {group.completedCount}/{group.totalCount}{" "}
-                                  complete
-                                </span>
-                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                                  {group.percentage}%
-                                </span>
-                              </div>
-                            </div>
-                            <div className="space-y-3">
-                              {group.items.map(renderNewItem)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                );
-              })()
-            : // Regular To Do section for other tabs
-              filteredItems.some(
-                (item) =>
-                  !isItemCompleted(item) && !(item as any).is_skipped_for_date,
-              ) && (
-                <div className="mb-8">
-                  <div className="text-center mb-6">
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                      To Do
-                    </h2>
-                  </div>
-                  <div className="space-y-4">
-                    {filteredItems
-                      .filter(
-                        (item) =>
-                          !isItemCompleted(item) &&
-                          !(item as any).is_skipped_for_date,
-                      )
-                      .sort((a, b) => {
-                        // Sort by due time if present, otherwise by type
-                        if (a.due_date && b.due_date) {
-                          return (
-                            new Date(a.due_date).getTime() -
-                            new Date(b.due_date).getTime()
-                          );
-                        }
-                        if (a.due_date && !b.due_date) return -1;
-                        if (!a.due_date && b.due_date) return 1;
-                        return a.item_type.localeCompare(b.item_type);
-                      })
-                      .map(renderNewItem)}
-                  </div>
-                </div>
-              )}
 
-          {/* Done Section - Enhanced celebratory design */}
+          {/* Done Section */}
           {filteredItems.some((item) => isItemCompleted(item)) && (
-            <div className="mt-8">
-              {/* Horizontal divider with centered "Done" label */}
-              <div className="relative flex items-center justify-center mb-6">
-                <div className="absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-green-200 to-transparent dark:via-green-800"></div>
-                <div className="relative bg-white dark:bg-gray-900 px-4">
-                  <button
-                    onClick={() => setShowCompleted(!showCompleted)}
-                    className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-all duration-150 hover:scale-105"
-                  >
-                    Done (
-                    {
-                      filteredItems.filter((item) => isItemCompleted(item))
-                        .length
-                    }
-                    )
-                    <ChevronDown
-                      className={`h-3 w-3 transition-transform duration-200 ${
-                        showCompleted ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
+            <div className="mt-6">
+              <button
+                onClick={() => setShowCompleted(!showCompleted)}
+                className="flex items-center gap-2 w-full text-left mb-3"
+              >
+                <span className="text-green-400 text-base">✓</span>
+                <span className="text-white font-medium text-sm">Done</span>
+                <span className="text-gray-400 text-xs ml-auto">
+                  {filteredItems.filter((item) => isItemCompleted(item)).length} completed
+                </span>
+                <ChevronDown
+                  className={`h-3 w-3 text-gray-400 transition-transform ${
+                    showCompleted ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
 
-              {/* Done items with celebratory background treatment */}
               {showCompleted && (
-                <div className="bg-gradient-to-b from-green-50/70 to-green-50/30 dark:from-green-900/20 dark:to-green-900/10 rounded-xl p-4 border border-green-100/50 dark:border-green-800/30">
-                  {activeTab === "shared" ? (
-                    // Shared completed items grouped by assignee
-                    (() => {
-                      const completedSharedGroups = groupSharedItemsByAssignee(
-                        filteredItems.filter((item) => isItemCompleted(item)),
-                      );
-                      return completedSharedGroups.length > 0 ? (
-                        <div className="space-y-6">
-                          {completedSharedGroups.map((group, groupIndex) => (
-                            <div key={`completed-group-${groupIndex}`}>
-                              <div className="flex items-center justify-between mb-3">
-                                <h4 className="text-sm font-medium text-green-700 dark:text-green-300">
-                                  Assigned to {group.assignee}
-                                </h4>
-                                <span className="text-xs text-green-600 dark:text-green-400">
-                                  {group.completedCount} completed
-                                </span>
-                              </div>
-                              <div className="space-y-3">
-                                {group.items.map((item, index) => (
-                                  <div
-                                    key={item.id}
-                                    className="animate-in slide-in-from-left duration-300"
-                                    style={{
-                                      animationDelay: `${index * 100}ms`,
-                                    }}
-                                  >
-                                    {renderNewItem(item, index)}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : null;
-                    })()
-                  ) : (
-                    // Regular completed items for other tabs
-                    <div className="space-y-4">
-                      {filteredItems
-                        .filter((item) => isItemCompleted(item))
-                        .map((item, index) => (
-                          <div
-                            key={item.id}
-                            className="animate-in slide-in-from-left duration-300"
-                            style={{ animationDelay: `${index * 100}ms` }}
-                          >
-                            {renderNewItem(item, index)}
-                          </div>
-                        ))}
-                    </div>
-                  )}
-
-                  {/* Encouraging message at bottom of completed section */}
-                  <div className="mt-4 pt-4 border-t border-green-200/50 dark:border-green-700/50 text-center">
-                    <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-                      Nice work! Keep it up! 🌟
-                    </p>
-                  </div>
+                <div className="space-y-2">
+                  {filteredItems
+                    .filter((item) => isItemCompleted(item))
+                    .map((item, index) => (
+                      <div key={item.id} className="opacity-60">
+                        {renderNewDesignItem(item, index)}
+                      </div>
+                    ))}
                 </div>
               )}
             </div>
           )}
 
-          {/* Skipped Section */}
-          {filteredItems.some((item) => (item as any).is_skipped_for_date) && (
-            <div className="mb-6">
-              <h2 className="text-base font-normal text-gray-600 dark:text-gray-400 mb-4">
-                Skipped
-              </h2>
-              <div className="space-y-4">
-                {filteredItems
-                  .filter((item) => (item as any).is_skipped_for_date)
-                  .map(renderNewItem)}
-              </div>
-            </div>
-          )}
-
-          {/* Empty state with encouraging messaging */}
+          {/* Empty state */}
           {filteredItems.length === 0 && (
             <div className="text-center py-16 px-6">
-              <div className="max-w-sm mx-auto">
-                <div className="text-6xl mb-4">✨</div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  {activeTab === "tasks"
-                    ? "You're all caught up!"
-                    : activeTab === "habits"
-                      ? "No habits for today!"
-                      : activeTab === "goals"
-                        ? "No goals set for today!"
-                        : "No projects active today!"}
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {activeTab === "tasks"
-                    ? "Take a moment to relax or tackle something fun!"
-                    : activeTab === "habits"
-                      ? "Perfect time to start building new healthy routines."
-                      : activeTab === "goals"
-                        ? "Ready to set some exciting goals for today?"
-                        : "Maybe it's time to start something new and creative!"}
-                </p>
+              <div className="text-gray-400 text-lg">
+                No items for {activeTab} today
               </div>
             </div>
           )}
