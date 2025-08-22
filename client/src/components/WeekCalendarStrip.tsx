@@ -287,15 +287,15 @@ export function WeekCalendarStrip({
                 <div className="relative">
                   {isSelected ? (
                     /* Selected date - blue circle with white text */
-                    <div className="bg-blue-500 rounded-full w-6 h-6 flex items-center justify-center">
-                      <span className="text-white font-medium text-xs">
+                    <div className="bg-accent-primary rounded-full w-8 h-8 flex items-center justify-center">
+                      <span className="text-white font-medium text-sm">
                         {day.displayNumber}
                       </span>
                     </div>
                   ) : (
                     /* Unselected dates - light gray circle with gray text */
-                    <div className="bg-gray-700 rounded-full w-6 h-6 flex items-center justify-center">
-                      <span className="text-gray-400 font-normal text-xs">
+                    <div className="bg-gray-700 rounded-full w-8 h-8 flex items-center justify-center">
+                      <span className="text-gray-400 font-normal text-sm">
                         {day.displayNumber}
                       </span>
                     </div>

@@ -1107,32 +1107,32 @@ export default function Today() {
 
         {/* Filter Tabs */}
         <div className="px-4 pb-6">
-          <div className="flex gap-2">
+          <div className="flex gap-3 justify-center">
             {[
-              { id: "habits", label: "Habits" },
-              { id: "focus", label: "Focus" },
-              { id: "shared", label: "Shared" },
+              { id: "habits", label: "Habits", icon: "🔄" },
+              { id: "focus", label: "Focus", icon: "🎯" },
+              { id: "shared", label: "Shared", icon: "👥" },
             ].map((tab) => {
               const status = getFilterStatus(tab.id);
+              const isActive = activeTab === tab.id;
               return (
-                <Button
+                <button
                   key={tab.id}
-                  variant="ghost"
-                  size="sm"
-                  className={`rounded-full px-4 py-2 flex items-center gap-2 transition-all text-sm ${
-                    activeTab === tab.id
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 text-sm font-medium ${
+                    isActive
+                      ? "bg-accent-primary text-white"
+                      : "bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:bg-gray-700/50"
                   }`}
                   onClick={() => setActiveTab(tab.id)}
                 >
+                  <span className="text-sm">{tab.icon}</span>
                   <span>{tab.label}</span>
                   {status.totalCount > 0 && status.incompleteCount > 0 && (
-                    <span className="bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[16px] h-4 flex items-center justify-center font-bold text-[10px]">
+                    <span className="bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[16px] h-4 flex items-center justify-center font-bold leading-none">
                       {status.incompleteCount}
                     </span>
                   )}
-                </Button>
+                </button>
               );
             })}
           </div>
