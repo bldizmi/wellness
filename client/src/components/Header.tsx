@@ -17,13 +17,11 @@ import symbolPath from "@assets/symbol.png";
 export default function Header() {
   const { data: profile } = useQuery({ queryKey: ["/api/profile"] });
   
-  // Get today's date for the query
-  const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
-  
-  const { data: personalProgressData } = useQuery({
-    queryKey: ["/api/today/personal-progress", today],
+  // Fetch overall user streak from dedicated API
+  const { data: streakData } = useQuery({
+    queryKey: ["/api/streak/overall"],
     queryFn: async () => {
-      return await apiRequest(`/api/today/personal-progress?date=${today}`);
+      return await apiRequest("/api/streak/overall");
     },
     staleTime: 30000,
   });
@@ -35,20 +33,14 @@ export default function Header() {
     .toUpperCase();
   const isAdmin = (profile as any)?.role === "admin";
 
-  // Calculate overall streak (same logic as Today page)
+  // Get current streak from API
   const getOverallStreak = () => {
-    if (!personalProgressData) {
+    if (!streakData?.streak) {
       return 0;
     }
 
-    // Count completed habits for today
-    const allHabits = personalProgressData.habits || [];
-    const completedHabits = allHabits.filter(habit => {
-      // Use the same comprehensive completion logic as Today page
-      return habit.is_completed_for_date === true || habit.status === 'completed' || habit.status === 'complete';
-    });
-
-    return completedHabits.length;
+    // Return the current streak (consecutive days with at least one completion)
+    return streakData.streak.current_streak;
   };
 
   const handleLogout = async () => {

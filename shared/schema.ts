@@ -581,6 +581,59 @@ export const insertItemSkipSchema = itemSkipSchema.omit({
 });
 export type InsertItemSkip = z.infer<typeof insertItemSkipSchema>;
 
+// Item skips table
+export const item_skips = pgTable(`${TABLE_PREFIX}item_skips`, {
+  id: text("id").primaryKey(),
+  item_id: text("item_id").notNull(),
+  user_id: text("user_id").notNull(),
+  skipped_date: text("skipped_date").notNull(), // YYYY-MM-DD format
+  reason: text("reason"),
+  created_at: text("created_at").notNull(),
+});
+
+// User streaks table - tracks consecutive days of completing at least one item
+export const user_streaks = pgTable(`${TABLE_PREFIX}user_streaks`, {
+  id: text("id").primaryKey(),
+  user_id: text("user_id").notNull().unique(),
+  current_streak: integer("current_streak").notNull().default(0),
+  longest_streak: integer("longest_streak").notNull().default(0),
+  last_completion_date: text("last_completion_date"), // YYYY-MM-DD format - last date they completed at least one item
+  streak_start_date: text("streak_start_date"), // YYYY-MM-DD format - when current streak began
+  total_completion_days: integer("total_completion_days").notNull().default(0), // lifetime count of days with at least one completion
+  created_at: text("created_at").notNull(),
+  updated_at: text("updated_at").notNull(),
+});
+
+// User streak schema
+export const userStreakSchema = z.object({
+  id: z.string(),
+  user_id: z.string(),
+  current_streak: z.number(),
+  longest_streak: z.number(),
+  last_completion_date: z.string().nullable(), // YYYY-MM-DD format
+  streak_start_date: z.string().nullable(), // YYYY-MM-DD format
+  total_completion_days: z.number(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type UserStreak = z.infer<typeof userStreakSchema>;
+
+export const insertUserStreakSchema = userStreakSchema.omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+});
+
+export const updateUserStreakSchema = userStreakSchema.omit({
+  id: true,
+  user_id: true,
+  created_at: true,
+}).partial();
+
+export type InsertUserStreak = z.infer<typeof insertUserStreakSchema>;
+export type UpdateUserStreak = z.infer<typeof updateUserStreakSchema>;
+
 // ===== PHASE 1: NEW RECURRING ITEM ARCHITECTURE =====
 // Recurring Templates table - stores the recurring pattern definition
 // FAANG-Level Architecture: Supports both recurring and one-time items

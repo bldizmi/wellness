@@ -13,6 +13,7 @@ import { db } from "../db";
 import { items, recurring_instances } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { createLogger } from "../services/logger";
+import { updateUserStreak } from "../services/streakService";
 
 /**
  * PHASE 1: Feature flag for targeted cache invalidation
@@ -517,6 +518,16 @@ router.post("/:id/complete", async (req, res) => {
           `⚠️ CACHE INVALIDATION ERROR: ${cacheError}, continuing without cache invalidation`,
         );
       }
+    }
+
+    // Update user's overall streak after successful completion
+    try {
+      console.log(`🔥 STREAK UPDATE: Updating streak for user ${user_id} on date ${finalCompletionDate}`);
+      await updateUserStreak(user_id, finalCompletionDate);
+      console.log(`🔥 STREAK SUCCESS: Streak updated successfully for user ${user_id}`);
+    } catch (streakError) {
+      // Don't fail the entire completion if streak update fails
+      console.error(`⚠️ STREAK ERROR: Failed to update streak for user ${user_id}:`, streakError);
     }
 
     const message = isEarlyCompletion

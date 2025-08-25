@@ -31,6 +31,7 @@ import {
   ChevronDown,
   Check,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -91,6 +92,7 @@ export default function Today() {
   const [sharingItem, setSharingItem] = useState<ItemData | null>(null);
   const [selectedCommunity, setSelectedCommunity] = useState<string>("");
   const [shareVisibility, setShareVisibility] = useState<string>("community");
+  const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("habits");
   const [showMenuDrawer, setShowMenuDrawer] = useState(false);
@@ -150,6 +152,12 @@ export default function Today() {
     },
     onError: (err, { item }) => {
       console.error("Completion error:", err);
+      // Remove item from loading state
+      setLoadingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
+      });
       toast({
         title: "Error",
         description: `Failed to update ${item.title}`,
@@ -157,6 +165,13 @@ export default function Today() {
       });
     },
     onSuccess: async (data, { item, checked }) => {
+      // Remove item from loading state
+      setLoadingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
+      });
+      
       // Simple invalidation - let React Query handle the refetch
       await queryClient.invalidateQueries();
 
@@ -536,6 +551,7 @@ export default function Today() {
   const renderNewDesignItem = (item: ItemData, index: number) => {
     const isCompleted = isItemCompleted(item);
     const isSkipped = (item as any).is_skipped_for_date;
+    const isLoading = loadingItems.has(item.id);
 
     return (
       <div
@@ -598,16 +614,20 @@ export default function Today() {
               <button
                 className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
                   isCompleted
-                    ? "bg-blue-600 border-blue-600 hover:bg-blue-700"
+                    ? "bg-accent-primary border-accent-primary hover:bg-accent-hover"
                     : "border-gray-500 bg-transparent hover:border-gray-400"
-                }`}
+                } ${isLoading ? "opacity-75 cursor-not-allowed" : ""}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleItemCompletion(item, !isCompleted);
                 }}
-                disabled={isSkipped}
+                disabled={isSkipped || isLoading}
               >
-                {isCompleted && <Check className="h-4 w-4 text-white" />}
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 text-white animate-spin" />
+                ) : (
+                  isCompleted && <Check className="h-4 w-4 text-white" />
+                )}
               </button>
             )}
           </div>
@@ -877,6 +897,9 @@ export default function Today() {
       `🔥 COMPLETION CLICK: ${item.title} (${item.id}), checked: ${checked}, verify_required: ${item.verify_required}`,
     );
 
+    // Add item to loading state
+    setLoadingItems(prev => new Set([...prev, item.id]));
+
     const needsVerification =
       item.verify_required || item.title.toLowerCase().includes("verify");
 
@@ -887,6 +910,12 @@ export default function Today() {
       !item.completed_at
     ) {
       setVerifyingItem(item);
+      // Remove from loading state since we're opening verification modal
+      setLoadingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
+      });
       return;
     }
 

@@ -35,6 +35,7 @@ router.use("/api/items", itemsRoutes);
 router.use("/api/item", itemRoutes);
 router.use("/api/item", itemCompletionRoutes);
 router.use("/api/item", streakRoutes);
+router.use("/api/streak", streakRoutes);
 router.use("/api/item", skipRoutes);
 router.use("/api/ai", aiRoutes);
 router.use("/api/today", todayRoutes);

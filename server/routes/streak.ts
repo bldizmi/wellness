@@ -1,14 +1,46 @@
 /**
- * Streak tracking API endpoints for individual recurring items
+ * Streak tracking API endpoints for individual recurring items and overall user streaks
  */
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { getUserStreak } from '../services/streakService';
+import { createLogger } from '../services/logger';
 
 const router = Router();
+const logger = createLogger({ service: 'streakRoutes' });
 
 /**
+ * GET /api/streak/overall
+ * Get current user's overall streak information (consecutive days with at least one completed item)
+ */
+router.get('/overall', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user_id;
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    logger.debug('Getting overall user streak', { userId });
+
+    const streak = await getUserStreak(userId);
+
+    res.json({
+      success: true,
+      streak,
+    });
+  } catch (error) {
+    logger.error('Error getting overall user streak', { error });
+    res.status(500).json({
+      error: 'Failed to get streak information',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * GET /api/streak/:id
  * GET /api/item/:id/streak
  * Returns per-item streak data including current streak, longest streak, and monthly completion rate
  */

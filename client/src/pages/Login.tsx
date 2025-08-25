@@ -97,13 +97,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4">
+      <Card className="w-full max-w-md bg-gray-800 border-gray-600">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">
+          <CardTitle className="text-2xl text-center text-white">
             {isSignUp ? "Create Account" : "Sign In"}
           </CardTitle>
-          <CardDescription className="text-center">
+          <CardDescription className="text-center text-gray-400">
             {isSignUp
               ? "Create your MindDouble account to get started"
               : "Welcome back to MindDouble"}
@@ -112,7 +112,7 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-white">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -120,11 +120,12 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="border-gray-600 bg-gray-800 text-white placeholder:text-gray-400 focus:border-accent-primary"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-white">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -134,10 +135,11 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
+                  className="border-gray-600 bg-gray-800 text-white placeholder:text-gray-400 focus:border-accent-primary pr-10"
                 />
                 <button
                   type="button"
-                  className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
+                  className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-200"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -152,7 +154,7 @@ export default function Login() {
             {/* New Confirm Password Field (Only shown during sign-up) */}
             {isSignUp && (
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="text-white">Confirm Password</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -162,10 +164,11 @@ export default function Login() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     minLength={6}
+                    className="border-gray-600 bg-gray-800 text-white placeholder:text-gray-400 focus:border-accent-primary pr-10"
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
+                    className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-200"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? (
@@ -178,7 +181,7 @@ export default function Login() {
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-accent-primary hover:bg-accent-hover" disabled={isLoading}>
               {isLoading
                 ? isSignUp
                   ? "Creating Account..."
@@ -189,20 +192,6 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setConfirmPassword(""); // Reset confirm password when switching modes
-              }}
-              className="text-sm text-blue-600 hover:underline"
-            >
-              {isSignUp
-                ? "Already have an account? Sign in"
-                : "Don't have an account? Create one"}
-            </button>
-          </div>
         </CardContent>
       </Card>
     </div>
