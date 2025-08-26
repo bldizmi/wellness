@@ -16,9 +16,15 @@
             "hash": "d94e96a5d2ebb4c3bc621813bce15b7514ac99331b005af6254c7492ddc3f2c6"
         },
         {
+<<<<<<< HEAD
+            "date": 1756210326835,
+            "name": "logs\\performance-2025-08-26.log",
+            "hash": "fbae6ef3ba4d498c0da8d49bac17c974f57f946f0d5cb62c7e8627b74b4476ba"
+=======
             "date": 1756209911657,
             "name": "logs/performance-2025-08-26.log",
             "hash": "51f7727f170304745bd9d4e047daa4a136091cffeaec9712a44859eb52ac16da"
+>>>>>>> 4467f347352955330587b18756f1cbd4a45948b6
         }
     ],
     "hashType": "sha256"
