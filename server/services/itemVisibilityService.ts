@@ -173,24 +173,29 @@ export async function userHasItemAccess(
     let newArchItem = null;
 
     try {
-      console.log(
-        `🔍 ACCESS ENVIRONMENT: ${process.env.NODE_ENV || 'undefined'}, using schema-based table selection`,
-      );
-
-      // Use schema-based table selection to match item creation
-      let candidateItem = await db
-        .select()
-        .from(recurring_instances)
-        .where(eq(recurring_instances.id, itemId));
+      // CONSISTENT ENVIRONMENT-BASED TABLE SELECTION (same as delete function)
+      const isDevelopment = process.env.NODE_ENV === "development";
+      const instancesTable = isDevelopment
+        ? "dev_recurring_instances"
+        : "recurring_instances";
 
       console.log(
-        `🔄 HYBRID ACCESS: Checking recurring_instances for item ${itemId}`,
+        `🔍 ACCESS ENVIRONMENT: ${isDevelopment ? "development" : "production"}, using table: ${instancesTable}`,
       );
 
-      if (candidateItem && candidateItem.length > 0) {
-        const item = candidateItem[0];
+      // Use the same table that delete function would use
+      let candidateItem = await db.execute(sql`
+        SELECT * FROM ${sql.raw(instancesTable)} WHERE id = ${itemId}
+      `);
+
+      console.log(
+        `🔄 HYBRID ACCESS: Checking ${instancesTable} for item ${itemId}`,
+      );
+
+      if (candidateItem.rows && candidateItem.rows.length > 0) {
+        const item = candidateItem.rows[0];
         console.log(
-          `🔄 HYBRID ACCESS: Found item ${itemId} in recurring_instances`,
+          `🔄 HYBRID ACCESS: Found item ${itemId} in ${instancesTable}`,
         );
 
         // Check all permissions using JavaScript - no complex SQL
@@ -226,7 +231,7 @@ export async function userHasItemAccess(
         }
       } else {
         console.log(
-          `❌ HYBRID ACCESS: Item ${itemId} not found in recurring_instances`,
+          `❌ HYBRID ACCESS: Item ${itemId} not found in ${instancesTable}`,
         );
       }
     } catch (error) {

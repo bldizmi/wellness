@@ -14,16 +14,6 @@
             "date": 1755851500355,
             "name": "logs/audit-2025-08-22.log",
             "hash": "30c8b45dfa5d3b2f9cfbd072c15ec5728ecf747fd43c87cb7038e1f2cb1dbfb0"
-        },
-        {
-            "date": 1756197896493,
-            "name": "logs/audit-2025-08-26.log",
-            "hash": "875204139f947785c5f3eac61709c9f92a45b00339c5f6f4b7618f59ff71bc72"
-        },
-        {
-            "date": 1756204439887,
-            "name": "logs\\audit-2025-08-26.log",
-            "hash": "df0ce35ca2e6b89aad2f4ae979a5fbe415e6a014993a674128bd485bcef6e4d3"
         }
     ],
     "hashType": "sha256"
