@@ -1,0 +1,2 @@
+{"environment":"development","level":"info","message":"Firebase Admin SDK initialized successfully","projectId":"minddouble-prod","service":"minddouble-api","timestamp":"2025-08-26T07:20:08.960Z"}
+{"cleanup_interval_ms":300000,"default_ttl_ms":600000,"environment":"development","level":"info","message":"Cache service initialized","service":"minddouble-api","timestamp":"2025-08-26T07:20:08.978Z"}
