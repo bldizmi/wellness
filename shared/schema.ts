@@ -14,12 +14,12 @@ import { z } from "zod";
 const TABLE_PREFIX = process.env.NODE_ENV === "development" ? "dev_" : "";
 //console.log("Table___________prefix:");
 //console.log(TABLE_PREFIX);
-console.log("DEBUG NODE_ENV:", process.env.NODE_ENV);
-console.log("DEBUG NODE_ENV type:", typeof process.env.NODE_ENV);
-console.log(
-  "DEBUG NODE_ENV === 'development':",
-  process.env.NODE_ENV === "development",
-);
+//console.log("DEBUG NODE_ENV:", process.env.NODE_ENV);
+//console.log("DEBUG NODE_ENV type:", typeof process.env.NODE_ENV);
+//console.log(
+//   "DEBUG NODE_ENV === 'development':",
+//   process.env.NODE_ENV === "development",
+// );
 
 // Users table (enhanced for admin dashboard)
 export const users = pgTable(`${TABLE_PREFIX}users`, {
