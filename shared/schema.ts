@@ -12,8 +12,14 @@ import { z } from "zod";
 
 // Dynamic table naming based on environment
 const TABLE_PREFIX = process.env.NODE_ENV === "development" ? "dev_" : "";
-console.log("Table___________prefix:");
-console.log(TABLE_PREFIX);
+//console.log("Table___________prefix:");
+//console.log(TABLE_PREFIX);
+//console.log("DEBUG NODE_ENV:", process.env.NODE_ENV);
+//console.log("DEBUG NODE_ENV type:", typeof process.env.NODE_ENV);
+//console.log(
+//   "DEBUG NODE_ENV === 'development':",
+//   process.env.NODE_ENV === "development",
+// );
 
 // Users table (enhanced for admin dashboard)
 export const users = pgTable(`${TABLE_PREFIX}users`, {
@@ -625,11 +631,13 @@ export const insertUserStreakSchema = userStreakSchema.omit({
   updated_at: true,
 });
 
-export const updateUserStreakSchema = userStreakSchema.omit({
-  id: true,
-  user_id: true,
-  created_at: true,
-}).partial();
+export const updateUserStreakSchema = userStreakSchema
+  .omit({
+    id: true,
+    user_id: true,
+    created_at: true,
+  })
+  .partial();
 
 export type InsertUserStreak = z.infer<typeof insertUserStreakSchema>;
 export type UpdateUserStreak = z.infer<typeof updateUserStreakSchema>;
