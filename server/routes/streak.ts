@@ -4,9 +4,10 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
 import { db } from '../db';
-import { sql } from 'drizzle-orm';
+import { sql, eq, asc } from 'drizzle-orm';
 import { getUserStreak } from '../services/streakService';
 import { createLogger } from '../services/logger';
+import { recurring_instances, item_completions } from '@shared/schema';
 
 const router = Router();
 const logger = createLogger({ service: 'streakRoutes' });
@@ -48,32 +49,43 @@ router.get('/:id/streak', authMiddleware, async (req, res) => {
   try {
     const { id: itemId } = req.params;
     const userId = req.user_id;
-    const TABLE_PREFIX = process.env.NODE_ENV === 'development' ? 'dev_' : '';
 
-    // Verify item belongs to user using Drizzle ORM
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    const itemsTable = isDevelopment ? sql.identifier('dev_items') : sql.identifier('items');
-    const itemCheck = await db.execute(
-      sql`SELECT id FROM ${itemsTable} WHERE id = ${itemId} AND user_id = ${userId}`
-    );
+    // Verify item belongs to user using schema-based approach
+    const itemCheck = await db
+      .select({ id: recurring_instances.id })
+      .from(recurring_instances)
+      .where(eq(recurring_instances.id, itemId));
 
-    if (itemCheck.rows.length === 0) {
+    if (itemCheck.length === 0) {
       return res.status(404).json({ error: 'Item not found' });
     }
 
-    // Get all completions for this item, ordered by date using Drizzle ORM
-    const completionsTable = isDevelopment ? sql.identifier('dev_item_completions') : sql.identifier('item_completions');
-    const completionsResult = await db.execute(
-      sql`SELECT completion_date FROM ${completionsTable} WHERE item_id = ${itemId} AND user_id = ${userId} ORDER BY completion_date ASC`
-    );
+    // Additional authorization check - ensure user has access to this item
+    const { userHasItemAccess } = await import('../services/itemVisibilityService');
+    const hasAccess = await userHasItemAccess(userId, itemId);
+    
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Access denied to this item' });
+    }
 
-    const completions = completionsResult.rows.map((row: any) => row.completion_date);
+    // Get all completions for this item, ordered by date using schema-based approach
+    const completionsResult = await db
+      .select({ completion_date: item_completions.completion_date })
+      .from(item_completions)
+      .where(eq(item_completions.item_id, itemId))
+      .orderBy(asc(item_completions.completion_date));
+
+    const completions = completionsResult.map(row => row.completion_date);
     
     if (completions.length === 0) {
       return res.json({
-        current_streak: 0,
-        longest_streak: 0,
-        monthly_completion_rate: 0
+        success: true,
+        streak: {
+          current_streak: 0,
+          longest_streak: 0,
+          total_completions: 0,
+          completion_rate: 0
+        }
       });
     }
 
@@ -153,9 +165,13 @@ router.get('/:id/streak', authMiddleware, async (req, res) => {
     const monthlyCompletionRate = Math.round((monthlyCompletions / daysInMonth) * 100);
 
     res.json({
-      current_streak: currentStreak,
-      longest_streak: longestStreak,
-      monthly_completion_rate: monthlyCompletionRate
+      success: true,
+      streak: {
+        current_streak: currentStreak,
+        longest_streak: longestStreak,
+        total_completions: completions.length,
+        completion_rate: monthlyCompletionRate
+      }
     });
 
   } catch (error) {
