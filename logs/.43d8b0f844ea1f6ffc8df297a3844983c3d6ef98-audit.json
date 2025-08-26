@@ -14,6 +14,11 @@
             "date": 1755851500355,
             "name": "logs/audit-2025-08-22.log",
             "hash": "30c8b45dfa5d3b2f9cfbd072c15ec5728ecf747fd43c87cb7038e1f2cb1dbfb0"
+        },
+        {
+            "date": 1756209911658,
+            "name": "logs/audit-2025-08-26.log",
+            "hash": "666f741f305fcfed62a9314aec0a8d3d34527f87a653aafe5f6cb4e2b9c09f83"
         }
     ],
     "hashType": "sha256"
