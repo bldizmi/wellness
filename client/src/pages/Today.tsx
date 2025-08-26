@@ -97,6 +97,7 @@ export default function Today() {
   const [activeTab, setActiveTab] = useState("habits");
   const [showMenuDrawer, setShowMenuDrawer] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [isCalendarVisible, setIsCalendarVisible] = useState(false);
 
   // Calendar date selection state
   const [selectedDate, setSelectedDate] = useState<string>(
@@ -1096,12 +1097,22 @@ export default function Today() {
   return (
     <div className="min-h-screen bg-gray-950">
       <div className="w-full max-w-sm mx-auto bg-gray-950 min-h-screen text-white">
-        {/* Header with Day Name and Date */}
+        {/* Header with Day Name and Date - Clickable to toggle calendar */}
         <div className="pt-10 px-4 pb-4">
-          <div className="flex flex-col items-center justify-center mb-4">
-            <h1 className="text-2xl font-bold text-white mb-1">
-              {new Date(selectedDate).toLocaleDateString("en-US", { weekday: "long" })}
-            </h1>
+          <div 
+            className="flex flex-col items-center justify-center mb-4 cursor-pointer hover:bg-gray-800 rounded-lg py-2 px-4 transition-colors duration-200"
+            onClick={() => setIsCalendarVisible(!isCalendarVisible)}
+          >
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-white mb-1">
+                {new Date(selectedDate).toLocaleDateString("en-US", { weekday: "long" })}
+              </h1>
+              <ChevronDown 
+                className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+                  isCalendarVisible ? 'rotate-180' : ''
+                }`}
+              />
+            </div>
             <p className="text-gray-400 text-sm">
               {new Date(selectedDate).toLocaleDateString("en-US", {
                 month: "long",
@@ -1112,13 +1123,15 @@ export default function Today() {
           </div>
         </div>
 
-        {/* 7-Day Calendar Strip */}
-        <div className="mb-6">
-          <WeekCalendarStrip
-            selectedDate={selectedDate}
-            onDateSelect={handleDateSelect}
-          />
-        </div>
+        {/* 7-Day Calendar Strip - Collapsible */}
+        {isCalendarVisible && (
+          <div className="mb-6 animate-in slide-in-from-top-2 duration-200">
+            <WeekCalendarStrip
+              selectedDate={selectedDate}
+              onDateSelect={handleDateSelect}
+            />
+          </div>
+        )}
 
         {/* Progress indicator */}
         <div className="px-4 mb-6">
