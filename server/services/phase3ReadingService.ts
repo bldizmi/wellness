@@ -96,7 +96,12 @@ async function ensureInstancesExistForDates(userId: string, dates: string[]) {
             updated_at: new Date().toISOString(),
           };
 
-          await db.insert(recurring_instances).values(instanceData);
+          const insertQuery = sql`
+            INSERT INTO ${sql.raw(instancesTable)} 
+            (id, template_id, occurrence_date, status, assigned_to, shared_with, display_id, created_at, updated_at)
+            VALUES (${instanceData.id}, ${instanceData.template_id}, ${instanceData.occurrence_date}, ${instanceData.status}, ${instanceData.assigned_to}, ${instanceData.shared_with}, ${instanceData.display_id}, ${instanceData.created_at}, ${instanceData.updated_at})
+          `;
+          await db.execute(insertQuery);
           console.log(
             `✅ CREATED: Instance for template ${template.id} on ${date}`,
           );
