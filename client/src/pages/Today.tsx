@@ -52,7 +52,6 @@ interface ItemData {
   custom_recurrence?: string;
   due_date?: string;
   time_frame?: number;
-  time_of_day?: string;
   verify_required?: boolean;
   is_chore?: boolean;
   why_it_matters?: string;
@@ -155,7 +154,7 @@ export default function Today() {
     onError: (err, { item }) => {
       console.error("Completion error:", err);
       // Remove item from loading state
-      setLoadingItems(prev => {
+      setLoadingItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(item.id);
         return newSet;
@@ -168,12 +167,12 @@ export default function Today() {
     },
     onSuccess: async (data, { item, checked }) => {
       // Remove item from loading state
-      setLoadingItems(prev => {
+      setLoadingItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(item.id);
         return newSet;
       });
-      
+
       // Simple invalidation - let React Query handle the refetch
       await queryClient.invalidateQueries();
 
@@ -265,7 +264,7 @@ export default function Today() {
     // DEBUG: Log data after both queries are available
     console.log("🔍 DEBUG: Personal progress data:", personalProgressData);
     console.log("🔍 DEBUG: Shared data:", sharedData);
-    
+
     if (!personalProgressData && !sharedData) return null;
 
     // Personal progress data will be used for Habits and Focus tabs
@@ -384,7 +383,7 @@ export default function Today() {
       ...(data.goals || []),
       ...(data.projects || []),
     ];
-    
+
     console.log("🔍 DEBUG: All items breakdown:", {
       totalItems: items.length,
       tasks: data.tasks?.length || 0,
@@ -394,9 +393,9 @@ export default function Today() {
       itemsByType: items.reduce((acc, item) => {
         acc[item.item_type] = (acc[item.item_type] || 0) + 1;
         return acc;
-      }, {})
+      }, {}),
     });
-    
+
     return items;
   }, [todayData]);
 
@@ -409,22 +408,28 @@ export default function Today() {
       const habitsFromPersonal = personalProgressData?.habits || [];
       console.log("🔍 DEBUG: Filtering for habits tab:", {
         totalHabits: habitsFromPersonal.length,
-        habitDetails: habitsFromPersonal.map(h => ({ title: h.title, item_type: h.item_type }))
+        habitDetails: habitsFromPersonal.map((h) => ({
+          title: h.title,
+          item_type: h.item_type,
+        })),
       });
-      return habitsFromPersonal.filter(item => item.assigned_to === user.uid);
+      return habitsFromPersonal.filter((item) => item.assigned_to === user.uid);
     }
     if (activeTab === "focus") {
       // Show tasks, goals, projects assigned to the user from personal progress data
       const focusItems = [
         ...(personalProgressData?.tasks || []),
         ...(personalProgressData?.goals || []),
-        ...(personalProgressData?.projects || [])
+        ...(personalProgressData?.projects || []),
       ];
       console.log("🔍 DEBUG: Filtering for focus tab:", {
         totalItems: focusItems.length,
-        itemDetails: focusItems.map(i => ({ title: i.title, item_type: i.item_type }))
+        itemDetails: focusItems.map((i) => ({
+          title: i.title,
+          item_type: i.item_type,
+        })),
       });
-      return focusItems.filter(item => item.assigned_to === user.uid);
+      return focusItems.filter((item) => item.assigned_to === user.uid);
     }
     if (activeTab === "shared") {
       // Use shared data endpoint for shared items - exclude habits as they are not shareable
@@ -442,7 +447,7 @@ export default function Today() {
 
   // DEBUG: Log filtered items after they're calculated
   console.log("🔍 DEBUG: All filtered items:", filteredItems);
-  
+
   // Debug individual items to see their completion status
   if (filteredItems.length > 0) {
     console.log("🔍 DEBUG: First item details:", {
@@ -454,7 +459,7 @@ export default function Today() {
       is_completed_for_date: filteredItems[0].is_completed_for_date,
       status: filteredItems[0].status,
       completed_at: filteredItems[0].completed_at,
-      occurrence_date: filteredItems[0].occurrence_date
+      occurrence_date: filteredItems[0].occurrence_date,
     });
   }
 
@@ -503,20 +508,21 @@ export default function Today() {
   const getTabProgress = (tabId: string) => {
     const status = getFilterStatus(tabId);
     const completedCount = status.totalCount - status.incompleteCount;
-    const progressPercentage = status.totalCount > 0 ? (completedCount / status.totalCount) * 100 : 0;
-    
+    const progressPercentage =
+      status.totalCount > 0 ? (completedCount / status.totalCount) * 100 : 0;
+
     // Define colors for each tab
     const colors = {
-      habits: 'from-blue-500 to-blue-600',
-      focus: 'from-purple-500 to-purple-600', 
-      shared: 'from-gray-500 to-gray-600'
+      habits: "from-blue-500 to-blue-600",
+      focus: "from-purple-500 to-purple-600",
+      shared: "from-gray-500 to-gray-600",
     };
-    
+
     return {
       completed: completedCount,
       total: status.totalCount,
       percentage: progressPercentage,
-      color: colors[tabId as keyof typeof colors] || colors.habits
+      color: colors[tabId as keyof typeof colors] || colors.habits,
     };
   };
 
@@ -592,7 +598,7 @@ export default function Today() {
             >
               {item.title}
             </h3>
-            
+
             {/* Metadata row */}
             <div className="flex items-center gap-3 text-xs">
               {/* Streak indicator - calculate for all recurring items */}
@@ -607,7 +613,7 @@ export default function Today() {
                   </div>
                 ) : null;
               })()}
-              
+
               {/* Photo verification indicator */}
               {item.verify_required && (
                 <div className="flex items-center gap-1">
@@ -659,36 +665,69 @@ export default function Today() {
     );
   };
 
-  // Group items by time categories using time_of_day field
+  // Group items by time categories
   const groupItemsByTime = (items: ItemData[]) => {
-    const morning = items.filter(item => item.time_of_day === 'morning');
-    const afternoon = items.filter(item => item.time_of_day === 'afternoon');
-    const anytime = items.filter(item => !item.time_of_day || item.time_of_day === 'anytime');
-    
-    return { morning, afternoon, anytime };
+    const morning = items.filter((item) => {
+      if (!item.due_date) return false;
+      const hour = new Date(item.due_date).getHours();
+      return hour >= 5 && hour < 12;
+    });
+
+    const evening = items.filter((item) => {
+      if (!item.due_date) return false;
+      const hour = new Date(item.due_date).getHours();
+      return hour >= 17 && hour < 24;
+    });
+
+    const anytime = items.filter((item) => {
+      if (!item.due_date) return true;
+      const hour = new Date(item.due_date).getHours();
+      return (hour >= 0 && hour < 5) || (hour >= 12 && hour < 17);
+    });
+
+    return { morning, evening, anytime };
   };
 
   // Render time-based sections
   const renderTimeBasedSections = () => {
     const timeGroups = groupItemsByTime(filteredItems);
     const sections = [
-      { key: 'morning', label: 'Morning', icon: '🌅', items: timeGroups.morning },
-      { key: 'afternoon', label: 'Afternoon', icon: '☀️', items: timeGroups.afternoon },
-      { key: 'anytime', label: 'Anytime', icon: '⏰', items: timeGroups.anytime }
+      {
+        key: "morning",
+        label: "Morning",
+        icon: "🌅",
+        items: timeGroups.morning,
+      },
+      {
+        key: "evening",
+        label: "Evening",
+        icon: "🌆",
+        items: timeGroups.evening,
+      },
+      {
+        key: "anytime",
+        label: "Anytime",
+        icon: "⏰",
+        items: timeGroups.anytime,
+      },
     ];
 
     return sections
-      .filter(section => section.items.length > 0)
-      .map(section => (
+      .filter((section) => section.items.length > 0)
+      .map((section) => (
         <div key={section.key} className="space-y-3">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
               <span className="text-xs">{section.icon}</span>
             </div>
-            <h2 className="text-white font-medium text-base">{section.label}</h2>
+            <h2 className="text-white font-medium text-base">
+              {section.label}
+            </h2>
           </div>
           <div className="space-y-2">
-            {section.items.map((item, index) => renderNewDesignItem(item, index))}
+            {section.items.map((item, index) =>
+              renderNewDesignItem(item, index),
+            )}
           </div>
         </div>
       ));
@@ -697,7 +736,7 @@ export default function Today() {
   // Render assignment-based sections for shared items
   const renderAssignmentSections = () => {
     const sharedGroups = groupSharedItemsByAssignee(filteredItems);
-    
+
     return sharedGroups.map((group, groupIndex) => (
       <div key={`group-${groupIndex}`} className="space-y-4">
         <div className="flex items-center justify-between">
@@ -708,9 +747,12 @@ export default function Today() {
               </span>
             </div>
             <div>
-              <h2 className="text-white font-semibold">Assigned to {group.assignee}</h2>
+              <h2 className="text-white font-semibold">
+                Assigned to {group.assignee}
+              </h2>
               <p className="text-gray-400 text-sm">
-                {group.completedCount}/{group.totalCount} complete • {group.percentage}%
+                {group.completedCount}/{group.totalCount} complete •{" "}
+                {group.percentage}%
               </p>
             </div>
           </div>
@@ -765,27 +807,35 @@ export default function Today() {
       is_recurring: item.is_recurring,
       recurrence_type: item.recurrence_type,
       is_completed_for_date: (item as any).is_completed_for_date,
-      status: item.status
+      status: item.status,
     });
 
     // Only calculate streaks for recurring items (habits, tasks, goals, projects)
-    if (!item.is_recurring && (!item.recurrence_type || item.recurrence_type === 'once')) {
+    if (
+      !item.is_recurring &&
+      (!item.recurrence_type || item.recurrence_type === "once")
+    ) {
       console.log("🔥 DEBUG: Not recurring, returning 0");
       return 0;
     }
 
     // Check if this item is completed today
-    const isCompletedToday = (item as any).is_completed_for_date === true || item.status === 'completed' || item.status === 'complete';
-    
+    const isCompletedToday =
+      (item as any).is_completed_for_date === true ||
+      item.status === "completed" ||
+      item.status === "complete";
+
     console.log("🔥 DEBUG: Completion check result:", {
       is_completed_for_date: (item as any).is_completed_for_date,
       status: item.status,
       isCompletedToday: isCompletedToday,
-      item_type: item.item_type
+      item_type: item.item_type,
     });
 
     if (isCompletedToday) {
-      console.log("🔥 DEBUG: Recurring item is completed today, showing streak of 1 (can be enhanced with historical data)");
+      console.log(
+        "🔥 DEBUG: Recurring item is completed today, showing streak of 1 (can be enhanced with historical data)",
+      );
       // For now, return 1 if completed today
       // This can be enhanced to calculate actual historical streaks
       return 1;
@@ -798,7 +848,7 @@ export default function Today() {
   // Calculate overall streak (for the yellow circle)
   const getOverallStreak = () => {
     console.log("🏆 DEBUG: Calculating overall streak");
-    
+
     if (!personalProgressData) {
       console.log("🏆 DEBUG: No personal progress data, returning 0");
       return 0;
@@ -806,22 +856,25 @@ export default function Today() {
 
     // Count completed habits for today
     const allHabits = personalProgressData.habits || [];
-    const completedHabits = allHabits.filter(habit => {
+    const completedHabits = allHabits.filter((habit) => {
       // Use the correct completion field from the data structure
-      const completed = habit.is_completed_for_date === true || habit.status === 'completed' || habit.status === 'complete';
+      const completed =
+        habit.is_completed_for_date === true ||
+        habit.status === "completed" ||
+        habit.status === "complete";
       console.log("🏆 DEBUG: Habit completion check:", {
         title: habit.title,
         is_completed_for_date: habit.is_completed_for_date,
         status: habit.status,
-        completed: completed
+        completed: completed,
       });
       return completed;
     });
-    
+
     console.log("🏆 DEBUG: Overall streak calculation:", {
       totalHabits: allHabits.length,
       completedHabits: completedHabits.length,
-      completedHabitsCount: completedHabits.length
+      completedHabitsCount: completedHabits.length,
     });
 
     // Return the count of completed habits today
@@ -907,7 +960,7 @@ export default function Today() {
     );
 
     // Add item to loading state
-    setLoadingItems(prev => new Set([...prev, item.id]));
+    setLoadingItems((prev) => new Set([...prev, item.id]));
 
     const needsVerification =
       item.verify_required || item.title.toLowerCase().includes("verify");
@@ -920,7 +973,7 @@ export default function Today() {
     ) {
       setVerifyingItem(item);
       // Remove from loading state since we're opening verification modal
-      setLoadingItems(prev => {
+      setLoadingItems((prev) => {
         const newSet = new Set(prev);
         newSet.delete(item.id);
         return newSet;
@@ -1107,25 +1160,27 @@ export default function Today() {
       <div className="w-full max-w-sm mx-auto bg-gray-950 min-h-screen text-white">
         {/* Header with Day Name and Date - Clickable to toggle calendar */}
         <div className="pt-10 px-4 pb-4">
-          <div 
+          <div
             className="flex flex-col items-center justify-center mb-4 cursor-pointer hover:bg-gray-800 rounded-lg py-2 px-4 transition-colors duration-200"
             onClick={() => setIsCalendarVisible(!isCalendarVisible)}
           >
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-white mb-1">
-                {new Date(selectedDate).toLocaleDateString("en-US", { weekday: "long" })}
+                {new Date(selectedDate).toLocaleDateString("en-US", {
+                  weekday: "long",
+                })}
               </h1>
-              <ChevronDown 
+              <ChevronDown
                 className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
-                  isCalendarVisible ? 'rotate-180' : ''
+                  isCalendarVisible ? "rotate-180" : ""
                 }`}
               />
             </div>
             <p className="text-gray-400 text-sm">
               {new Date(selectedDate).toLocaleDateString("en-US", {
                 month: "long",
-                day: "numeric", 
-                year: "numeric"
+                day: "numeric",
+                year: "numeric",
               })}
             </p>
           </div>
@@ -1145,7 +1200,8 @@ export default function Today() {
         <div className="px-4 mb-6">
           <div className="text-right">
             <span className="text-gray-400 text-sm">
-              {getTabProgress(activeTab).completed}/{getTabProgress(activeTab).total}
+              {getTabProgress(activeTab).completed}/
+              {getTabProgress(activeTab).total}
             </span>
           </div>
         </div>
@@ -1153,7 +1209,7 @@ export default function Today() {
         {/* Dynamic progress line - tab specific */}
         <div className="px-4 mb-4">
           <div className="h-0.5 w-full bg-gray-600 rounded-full relative">
-            <div 
+            <div
               className={`h-0.5 bg-gradient-to-r ${getTabProgress(activeTab).color} rounded-full absolute left-0 transition-all duration-300 ease-in-out`}
               style={{ width: `${getTabProgress(activeTab).percentage}%` }}
             ></div>
@@ -1197,18 +1253,13 @@ export default function Today() {
         <div className="px-4 pb-20">
           {/* Time-based sections for habits and focus */}
           {(activeTab === "habits" || activeTab === "focus") && (
-            <div className="space-y-6">
-              {renderTimeBasedSections()}
-            </div>
-          )}
-          
-          {/* Assignment-based sections for shared */}
-          {activeTab === "shared" && (
-            <div className="space-y-6">
-              {renderAssignmentSections()}
-            </div>
+            <div className="space-y-6">{renderTimeBasedSections()}</div>
           )}
 
+          {/* Assignment-based sections for shared */}
+          {activeTab === "shared" && (
+            <div className="space-y-6">{renderAssignmentSections()}</div>
+          )}
 
           {/* Done Section */}
           {filteredItems.some((item) => isItemCompleted(item)) && (
@@ -1220,7 +1271,8 @@ export default function Today() {
                 <span className="text-green-400 text-base">✓</span>
                 <span className="text-white font-medium text-sm">Done</span>
                 <span className="text-gray-400 text-xs ml-auto">
-                  {filteredItems.filter((item) => isItemCompleted(item)).length} completed
+                  {filteredItems.filter((item) => isItemCompleted(item)).length}{" "}
+                  completed
                 </span>
                 <ChevronDown
                   className={`h-3 w-3 text-gray-400 transition-transform ${
