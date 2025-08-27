@@ -498,6 +498,27 @@ export default function Today() {
     return { incompleteCount, isAllComplete, totalCount: categoryItems.length };
   };
 
+  // Get tab-specific progress data for progress line
+  const getTabProgress = (tabId: string) => {
+    const status = getFilterStatus(tabId);
+    const completedCount = status.totalCount - status.incompleteCount;
+    const progressPercentage = status.totalCount > 0 ? (completedCount / status.totalCount) * 100 : 0;
+    
+    // Define colors for each tab
+    const colors = {
+      habits: 'from-blue-500 to-blue-600',
+      focus: 'from-purple-500 to-purple-600', 
+      shared: 'from-gray-500 to-gray-600'
+    };
+    
+    return {
+      completed: completedCount,
+      total: status.totalCount,
+      percentage: progressPercentage,
+      color: colors[tabId as keyof typeof colors] || colors.habits
+    };
+  };
+
   // Format time for display
   const formatTimeFrame = (minutes?: number) => {
     if (!minutes) return "No estimate";
@@ -1133,17 +1154,22 @@ export default function Today() {
           </div>
         )}
 
-        {/* Progress indicator */}
+        {/* Progress indicator - Tab specific */}
         <div className="px-4 mb-6">
           <div className="text-right">
-            <span className="text-gray-400 text-sm">2/10</span>
+            <span className="text-gray-400 text-sm">
+              {getTabProgress(activeTab).completed}/{getTabProgress(activeTab).total}
+            </span>
           </div>
         </div>
 
-        {/* Colorful gradient line - colors only at beginning */}
+        {/* Dynamic progress line - tab specific */}
         <div className="px-4 mb-4">
           <div className="h-0.5 w-full bg-gray-600 rounded-full relative">
-            <div className="h-0.5 w-16 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full absolute left-0"></div>
+            <div 
+              className={`h-0.5 bg-gradient-to-r ${getTabProgress(activeTab).color} rounded-full absolute left-0 transition-all duration-300 ease-in-out`}
+              style={{ width: `${getTabProgress(activeTab).percentage}%` }}
+            ></div>
           </div>
         </div>
 
