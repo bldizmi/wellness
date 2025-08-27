@@ -4,6 +4,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   ChevronRight, 
   Settings as SettingsIcon, 
@@ -21,7 +25,10 @@ import {
   Check,
   X,
   Clock,
-  UserPlus
+  UserPlus,
+  Plus,
+  Mail,
+  Settings
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTheme, ThemeMode, ThemeVariant, THEME_COLORS, getThemeDisplayName } from "@/contexts/ThemeContext";
@@ -33,6 +40,16 @@ export default function Profile() {
   const { theme, updateMode, updateVariant } = useTheme();
   const { logout } = useAuth();
   const queryClient = useQueryClient();
+
+  // Modal states
+  const [showCreateCommunityModal, setShowCreateCommunityModal] = useState(false);
+  const [showInviteMemberModal, setShowInviteMemberModal] = useState(false);
+  const [selectedCommunityForInvite, setSelectedCommunityForInvite] = useState<any>(null);
+
+  // Form states
+  const [newCommunityName, setNewCommunityName] = useState("");
+  const [newCommunityType, setNewCommunityType] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
 
   const {
     data: profile,
@@ -77,6 +94,39 @@ export default function Profile() {
     },
   });
 
+  // Mutation for creating communities
+  const createCommunityMutation = useMutation({
+    mutationFn: async ({ name, type }: { name: string; type: string }) => {
+      return await apiRequest("/api/community", {
+        method: "POST",
+        body: JSON.stringify({ name, type }),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/community"] });
+      setShowCreateCommunityModal(false);
+      setNewCommunityName("");
+      setNewCommunityType("");
+    },
+  });
+
+  // Mutation for inviting members
+  const inviteMemberMutation = useMutation({
+    mutationFn: async ({ communityId, email }: { communityId: string; email: string }) => {
+      return await apiRequest(`/api/community/${communityId}/invite`, {
+        method: "POST",
+        body: JSON.stringify({ email }),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+    onSuccess: () => {
+      setShowInviteMemberModal(false);
+      setInviteEmail("");
+      setSelectedCommunityForInvite(null);
+    },
+  });
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -115,6 +165,24 @@ export default function Profile() {
 
   const handleFamilyCommunityToggle = () => {
     toggleSection("familycommunity");
+  };
+
+  const handleCreateCommunity = () => {
+    if (!newCommunityName.trim() || !newCommunityType) return;
+    createCommunityMutation.mutate({ name: newCommunityName.trim(), type: newCommunityType });
+  };
+
+  const handleInviteMember = () => {
+    if (!inviteEmail.trim() || !selectedCommunityForInvite) return;
+    inviteMemberMutation.mutate({ 
+      communityId: selectedCommunityForInvite.id, 
+      email: inviteEmail.trim() 
+    });
+  };
+
+  const openInviteModal = (community: any) => {
+    setSelectedCommunityForInvite(community);
+    setShowInviteMemberModal(true);
   };
 
   const selectMode = (mode: ThemeMode) => {
@@ -373,6 +441,17 @@ export default function Profile() {
                                 {community.member_count} member{community.member_count !== 1 ? 's' : ''}
                               </div>
                             </div>
+                            {(community.user_role === "owner" || community.user_role === "admin") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-xs ml-2"
+                                onClick={() => openInviteModal(community)}
+                              >
+                                <Mail className="h-3 w-3 mr-1" />
+                                Invite
+                              </Button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -380,14 +459,29 @@ export default function Profile() {
                   </div>
                 )}
 
-                {/* No Data State */}
+                {/* Create Community Section */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                      <Plus className="h-3 w-3" />
+                      Create New Community
+                    </h4>
+                  </div>
+                  <Button
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm"
+                    onClick={() => setShowCreateCommunityModal(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Community
+                  </Button>
+                </div>
+
+                {/* Empty state message only when no communities and no invitations */}
                 {(!pendingInvitations || pendingInvitations.length === 0) && 
                  (!communities || communities.length === 0) && (
-                  <div className="text-center py-4">
-                    <UserPlus className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-                    <div className="text-sm text-gray-400">No communities or invitations yet</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Join or create communities to collaborate with others
+                  <div className="text-center py-2">
+                    <div className="text-xs text-gray-500">
+                      Start by creating your first community
                     </div>
                   </div>
                 )}
@@ -550,6 +644,120 @@ export default function Profile() {
           </button>
         </div>
       </div>
+
+      {/* Create Community Modal */}
+      <Dialog open={showCreateCommunityModal} onOpenChange={setShowCreateCommunityModal}>
+        <DialogContent className="bg-slate-800 text-white border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-purple-400" />
+              Create New Community
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Create a community to collaborate with friends, family, or colleagues
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="community-name" className="text-sm font-medium text-gray-300">
+                Community Name
+              </Label>
+              <Input
+                id="community-name"
+                value={newCommunityName}
+                onChange={(e) => setNewCommunityName(e.target.value)}
+                placeholder="Enter community name..."
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
+                maxLength={100}
+              />
+            </div>
+            <div>
+              <Label htmlFor="community-type" className="text-sm font-medium text-gray-300">
+                Community Type
+              </Label>
+              <Select value={newCommunityType} onValueChange={setNewCommunityType}>
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white mt-1">
+                  <SelectValue placeholder="Select community type..." />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectItem value="family" className="text-white hover:bg-gray-600">Family</SelectItem>
+                  <SelectItem value="friends" className="text-white hover:bg-gray-600">Friends</SelectItem>
+                  <SelectItem value="work" className="text-white hover:bg-gray-600">Work</SelectItem>
+                  <SelectItem value="study" className="text-white hover:bg-gray-600">Study</SelectItem>
+                  <SelectItem value="hobby" className="text-white hover:bg-gray-600">Hobby</SelectItem>
+                  <SelectItem value="roommates" className="text-white hover:bg-gray-600">Roommates</SelectItem>
+                  <SelectItem value="team" className="text-white hover:bg-gray-600">Team</SelectItem>
+                  <SelectItem value="custom" className="text-white hover:bg-gray-600">Custom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowCreateCommunityModal(false)}
+                disabled={createCommunityMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                onClick={handleCreateCommunity}
+                disabled={!newCommunityName.trim() || !newCommunityType || createCommunityMutation.isPending}
+              >
+                {createCommunityMutation.isPending ? "Creating..." : "Create Community"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invite Member Modal */}
+      <Dialog open={showInviteMemberModal} onOpenChange={setShowInviteMemberModal}>
+        <DialogContent className="bg-slate-800 text-white border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-blue-400" />
+              Invite Member to {selectedCommunityForInvite?.name}
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Send an invitation link to someone's email address
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="invite-email" className="text-sm font-medium text-gray-300">
+                Email Address
+              </Label>
+              <Input
+                id="invite-email"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="Enter email address..."
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowInviteMemberModal(false)}
+                disabled={inviteMemberMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                onClick={handleInviteMember}
+                disabled={!inviteEmail.trim() || inviteMemberMutation.isPending}
+              >
+                {inviteMemberMutation.isPending ? "Sending..." : "Send Invitation"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
