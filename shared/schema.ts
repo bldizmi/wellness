@@ -407,6 +407,7 @@ export const insertItemSchema = z.object({
   by_month: z.string().optional(),
   due_date: z.string().optional().nullable(),
   time_frame: z.number().optional().nullable(),
+  time_of_day: z.enum(["morning", "afternoon", "anytime"]).default("anytime"),
   verify_required: z.boolean().default(false),
   why_it_matters: z.string().optional(),
   assigned_to: z.string().optional().nullable(),

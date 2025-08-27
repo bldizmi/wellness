@@ -30,6 +30,7 @@ export function legacyItemToTemplate(legacyItem: any): any {
     why_it_matters: legacyItem.why_it_matters || null,
     verify_required: legacyItem.verify_required || false,
     time_frame: legacyItem.time_frame || null,
+    time_of_day: legacyItem.time_of_day || "anytime",
 
     // New individual recurrence fields
     is_recurring:
@@ -170,6 +171,7 @@ export async function createSingleInstance(
     why_it_matters: legacyItem.why_it_matters || null,
     verify_required: legacyItem.verify_required || false,
     time_frame: legacyItem.time_frame || null,
+    time_of_day: legacyItem.time_of_day || "anytime",
 
     // FAANG-Level Architecture: Individual recurrence fields
     is_recurring: false, // One-time items are non-recurring

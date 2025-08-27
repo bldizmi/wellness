@@ -668,19 +668,28 @@ export default function Today() {
 
   // Group items by time categories using time_of_day field
   const groupItemsByTime = (items: ItemData[]) => {
-    console.log("🔍 DEBUG: Grouping items by time_of_day:", items.map(item => ({ 
-      title: item.title, 
-      time_of_day: item.time_of_day 
-    })));
+    console.log(
+      "🔍 DEBUG: Grouping items by time_of_day:",
+      items.map((item) => ({
+        title: item.title,
+        time_of_day: item.time_of_day,
+      })),
+    );
 
-    const morning = items.filter((item) => item.time_of_day === 'morning');
-    const afternoon = items.filter((item) => item.time_of_day === 'afternoon');
-    const anytime = items.filter((item) => !item.time_of_day || item.time_of_day === 'anytime');
+    const morning = items.filter((item) => item.time_of_day === "morning");
+    const afternoon = items.filter((item) => item.time_of_day === "afternoon");
+    //const anytime = items.filter((item) => !item.time_of_day || item.time_of_day === 'anytime');
+    const anytime = items.filter(
+      (item) =>
+        item.time_of_day === undefined ||
+        item.time_of_day === null ||
+        item.time_of_day === "anytime",
+    );
 
     console.log("🔍 DEBUG: Grouped results:", {
       morning: morning.length,
       afternoon: afternoon.length,
-      anytime: anytime.length
+      anytime: anytime.length,
     });
 
     return { morning, afternoon, anytime };
