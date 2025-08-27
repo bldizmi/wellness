@@ -143,6 +143,10 @@ export async function userHasItemAccess(
       buildItemVisibilityFilter(userId, userCommunityIds),
     );
 
+    // const [legacyItem] = await db
+    //   .select()
+    //   .from(items)
+    //   .where(legacyVisibilityFilter);
     const [legacyItem] = await db
       .select({
         id: items.id,
@@ -155,72 +159,9 @@ export async function userHasItemAccess(
 
     if (legacyItem) {
       console.log(
-        `✅ HYBRID ACCESS: Found item ${itemId} in legacy architecture (created_by/assigned_to)`,
+        `✅ HYBRID ACCESS: Found item ${itemId} in legacy architecture`,
       );
       return true;
-    }
-
-    // PHASE 1.5: Check if item exists and user is in shared_with array (since SQL can't easily query JSON arrays)
-    console.log(
-      `🔄 HYBRID ACCESS: Item ${itemId} not found via assigned_to/created_by, checking shared_with`,
-    );
-
-    const [sharedItem] = await db
-      .select({
-        id: items.id,
-        shared_with: items.shared_with,
-        community_id: items.community_id,
-      })
-      .from(items)
-      .where(eq(items.id, itemId));
-
-    if (sharedItem) {
-      console.log(
-        `🔍 HYBRID ACCESS: Found item ${itemId}, checking shared_with array:`,
-        {
-          shared_with: sharedItem.shared_with,
-          shared_with_type: typeof sharedItem.shared_with,
-          shared_with_is_array: Array.isArray(sharedItem.shared_with),
-          community_id: sharedItem.community_id,
-          user_id: userId,
-          user_community_ids: userCommunityIds
-        }
-      );
-
-      // Check if user is in shared_with array
-      if (
-        sharedItem.shared_with &&
-        Array.isArray(sharedItem.shared_with) &&
-        sharedItem.shared_with.includes(userId)
-      ) {
-        // Also check community access if item has a community
-        if (sharedItem.community_id) {
-          const hasCommunitAccess = userCommunityIds.includes(sharedItem.community_id);
-          if (hasCommunitAccess) {
-            console.log(
-              `✅ HYBRID ACCESS: Found item ${itemId} in legacy architecture (shared_with + community access)`,
-            );
-            return true;
-          } else {
-            console.log(
-              `❌ HYBRID ACCESS: Item ${itemId} shared with user but no community access - user communities: ${userCommunityIds.join(', ')}, item community: ${sharedItem.community_id}`,
-            );
-          }
-        } else {
-          console.log(
-            `✅ HYBRID ACCESS: Found item ${itemId} in legacy architecture (shared_with, no community required)`,
-          );
-          return true;
-        }
-      } else {
-        console.log(
-          `❌ HYBRID ACCESS: Item ${itemId} exists but user ${userId} not in shared_with array`,
-        );
-      }
-    } else {
-      console.log(
-        `❌ HYBRID ACCESS: Item ${itemId} not found in legacy items table`,
-      );
     }
 
     // PHASE 2: Check new recurring_instances architecture (BOTH production and development tables)
