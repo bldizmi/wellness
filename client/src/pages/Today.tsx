@@ -592,11 +592,7 @@ export default function Today() {
         <div className="flex items-center justify-between">
           {/* Left side: Content */}
           <div className="flex-1 min-w-0">
-            <h3
-              className={`text-white font-medium text-sm mb-1 ${
-                isCompleted ? "line-through opacity-60" : ""
-              }`}
-            >
+            <h3 className="text-white font-medium text-sm mb-1">
               {item.title}
             </h3>
 
@@ -666,27 +662,33 @@ export default function Today() {
     );
   };
 
-  // Group items by time categories using time_of_day field
+  // Group items by time categories using time_of_day field - exclude completed items
   const groupItemsByTime = (items: ItemData[]) => {
     console.log(
       "🔍 DEBUG: Grouping items by time_of_day:",
       items.map((item) => ({
         title: item.title,
         time_of_day: item.time_of_day,
+        completed: isItemCompleted(item),
       })),
     );
 
-    const morning = items.filter((item) => item.time_of_day === "morning");
-    const afternoon = items.filter((item) => item.time_of_day === "afternoon");
-    //const anytime = items.filter((item) => !item.time_of_day || item.time_of_day === 'anytime');
-    const anytime = items.filter(
+    // Filter out completed items so they only appear in Done section
+    const incompleteItems = items.filter((item) => !isItemCompleted(item));
+
+    const morning = incompleteItems.filter((item) => item.time_of_day === "morning");
+    const afternoon = incompleteItems.filter((item) => item.time_of_day === "afternoon");
+    const anytime = incompleteItems.filter(
       (item) =>
         item.time_of_day === undefined ||
         item.time_of_day === null ||
         item.time_of_day === "anytime",
     );
 
-    console.log("🔍 DEBUG: Grouped results:", {
+    console.log("🔍 DEBUG: Grouped results (incomplete items only):", {
+      total_items: items.length,
+      incomplete_items: incompleteItems.length,
+      completed_items: items.length - incompleteItems.length,
       morning: morning.length,
       afternoon: afternoon.length,
       anytime: anytime.length,
