@@ -52,6 +52,7 @@ interface ItemData {
   custom_recurrence?: string;
   due_date?: string;
   time_frame?: number;
+  time_of_day?: string;
   verify_required?: boolean;
   is_chore?: boolean;
   why_it_matters?: string;
@@ -665,27 +666,24 @@ export default function Today() {
     );
   };
 
-  // Group items by time categories
+  // Group items by time categories using time_of_day field
   const groupItemsByTime = (items: ItemData[]) => {
-    const morning = items.filter((item) => {
-      if (!item.due_date) return false;
-      const hour = new Date(item.due_date).getHours();
-      return hour >= 5 && hour < 12;
+    console.log("🔍 DEBUG: Grouping items by time_of_day:", items.map(item => ({ 
+      title: item.title, 
+      time_of_day: item.time_of_day 
+    })));
+
+    const morning = items.filter((item) => item.time_of_day === 'morning');
+    const afternoon = items.filter((item) => item.time_of_day === 'afternoon');
+    const anytime = items.filter((item) => !item.time_of_day || item.time_of_day === 'anytime');
+
+    console.log("🔍 DEBUG: Grouped results:", {
+      morning: morning.length,
+      afternoon: afternoon.length,
+      anytime: anytime.length
     });
 
-    const evening = items.filter((item) => {
-      if (!item.due_date) return false;
-      const hour = new Date(item.due_date).getHours();
-      return hour >= 17 && hour < 24;
-    });
-
-    const anytime = items.filter((item) => {
-      if (!item.due_date) return true;
-      const hour = new Date(item.due_date).getHours();
-      return (hour >= 0 && hour < 5) || (hour >= 12 && hour < 17);
-    });
-
-    return { morning, evening, anytime };
+    return { morning, afternoon, anytime };
   };
 
   // Render time-based sections
@@ -699,10 +697,10 @@ export default function Today() {
         items: timeGroups.morning,
       },
       {
-        key: "evening",
-        label: "Evening",
-        icon: "🌆",
-        items: timeGroups.evening,
+        key: "afternoon",
+        label: "Afternoon",
+        icon: "☀️",
+        items: timeGroups.afternoon,
       },
       {
         key: "anytime",
