@@ -149,6 +149,7 @@ async function getPersonalProgressItemsForDate(
     shared_with: item.shared_with,
     community_id: item.community_id,
     time_frame: item.time_frame,
+    time_of_day: item.time_of_day,
     due_date: item.due_date,
     by_day: item.by_day,
     by_monthday: item.by_monthday,
@@ -280,6 +281,7 @@ async function getSharedItemsForDate(userId: string, targetDate: string) {
     shared_with: item.shared_with,
     community_id: item.community_id,
     time_frame: item.time_frame,
+    time_of_day: item.time_of_day,
     status: item.status,
     is_completed_for_date: item.is_completed_for_date,
     is_skipped_for_date: item.is_skipped_for_date,
@@ -594,6 +596,7 @@ async function getItemsWithSpecificDueDate(userId: string, targetDate: string) {
     shared_with: item.shared_with,
     community_id: item.community_id,
     time_frame: item.time_frame,
+    time_of_day: item.time_of_day,
     status: item.status, // Added status field for completion checks
   }));
 }

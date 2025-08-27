@@ -264,6 +264,7 @@ export async function getPersonalProgressItemsNew(
       rt.why_it_matters,
       rt.verify_required,
       rt.time_frame,
+      rt.time_of_day,
       rt.is_recurring,
       rt.recurrence_type,
       CASE 
@@ -457,6 +458,7 @@ export async function getSharedItemsNew(userId: string, targetDate: string) {
       rt.why_it_matters,
       rt.verify_required,
       rt.time_frame,
+      rt.time_of_day,
       rt.created_by,
       rt.is_recurring,
       rt.recurrence_type,
