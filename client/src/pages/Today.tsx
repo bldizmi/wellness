@@ -676,8 +676,12 @@ export default function Today() {
     // Filter out completed items so they only appear in Done section
     const incompleteItems = items.filter((item) => !isItemCompleted(item));
 
-    const morning = incompleteItems.filter((item) => item.time_of_day === "morning");
-    const afternoon = incompleteItems.filter((item) => item.time_of_day === "afternoon");
+    const morning = incompleteItems.filter(
+      (item) => item.time_of_day === "morning",
+    );
+    const afternoon = incompleteItems.filter(
+      (item) => item.time_of_day === "afternoon",
+    );
     const anytime = incompleteItems.filter(
       (item) =>
         item.time_of_day === undefined ||
