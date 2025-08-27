@@ -21,11 +21,13 @@ import {
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTheme, ThemeMode, ThemeVariant, THEME_COLORS, getThemeDisplayName } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Profile() {
   const [, navigate] = useLocation();
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const { theme, updateMode, updateVariant } = useTheme();
+  const { logout } = useAuth();
 
   const {
     data: profile,
@@ -47,9 +49,15 @@ export default function Profile() {
       .slice(0, 2);
   };
 
-  const handleSignOut = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      // Navigation will happen automatically when auth state changes
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Fallback navigation in case of error
+      navigate("/login");
+    }
   };
 
   const toggleSection = (section: string) => {
