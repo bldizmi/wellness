@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -17,7 +17,11 @@ import {
   Shield,
   HelpCircle,
   LogOut,
-  Palette
+  Palette,
+  Check,
+  X,
+  Clock,
+  UserPlus
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTheme, ThemeMode, ThemeVariant, THEME_COLORS, getThemeDisplayName } from "@/contexts/ThemeContext";
@@ -28,6 +32,7 @@ export default function Profile() {
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const { theme, updateMode, updateVariant } = useTheme();
   const { logout } = useAuth();
+  const queryClient = useQueryClient();
 
   const {
     data: profile,
@@ -37,6 +42,38 @@ export default function Profile() {
     queryKey: ["/api/profile"],
     queryFn: async () => {
       return await apiRequest("/api/profile");
+    },
+  });
+
+  // Fetch pending invitations
+  const { data: pendingInvitations } = useQuery({
+    queryKey: ["/api/community/invitations/pending"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/community/invitations/pending");
+      return response.invitations || [];
+    },
+  });
+
+  // Fetch user communities
+  const { data: communities } = useQuery({
+    queryKey: ["/api/community"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/community");
+      return response.communities || [];
+    },
+  });
+
+  // Mutation for responding to invitations
+  const respondToInvitationMutation = useMutation({
+    mutationFn: async ({ invitationId, action }: { invitationId: string; action: "accept" | "decline" }) => {
+      return await apiRequest(`/api/community/invitations/${invitationId}/${action}`, {
+        method: "POST",
+      });
+    },
+    onSuccess: () => {
+      // Refresh both invitations and communities data
+      queryClient.invalidateQueries({ queryKey: ["/api/community/invitations/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/community"] });
     },
   });
 
@@ -74,6 +111,10 @@ export default function Profile() {
 
   const handleAppearanceToggle = () => {
     toggleSection("appearance");
+  };
+
+  const handleFamilyCommunityToggle = () => {
+    toggleSection("familycommunity");
   };
 
   const selectMode = (mode: ThemeMode) => {
@@ -226,16 +267,132 @@ export default function Profile() {
               <ChevronRight className="h-4 w-4 text-gray-400" />
             </div>
             
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer">
+            <div 
+              className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer"
+              onClick={handleFamilyCommunityToggle}
+            >
               <div className="flex items-center space-x-3">
                 <Users className="h-4 w-4 text-gray-400" />
                 <div>
-                  <div className="font-medium">Family & Community</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Family & Community</span>
+                    {pendingInvitations && pendingInvitations.length > 0 && (
+                      <Badge className="bg-orange-600 hover:bg-orange-600 text-white text-xs">
+                        {pendingInvitations.length} invite{pendingInvitations.length > 1 ? 's' : ''}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="text-sm text-gray-400">Manage family connections and community settings</div>
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <ChevronDown 
+                className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
+                  expandedSections.includes("familycommunity") ? "rotate-180" : ""
+                }`} 
+              />
             </div>
+
+            {/* Family & Community Expanded Content */}
+            {expandedSections.includes("familycommunity") && (
+              <div className="mt-2 p-3 bg-gray-800/20 rounded-lg space-y-4">
+                {/* Pending Invitations Section */}
+                {pendingInvitations && pendingInvitations.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                      <Clock className="h-3 w-3" />
+                      Pending Invitations ({pendingInvitations.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {pendingInvitations.map((invitation: any) => (
+                        <div key={invitation.id} className="bg-gray-800/40 rounded-lg p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-white text-sm">{invitation.community_name}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {invitation.community_type}
+                                </Badge>
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                Expires: {new Date(invitation.expires_at).toLocaleDateString()}
+                              </div>
+                            </div>
+                            <div className="flex gap-2 ml-3">
+                              <Button
+                                size="sm"
+                                className="h-7 px-2 bg-green-600 hover:bg-green-700 text-xs"
+                                onClick={() => respondToInvitationMutation.mutate({ 
+                                  invitationId: invitation.id, 
+                                  action: "accept" 
+                                })}
+                                disabled={respondToInvitationMutation.isPending}
+                              >
+                                <Check className="h-3 w-3 mr-1" />
+                                Accept
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => respondToInvitationMutation.mutate({ 
+                                  invitationId: invitation.id, 
+                                  action: "decline" 
+                                })}
+                                disabled={respondToInvitationMutation.isPending}
+                              >
+                                <X className="h-3 w-3 mr-1" />
+                                Decline
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Current Communities Section */}
+                {communities && communities.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                      <Users className="h-3 w-3" />
+                      Your Communities ({communities.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {communities.map((community: any) => (
+                        <div key={community.id} className="bg-gray-800/40 rounded-lg p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-white text-sm">{community.name}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {community.user_role}
+                                </Badge>
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                {community.member_count} member{community.member_count !== 1 ? 's' : ''}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* No Data State */}
+                {(!pendingInvitations || pendingInvitations.length === 0) && 
+                 (!communities || communities.length === 0) && (
+                  <div className="text-center py-4">
+                    <UserPlus className="h-8 w-8 text-gray-500 mx-auto mb-2" />
+                    <div className="text-sm text-gray-400">No communities or invitations yet</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Join or create communities to collaborate with others
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
