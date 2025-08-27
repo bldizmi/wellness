@@ -202,6 +202,10 @@ export function CreateOrEditItemModal({
 
   // Update field helper
   const updateField = (field: string, value: any) => {
+    // DEBUG: Log field updates for time_of_day
+    if (field === "time_of_day") {
+      console.log("🔍 DEBUG: updateField time_of_day =", value);
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -610,6 +614,10 @@ export function CreateOrEditItemModal({
 
   // Handle save
   const handleSave = () => {
+    // DEBUG: Log form state before save
+    console.log("🔍 DEBUG: formData.time_of_day =", formData.time_of_day);
+    console.log("🔍 DEBUG: Full formData =", formData);
+
     if (!formData.title.trim()) {
       toast({
         title: "Title required",
@@ -655,6 +663,10 @@ export function CreateOrEditItemModal({
       completed_at:
         isEditing && markComplete ? new Date().toISOString() : undefined,
     };
+
+    // DEBUG: Log save data before sending
+    console.log("🔍 DEBUG: saveData.time_of_day =", saveData.time_of_day);
+    console.log("🔍 DEBUG: Full saveData =", saveData);
 
     saveMutation.mutate(saveData);
   };
