@@ -61,6 +61,7 @@ export function CreateOrEditItemModal({
     item_type: "task" as const,
     due_date: "",
     time_frame: undefined as number | undefined,
+    time_of_day: "anytime" as "morning" | "afternoon" | "anytime",
     verify_required: false,
     why_it_matters: "",
     recurrence_type: "daily" as const,
@@ -155,6 +156,7 @@ export function CreateOrEditItemModal({
         item_type: item.item_type || "task",
         due_date: item.due_date || "",
         time_frame: item.time_frame || undefined,
+        time_of_day: (item.time_of_day as "morning" | "afternoon" | "anytime") || "anytime",
         verify_required: !!item.verify_required,
         why_it_matters: item.why_it_matters || "",
         recurrence_type: item.recurrence_type || "daily",
@@ -179,6 +181,7 @@ export function CreateOrEditItemModal({
         item_type: "task",
         due_date: "",
         time_frame: undefined,
+        time_of_day: "anytime",
         verify_required: false,
         why_it_matters: "",
         recurrence_type: "daily",
@@ -1039,6 +1042,36 @@ export function CreateOrEditItemModal({
                     placeholder="30"
                     className="rounded-lg bg-gray-800 border-2 border-gray-600 focus:border-accent-primary text-white placeholder:text-gray-400"
                   />
+                </div>
+
+                {/* Time of Day Selection */}
+                <div>
+                  <Label className="text-sm text-gray-300 mb-2 block">
+                    Time of Day
+                  </Label>
+                  <div className="flex gap-2">
+                    {[
+                      { value: "morning", label: "Morning", icon: "🌅" },
+                      { value: "afternoon", label: "Afternoon", icon: "☀️" },
+                      { value: "anytime", label: "Anytime", icon: "⏰" }
+                    ].map((option) => (
+                      <Button
+                        key={option.value}
+                        type="button"
+                        variant={formData.time_of_day === option.value ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => updateField("time_of_day", option.value)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm ${
+                          formData.time_of_day === option.value
+                            ? "bg-accent-primary hover:bg-accent-hover text-white"
+                            : "border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                        }`}
+                      >
+                        <span>{option.icon}</span>
+                        <span>{option.label}</span>
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
