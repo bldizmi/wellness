@@ -163,6 +163,7 @@ export const items = pgTable(`${TABLE_PREFIX}items`, {
   by_month: text("by_month"), // Month name for yearly recurrence
   due_date: text("due_date"), // ISO date string
   time_frame: integer("time_frame"), // minutes
+  time_of_day: text("time_of_day").default("anytime"), // morning, afternoon, anytime
   verify_required: boolean("verify_required").default(false),
   why_it_matters: text("why_it_matters"),
   created_at: text("created_at").notNull(),
@@ -655,6 +656,7 @@ export const recurring_templates = pgTable(
     why_it_matters: text("why_it_matters"),
     verify_required: boolean("verify_required").default(false),
     time_frame: integer("time_frame"), // minutes
+    time_of_day: text("time_of_day").default("anytime"), // morning, afternoon, anytime
 
     // FAANG-Level Recurrence Design
     is_recurring: boolean("is_recurring").notNull().default(false), // false for one-time items
