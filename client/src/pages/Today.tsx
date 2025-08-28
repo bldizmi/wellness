@@ -262,7 +262,6 @@ export default function Today() {
 
   // Create a combined todayData object that matches the existing UI expectations
   const todayData = useMemo(() => {
-
     if (!personalProgressData && !sharedData) return null;
 
     // Personal progress data will be used for Habits and Focus tabs
@@ -382,7 +381,6 @@ export default function Today() {
       ...(data.projects || []),
     ];
 
-
     return items;
   }, [todayData]);
 
@@ -417,8 +415,6 @@ export default function Today() {
     }
     return allItems;
   }, [allItems, activeTab, user?.uid, sharedData]);
-
-
 
   //console.log("Filtered items:", filteredItems);
 
@@ -620,9 +616,13 @@ export default function Today() {
 
   // Group items by time categories using time_of_day field - exclude completed items
   const groupItemsByTime = (items: ItemData[]) => {
-    console.log(`🕒 TIME_OF_DAY FRONTEND DEBUG: Grouping ${items.length} items:`);
-    items.forEach(item => {
-      console.log(`  - "${item.title}": time_of_day="${item.time_of_day}" (type: ${typeof item.time_of_day}), completed: ${isItemCompleted(item)}`);
+    console.log(
+      `🕒 TIME_OF_DAY FRONTEND DEBUG: Grouping ${items.length} items:`,
+    );
+    items.forEach((item) => {
+      console.log(
+        `  - "${item.title}": time_of_day="${item.time_of_day}" (type: ${typeof item.time_of_day}), completed: ${isItemCompleted(item)}`,
+      );
     });
 
     // Filter out completed items so they only appear in Done section
@@ -649,12 +649,21 @@ export default function Today() {
       afternoon: afternoon.length,
       anytime: anytime.length,
     });
-    
+
     // DEBUG: Show which items went to each group
     console.log(`🕒 TIME_OF_DAY FRONTEND DEBUG: Group contents:`);
-    console.log('  Morning:', morning.map(i => `"${i.title}" (${i.time_of_day})`));
-    console.log('  Afternoon:', afternoon.map(i => `"${i.title}" (${i.time_of_day})`));
-    console.log('  Anytime:', anytime.map(i => `"${i.title}" (${i.time_of_day})`));
+    console.log(
+      "  Morning:",
+      morning.map((i) => `"${i.title}" (${i.time_of_day})`),
+    );
+    console.log(
+      "  Afternoon:",
+      afternoon.map((i) => `"${i.title}" (${i.time_of_day})`),
+    );
+    console.log(
+      "  Anytime:",
+      anytime.map((i) => `"${i.title}" (${i.time_of_day})`),
+    );
 
     return { morning, afternoon, anytime };
   };
@@ -772,7 +781,6 @@ export default function Today() {
 
   // Calculate streak for recurring items (habits, tasks, goals, projects)
   const calculateStreak = (item: ItemData) => {
-
     // Only calculate streaks for recurring items (habits, tasks, goals, projects)
     if (
       !item.is_recurring &&
@@ -786,7 +794,6 @@ export default function Today() {
       (item as any).is_completed_for_date === true ||
       item.status === "completed" ||
       item.status === "complete";
-
 
     if (isCompletedToday) {
       // For now, return 1 if completed today
@@ -813,7 +820,6 @@ export default function Today() {
         habit.status === "complete";
       return completed;
     });
-
 
     // Return the count of completed habits today
     // This will show 0 if no habits are completed, or the actual count
