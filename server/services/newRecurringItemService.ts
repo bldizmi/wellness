@@ -97,25 +97,45 @@ export async function generateInitialInstances(
   legacyItem: any,
   tx?: any,
 ): Promise<number> {
-  const today = new Date();
-  const endDate = new Date(today);
-  endDate.setDate(today.getDate() + 30); // Generate 30 days ahead
+  // CLIENT DATE CONTEXT: Use client_date if provided, otherwise fall back to server time
+  let startDate: Date;
+  let startDateStr: string;
+  
+  if (legacyItem.client_date) {
+    // Use client's local calendar date as the starting point
+    startDate = new Date(legacyItem.client_date + "T00:00:00"); // Client's "today" at midnight
+    startDateStr = legacyItem.client_date;
+    console.log(`🌍 CLIENT DATE: Using client's date "${startDateStr}" (timezone: ${legacyItem.client_timezone || 'unknown'}) for occurrence generation`);
+  } else {
+    // Fallback to server time (legacy behavior)
+    startDate = new Date();
+    startDateStr = startDate.toISOString().split("T")[0];
+    console.log(`⚠️ FALLBACK: No client_date provided, using server date "${startDateStr}"`);
+  }
+  
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + 30); // Generate 30 days ahead
 
   let instancesCreated = 0;
   const dbInstance = tx || db;
 
-  // FIX: Use consistent date formatting (YYYY-MM-DD) for occurrence generation
-  const todayStr = today.toISOString().split("T")[0];
   console.log(
-    `🔍 GENERATING INSTANCES: Starting from ${todayStr} for template ${templateId}`,
+    `🔍 GENERATING INSTANCES: Starting from ${startDateStr} for template ${templateId}`,
   );
 
-  // Generate instances based on recurrence pattern
-  const occurrences = generateOccurrences(legacyItem, today, endDate);
+  // Generate instances based on recurrence pattern using client date context
+  const occurrences = generateOccurrences(legacyItem, startDate, endDate);
 
   console.log(
     `📅 OCCURRENCES GENERATED: ${occurrences.length} occurrences: ${occurrences.slice(0, 5).join(", ")}${occurrences.length > 5 ? "..." : ""}`,
   );
+  
+  // DEBUG: Check if client's "today" is included in occurrences  
+  const includesClientToday = occurrences.includes(startDateStr);
+  console.log(`🌙 CLIENT DATE DEBUG: Does occurrences include client's today (${startDateStr})? ${includesClientToday}`);
+  if (!includesClientToday && occurrences.length > 0) {
+    console.log(`🌙 CLIENT DATE DEBUG: First occurrence is: ${occurrences[0]} (should be ${startDateStr} for same-day creation)`);
+  }
 
   for (const occurrenceDate of occurrences) {
     const instanceData = {
@@ -156,9 +176,18 @@ export async function createSingleInstance(
   );
   console.log(`🔍 DEBUG: legacyItem.display_id: ${legacyItem.display_id}`);
 
-  // Get target date - use due_date if available, otherwise today
-  const targetDate =
-    legacyItem.due_date || new Date().toISOString().split("T")[0];
+  // CLIENT DATE CONTEXT: Get target date with priority: due_date > client_date > server today
+  let targetDate: string;
+  if (legacyItem.due_date) {
+    targetDate = legacyItem.due_date;
+    console.log(`📅 SINGLE INSTANCE: Using due_date "${targetDate}"`);
+  } else if (legacyItem.client_date) {
+    targetDate = legacyItem.client_date;
+    console.log(`🌍 SINGLE INSTANCE: Using client_date "${targetDate}" (timezone: ${legacyItem.client_timezone || 'unknown'})`);
+  } else {
+    targetDate = new Date().toISOString().split("T")[0];
+    console.log(`⚠️ SINGLE INSTANCE: Fallback to server date "${targetDate}"`);
+  }
 
   const dbInstance = tx || db;
 

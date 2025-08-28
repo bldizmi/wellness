@@ -239,8 +239,13 @@ router.post("/", authMiddleware, async (req, res) => {
     console.log("Creating item with data:", req.body);
     console.log("Environment:", process.env.NODE_ENV);
     console.log("shared_with field received:", req.body.shared_with);
+    
+    // CLIENT DATE CONTEXT: Log received client date and timezone
+    if (req.body.client_date) {
+      console.log(`🌍 CLIENT DATE CONTEXT: Received client_date="${req.body.client_date}", timezone="${req.body.client_timezone}"`);
+    }
 
-    // Prepare data with proper handling for production
+    // Prepare data with proper handling for production + CLIENT DATE CONTEXT
     const requestData = {
       title: req.body.title,
       item_type: req.body.item_type,
@@ -258,6 +263,9 @@ router.post("/", authMiddleware, async (req, res) => {
         req.body.verify_required === "true",
       why_it_matters: req.body.why_it_matters || undefined,
       assigned_to: req.body.assigned_to || null,
+      // CLIENT DATE CONTEXT: Include client date and timezone
+      client_date: req.body.client_date || null,
+      client_timezone: req.body.client_timezone || null,
       shared_with:
         Array.isArray(req.body.shared_with) && req.body.shared_with.length > 0
           ? req.body.shared_with

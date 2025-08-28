@@ -636,6 +636,10 @@ export function CreateOrEditItemModal({
       return;
     }
 
+    // Get client's local date and timezone for server context
+    const clientDate = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+    const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
     const saveData = {
       ...formData,
       recurrence_type: isRecurring ? formData.recurrence_type : "once",
@@ -662,9 +666,13 @@ export function CreateOrEditItemModal({
       shared_with: selectedMembers,
       completed_at:
         isEditing && markComplete ? new Date().toISOString() : undefined,
+      // CLIENT DATE CONTEXT: Send user's local date for "starting today" logic
+      client_date: clientDate,
+      client_timezone: clientTimezone,
     };
 
-    // DEBUG: Log save data before sending
+    // DEBUG: Log save data before sending including client context
+    console.log(`🌍 CLIENT DATE DEBUG: Sending client context - Date: ${clientDate}, Timezone: ${clientTimezone}`);
     console.log("🔍 DEBUG: saveData.time_of_day =", saveData.time_of_day);
     console.log("🔍 DEBUG: Full saveData =", saveData);
 
