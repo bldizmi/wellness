@@ -20,9 +20,6 @@ const isDevelopment = process.env.NODE_ENV === "development";
  * This solves the issue where instances only exist for 30 days ahead
  */
 async function ensureInstancesExistForDates(userId: string, dates: string[]) {
-  console.log(
-    `🔄 ENSURING INSTANCES: Checking instances for ${dates.length} dates`,
-  );
 
   // Get all active templates for the user
   const templatesTable = isDevelopment
@@ -44,15 +41,8 @@ async function ensureInstancesExistForDates(userId: string, dates: string[]) {
   const templates = templatesResult.rows || [];
 
   if (templates.length === 0) {
-    console.log(
-      `✅ NO TEMPLATES: No recurring templates found for user ${userId}`,
-    );
     return;
   }
-
-  console.log(
-    `📋 TEMPLATES FOUND: ${templates.length} recurring templates for user ${userId}`,
-  );
 
   // For each date, check and create missing instances
   for (const date of dates) {
@@ -77,9 +67,6 @@ async function ensureInstancesExistForDates(userId: string, dates: string[]) {
     );
 
     if (missingTemplates.length > 0) {
-      console.log(
-        `🔧 GENERATING: Creating ${missingTemplates.length} missing instances for ${date}`,
-      );
 
       for (const template of missingTemplates) {
         // Check if this template should appear on this date based on recurrence pattern
@@ -97,9 +84,6 @@ async function ensureInstancesExistForDates(userId: string, dates: string[]) {
           };
 
           await db.insert(recurring_instances).values(instanceData);
-          console.log(
-            `✅ CREATED: Instance for template ${template.id} on ${date}`,
-          );
         }
       }
     }
@@ -222,9 +206,6 @@ export async function getPersonalProgressItemsNew(
   userId: string,
   targetDate: string,
 ) {
-  console.log(
-    `🔄 PHASE 3: Reading personal progress from new architecture for ${targetDate}`,
-  );
 
   // First, ensure instances exist for the requested date
   await ensureInstancesExistForDates(userId, [targetDate]);
@@ -285,22 +266,34 @@ export async function getPersonalProgressItemsNew(
 
   const result = await db.execute(instancesQuery);
   const instances = result.rows || [];
-  console.log(`🔍 PHASE 3: Instances_________:`, instances);
+  
+  // DEBUG: Check time_of_day field in raw database results
+  console.log(`🕒 TIME_OF_DAY DEBUG: Raw DB instances for ${targetDate}:`);
+  instances.forEach(instance => {
+    console.log(`  - ${instance.title}: time_of_day="${instance.time_of_day}" (type: ${typeof instance.time_of_day})`);
+  });
 
   console.log(
     `✅ PHASE 3: Found ${instances.length} instances for ${targetDate}`,
   );
 
   // Map instances to include is_completed_for_date field for frontend compatibility
-  const mapInstance = (instance: any) => ({
-    ...instance,
-    // CRITICAL: Frontend expects is_completed_for_date, not just status
-    // FIX: Database stores 'complete' not 'completed'!
-    is_completed_for_date:
-      instance.status === "complete" || instance.status === "completed",
-    // Also ensure recurrence_type is set for proper detection
-    recurrence_type: instance.recurrence_type || "daily", // Default for all recurring items from this table
-  });
+  const mapInstance = (instance: any) => {
+    const mappedInstance = {
+      ...instance,
+      // CRITICAL: Frontend expects is_completed_for_date, not just status
+      // FIX: Database stores 'complete' not 'completed'!
+      is_completed_for_date:
+        instance.status === "complete" || instance.status === "completed",
+      // Also ensure recurrence_type is set for proper detection
+      recurrence_type: instance.recurrence_type || "daily", // Default for all recurring items from this table
+    };
+    
+    // DEBUG: Check time_of_day field after mapping
+    console.log(`🕒 TIME_OF_DAY DEBUG: After mapping "${instance.title}": time_of_day="${mappedInstance.time_of_day}" (type: ${typeof mappedInstance.time_of_day})`);
+    
+    return mappedInstance;
+  };
 
   // Group by item type with proper field mapping
   const groupedItems = {
@@ -311,6 +304,14 @@ export async function getPersonalProgressItemsNew(
       .filter((i) => i.item_type === "project")
       .map(mapInstance),
   };
+
+  // DEBUG: Check time_of_day field in final grouped items
+  console.log(`🕒 TIME_OF_DAY DEBUG: Final grouped items time_of_day values:`);
+  ['tasks', 'habits', 'goals', 'projects'].forEach(type => {
+    groupedItems[type].forEach(item => {
+      console.log(`  - ${type}[${item.title}]: time_of_day="${item.time_of_day}" (type: ${typeof item.time_of_day})`);
+    });
+  });
 
   console.log(
     `📊 PHASE 3: Items breakdown - Tasks: ${groupedItems.tasks.length}, Habits: ${groupedItems.habits.length}, Goals: ${groupedItems.goals.length}, Projects: ${groupedItems.projects.length}`,

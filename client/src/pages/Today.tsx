@@ -262,9 +262,6 @@ export default function Today() {
 
   // Create a combined todayData object that matches the existing UI expectations
   const todayData = useMemo(() => {
-    // DEBUG: Log data after both queries are available
-    console.log("🔍 DEBUG: Personal progress data:", personalProgressData);
-    console.log("🔍 DEBUG: Shared data:", sharedData);
 
     if (!personalProgressData && !sharedData) return null;
 
@@ -385,17 +382,6 @@ export default function Today() {
       ...(data.projects || []),
     ];
 
-    console.log("🔍 DEBUG: All items breakdown:", {
-      totalItems: items.length,
-      tasks: data.tasks?.length || 0,
-      habits: data.habits?.length || 0,
-      goals: data.goals?.length || 0,
-      projects: data.projects?.length || 0,
-      itemsByType: items.reduce((acc, item) => {
-        acc[item.item_type] = (acc[item.item_type] || 0) + 1;
-        return acc;
-      }, {}),
-    });
 
     return items;
   }, [todayData]);
@@ -407,13 +393,6 @@ export default function Today() {
     if (activeTab === "habits") {
       // Show habits assigned to the user from personal progress data
       const habitsFromPersonal = personalProgressData?.habits || [];
-      console.log("🔍 DEBUG: Filtering for habits tab:", {
-        totalHabits: habitsFromPersonal.length,
-        habitDetails: habitsFromPersonal.map((h) => ({
-          title: h.title,
-          item_type: h.item_type,
-        })),
-      });
       return habitsFromPersonal.filter((item) => item.assigned_to === user.uid);
     }
     if (activeTab === "focus") {
@@ -423,13 +402,6 @@ export default function Today() {
         ...(personalProgressData?.goals || []),
         ...(personalProgressData?.projects || []),
       ];
-      console.log("🔍 DEBUG: Filtering for focus tab:", {
-        totalItems: focusItems.length,
-        itemDetails: focusItems.map((i) => ({
-          title: i.title,
-          item_type: i.item_type,
-        })),
-      });
       return focusItems.filter((item) => item.assigned_to === user.uid);
     }
     if (activeTab === "shared") {
@@ -446,23 +418,7 @@ export default function Today() {
     return allItems;
   }, [allItems, activeTab, user?.uid, sharedData]);
 
-  // DEBUG: Log filtered items after they're calculated
-  console.log("🔍 DEBUG: All filtered items:", filteredItems);
 
-  // Debug individual items to see their completion status
-  if (filteredItems.length > 0) {
-    console.log("🔍 DEBUG: First item details:", {
-      id: filteredItems[0].id,
-      title: filteredItems[0].title,
-      item_type: filteredItems[0].item_type,
-      is_recurring: filteredItems[0].is_recurring,
-      recurrence_type: filteredItems[0].recurrence_type,
-      is_completed_for_date: filteredItems[0].is_completed_for_date,
-      status: filteredItems[0].status,
-      completed_at: filteredItems[0].completed_at,
-      occurrence_date: filteredItems[0].occurrence_date,
-    });
-  }
 
   //console.log("Filtered items:", filteredItems);
 
@@ -664,14 +620,10 @@ export default function Today() {
 
   // Group items by time categories using time_of_day field - exclude completed items
   const groupItemsByTime = (items: ItemData[]) => {
-    console.log(
-      "🔍 DEBUG: Grouping items by time_of_day:",
-      items.map((item) => ({
-        title: item.title,
-        time_of_day: item.time_of_day,
-        completed: isItemCompleted(item),
-      })),
-    );
+    console.log(`🕒 TIME_OF_DAY FRONTEND DEBUG: Grouping ${items.length} items:`);
+    items.forEach(item => {
+      console.log(`  - "${item.title}": time_of_day="${item.time_of_day}" (type: ${typeof item.time_of_day}), completed: ${isItemCompleted(item)}`);
+    });
 
     // Filter out completed items so they only appear in Done section
     const incompleteItems = items.filter((item) => !isItemCompleted(item));
@@ -689,7 +641,7 @@ export default function Today() {
         item.time_of_day === "anytime",
     );
 
-    console.log("🔍 DEBUG: Grouped results (incomplete items only):", {
+    console.log(`🕒 TIME_OF_DAY FRONTEND DEBUG: Grouping results:`, {
       total_items: items.length,
       incomplete_items: incompleteItems.length,
       completed_items: items.length - incompleteItems.length,
@@ -697,6 +649,12 @@ export default function Today() {
       afternoon: afternoon.length,
       anytime: anytime.length,
     });
+    
+    // DEBUG: Show which items went to each group
+    console.log(`🕒 TIME_OF_DAY FRONTEND DEBUG: Group contents:`);
+    console.log('  Morning:', morning.map(i => `"${i.title}" (${i.time_of_day})`));
+    console.log('  Afternoon:', afternoon.map(i => `"${i.title}" (${i.time_of_day})`));
+    console.log('  Anytime:', anytime.map(i => `"${i.title}" (${i.time_of_day})`));
 
     return { morning, afternoon, anytime };
   };
@@ -814,21 +772,12 @@ export default function Today() {
 
   // Calculate streak for recurring items (habits, tasks, goals, projects)
   const calculateStreak = (item: ItemData) => {
-    console.log("🔥 DEBUG: Calculating streak for:", {
-      title: item.title,
-      item_type: item.item_type,
-      is_recurring: item.is_recurring,
-      recurrence_type: item.recurrence_type,
-      is_completed_for_date: (item as any).is_completed_for_date,
-      status: item.status,
-    });
 
     // Only calculate streaks for recurring items (habits, tasks, goals, projects)
     if (
       !item.is_recurring &&
       (!item.recurrence_type || item.recurrence_type === "once")
     ) {
-      console.log("🔥 DEBUG: Not recurring, returning 0");
       return 0;
     }
 
@@ -838,32 +787,19 @@ export default function Today() {
       item.status === "completed" ||
       item.status === "complete";
 
-    console.log("🔥 DEBUG: Completion check result:", {
-      is_completed_for_date: (item as any).is_completed_for_date,
-      status: item.status,
-      isCompletedToday: isCompletedToday,
-      item_type: item.item_type,
-    });
 
     if (isCompletedToday) {
-      console.log(
-        "🔥 DEBUG: Recurring item is completed today, showing streak of 1 (can be enhanced with historical data)",
-      );
       // For now, return 1 if completed today
       // This can be enhanced to calculate actual historical streaks
       return 1;
     }
 
-    console.log("🔥 DEBUG: Recurring item not completed today, returning 0");
     return 0;
   };
 
   // Calculate overall streak (for the yellow circle)
   const getOverallStreak = () => {
-    console.log("🏆 DEBUG: Calculating overall streak");
-
     if (!personalProgressData) {
-      console.log("🏆 DEBUG: No personal progress data, returning 0");
       return 0;
     }
 
@@ -875,20 +811,9 @@ export default function Today() {
         habit.is_completed_for_date === true ||
         habit.status === "completed" ||
         habit.status === "complete";
-      console.log("🏆 DEBUG: Habit completion check:", {
-        title: habit.title,
-        is_completed_for_date: habit.is_completed_for_date,
-        status: habit.status,
-        completed: completed,
-      });
       return completed;
     });
 
-    console.log("🏆 DEBUG: Overall streak calculation:", {
-      totalHabits: allHabits.length,
-      completedHabits: completedHabits.length,
-      completedHabitsCount: completedHabits.length,
-    });
 
     // Return the count of completed habits today
     // This will show 0 if no habits are completed, or the actual count
