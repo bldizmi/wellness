@@ -817,6 +817,7 @@ export default function Rewards() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingReward, setEditingReward] = useState<Reward | null>(null);
   const [viewingReward, setViewingReward] = useState<Reward | null>(null);
+  const [requiresApproval, setRequiresApproval] = useState(false);
   const [formData, setFormData] = useState<CreateRewardData>(() => {
     const today = new Date().toISOString().split("T")[0];
     const initialEndDate = (() => {
@@ -1058,6 +1059,7 @@ export default function Rewards() {
 
   const handleEditReward = (reward: Reward) => {
     setEditingReward(reward);
+    setRequiresApproval(reward.shared_with && reward.shared_with.length > 0);
     setFormData({
       title: reward.title,
       description: reward.description || "",
@@ -1076,6 +1078,7 @@ export default function Rewards() {
   const handleCloseModal = () => {
     setIsCreateModalOpen(false);
     setEditingReward(null);
+    setRequiresApproval(false);
     setFormData({
       title: "",
       description: "",
@@ -1328,24 +1331,87 @@ export default function Rewards() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-slate-700 rounded-lg">
-                  <div>
-                    <Label className="text-white font-medium">Requires Approval</Label>
-                    <p className="text-sm text-gray-400">Someone else must approve your reward</p>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-slate-700 rounded-lg">
+                    <div>
+                      <Label className="text-white font-medium">Requires Approval</Label>
+                      <p className="text-sm text-gray-400">Someone else must approve your reward</p>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={requiresApproval}
+                      onChange={(e) => {
+                        setRequiresApproval(e.target.checked);
+                        if (!e.target.checked) {
+                          // Clear approval settings when disabling
+                          setFormData((prev) => ({ ...prev, shared_with: [], community_id: "" }));
+                        }
+                      }}
+                      className="w-5 h-5 text-purple-600 bg-slate-600 border-slate-500 rounded focus:ring-purple-500"
+                    />
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={formData.shared_with.length > 0}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        // Set default approver (you'd implement proper selection logic)
-                        setFormData((prev) => ({ ...prev, shared_with: ["default-approver"] }));
-                      } else {
-                        setFormData((prev) => ({ ...prev, shared_with: [] }));
-                      }
-                    }}
-                    className="w-5 h-5 text-purple-600 bg-slate-600 border-slate-500 rounded focus:ring-purple-500"
-                  />
+
+                  {/* Community Selection - Show when approval is required */}
+                  {requiresApproval && (
+                    <div className="space-y-2">
+                      <Label className="text-white">Select Community for Approval</Label>
+                      <Select
+                        value={formData.community_id}
+                        onValueChange={(value) => {
+                          setFormData((prev) => ({ 
+                            ...prev, 
+                            community_id: value,
+                            shared_with: [] // Reset selected members when community changes
+                          }));
+                        }}
+                      >
+                        <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                          <SelectValue placeholder="Choose a community..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-700 border-slate-600">
+                          {(communities as any)?.communities?.length > 0 ? (
+                            (communities as any).communities.map((community: any) => (
+                              <SelectItem 
+                                key={community.id} 
+                                value={community.id}
+                                className="text-white focus:bg-slate-600"
+                              >
+                                {community.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="" disabled className="text-gray-400">
+                              No communities available
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Member Selection - Show when community is selected */}
+                  {formData.community_id && (
+                    <div className="space-y-2">
+                      <CommunityMemberSelector
+                        communityId={formData.community_id}
+                        selectedMembers={formData.shared_with}
+                        onMembersChange={(members) => {
+                          setFormData((prev) => ({ ...prev, shared_with: members }));
+                        }}
+                        userProfile={userProfile}
+                      />
+                      {formData.community_id && formData.shared_with.length === 0 && (
+                        <p className="text-sm text-yellow-400">
+                          ⚠️ Please select at least one community member to approve your reward
+                        </p>
+                      )}
+                      {requiresApproval && !(communities as any)?.communities?.length && (
+                        <p className="text-sm text-red-400">
+                          ⚠️ You need to join a community first to request approval from others
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2 justify-end pt-4">
@@ -1362,7 +1428,9 @@ export default function Rewards() {
                       createRewardMutation.isPending ||
                       updateRewardMutation.isPending ||
                       !formData.title ||
-                      !formData.target_metric
+                      !formData.target_metric ||
+                      // Validation: If approval is required but setup is incomplete, disable
+                      (requiresApproval && (!formData.community_id || formData.shared_with.length === 0))
                     }
                     className="bg-purple-600 hover:bg-purple-700 text-white"
                   >
