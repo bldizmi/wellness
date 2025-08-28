@@ -174,8 +174,15 @@ export default function Today() {
         return newSet;
       });
 
-      // Simple invalidation - let React Query handle the refetch
-      await queryClient.invalidateQueries();
+      // FIXED: Use specific cache key invalidation like other working mutations
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["/api/today/personal-progress", selectedDate],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["/api/today/shared", selectedDate],
+        }),
+      ]);
 
       // Show success feedback
       if (checked) {
