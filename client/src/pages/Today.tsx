@@ -466,6 +466,28 @@ export default function Today() {
 
   // Get tab-specific progress data for progress line
   const getTabProgress = (tabId: string) => {
+    // For Habits and Focus tabs, combine their progress
+    if (tabId === "habits" || tabId === "focus") {
+      const habitsStatus = getFilterStatus("habits");
+      const focusStatus = getFilterStatus("focus");
+      
+      const totalCompleted = (habitsStatus.totalCount - habitsStatus.incompleteCount) + 
+                            (focusStatus.totalCount - focusStatus.incompleteCount);
+      const totalItems = habitsStatus.totalCount + focusStatus.totalCount;
+      const combinedPercentage = totalItems > 0 ? (totalCompleted / totalItems) * 100 : 0;
+
+      // Use gradient that blends both tab colors for combined progress
+      const combinedColor = "from-blue-500 via-purple-500 to-purple-600";
+
+      return {
+        completed: totalCompleted,
+        total: totalItems,
+        percentage: combinedPercentage,
+        color: combinedColor,
+      };
+    }
+
+    // For Shared tab, keep separate progress
     const status = getFilterStatus(tabId);
     const completedCount = status.totalCount - status.incompleteCount;
     const progressPercentage =
@@ -473,8 +495,6 @@ export default function Today() {
 
     // Define colors for each tab
     const colors = {
-      habits: "from-blue-500 to-blue-600",
-      focus: "from-purple-500 to-purple-600",
       shared: "from-gray-500 to-gray-600",
     };
 
@@ -482,7 +502,7 @@ export default function Today() {
       completed: completedCount,
       total: status.totalCount,
       percentage: progressPercentage,
-      color: colors[tabId as keyof typeof colors] || colors.habits,
+      color: colors[tabId as keyof typeof colors] || "from-blue-500 to-blue-600",
     };
   };
 
