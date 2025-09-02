@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -106,6 +107,15 @@ export default function Insights() {
     gcTime: 10 * 60 * 1000 // 10 minutes
   });
 
+  // Add separate streak query using the same API as Header for real-time updates
+  const { data: streakData } = useQuery({
+    queryKey: ["/api/streak/overall"],
+    queryFn: async () => {
+      return await apiRequest("/api/streak/overall");
+    },
+    staleTime: 30000, // Same as Header (30 seconds)
+  });
+
   // Fetch user's communities for dropdown
   const { data: userCommunities } = useQuery<UserCommunitiesResponse>({
     queryKey: ['/api/community'],
@@ -198,7 +208,7 @@ export default function Insights() {
                     <div className="flex flex-col items-center space-y-3">
                       <Flame className="h-8 w-8 text-white" />
                       <div className="text-4xl font-bold text-white">
-                        {personalInsights.currentStreaks[0]?.count || 0}
+                        {streakData?.streak?.current_streak || 0}
                       </div>
                       <p className="text-white/90 font-medium">
                         Day Streak
@@ -283,7 +293,7 @@ export default function Insights() {
                     // Generate dynamic weekly data based on current metrics
                     const baseActivity = personalInsights.completionRate.thisWeek || 50;
                     const trustScore = personalInsights.trustScore || 50;
-                    const streak = personalInsights.currentStreaks[0]?.count || 0;
+                    const streak = streakData?.streak?.current_streak || 0;
                     
                     // Create stable variation patterns based on existing data
                     const weekData = [
