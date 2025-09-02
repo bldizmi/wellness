@@ -763,12 +763,53 @@ router.get("/:id/streak", async (req, res) => {
       return res.status(404).json({ error: "Item not found or unauthorized" });
     }
 
-    // Get item details for recurrence type
-    const [item] = await db
+    // HYBRID ITEM LOOKUP: Check both legacy items table and new recurring_instances architecture
+    let item = null;
+    let recurrenceType = 'once';
+
+    // First, try to find in legacy items table
+    const [legacyItem] = await db
       .select()
       .from(items)
       .where(eq(items.id, itemId))
       .limit(1);
+
+    if (legacyItem) {
+      item = legacyItem;
+      recurrenceType = legacyItem.recurrence_type || 'once';
+      console.log(`📝 STREAK API: Found legacy item ${itemId} with recurrence_type: ${recurrenceType}`);
+    } else {
+      // If not found in legacy table, check recurring_instances table
+      try {
+        const isDevelopment = process.env.NODE_ENV === "development";
+        const instancesTable = isDevelopment ? "dev_recurring_instances" : "recurring_instances";
+        const templatesTable = isDevelopment ? "dev_recurring_templates" : "recurring_templates";
+        
+        const instanceQuery = sql`
+          SELECT ri.*, rt.recurrence_type, rt.title, rt.item_type
+          FROM ${sql.raw(instancesTable)} ri
+          JOIN ${sql.raw(templatesTable)} rt ON ri.template_id = rt.id
+          WHERE ri.id = ${itemId}
+          LIMIT 1
+        `;
+        const instanceResult = await db.execute(instanceQuery);
+        
+        if (instanceResult.rows.length > 0) {
+          const instanceData = instanceResult.rows[0];
+          // Convert instance to item-like structure
+          item = {
+            id: instanceData.id,
+            title: instanceData.title,
+            item_type: instanceData.item_type,
+            recurrence_type: instanceData.recurrence_type,
+          };
+          recurrenceType = instanceData.recurrence_type || 'daily';
+          console.log(`📝 STREAK API: Found recurring instance ${itemId} with recurrence_type: ${recurrenceType}`);
+        }
+      } catch (architectureError) {
+        console.error(`⚠️ STREAK API ARCHITECTURE ERROR: ${(architectureError as Error).message}`);
+      }
+    }
 
     if (!item) {
       return res.status(404).json({ error: "Item not found" });
@@ -778,7 +819,7 @@ router.get("/:id/streak", async (req, res) => {
     const streak = await calculateCompletionStreak(
       itemId,
       user_id,
-      item.recurrence_type || "once",
+      recurrenceType,
     );
 
     res.json({

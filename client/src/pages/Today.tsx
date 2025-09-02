@@ -837,53 +837,27 @@ export default function Today() {
       enabled: !!(itemId && recurrenceType && recurrenceType !== 'once'),
     });
 
-    // Debug logging
-    console.log(`🔍 StreakDisplay Debug:`, {
-      itemId,
-      recurrenceType, 
-      isLoading,
-      error: error?.message,
-      streakData,
-      hasStreak: !!streakData?.streak,
-      currentStreak: streakData?.streak?.current_streak
-    });
-
-    if (isLoading) {
-      return (
-        <div className="flex items-center gap-1">
-          <span className="text-gray-400">🔥</span>
-          <span className="text-gray-400 font-medium text-xs">Loading...</span>
-        </div>
-      );
+    if (isLoading || !streakData?.streak) {
+      return null;
     }
 
     if (error) {
       console.error('Streak API Error:', error);
-      return (
-        <div className="flex items-center gap-1">
-          <span className="text-red-400">❌</span>
-          <span className="text-red-400 font-medium text-xs">Error</span>
-        </div>
-      );
-    }
-
-    if (!streakData?.streak) {
-      return (
-        <div className="flex items-center gap-1">
-          <span className="text-yellow-400">⚠️</span>
-          <span className="text-yellow-400 font-medium text-xs">No data</span>
-        </div>
-      );
+      return null;
     }
 
     const streak = streakData.streak;
     
-    // Show streak even if it's 0 for debugging
+    // Don't show if no current streak
+    if (streak.current_streak === 0) {
+      return null;
+    }
+
     return (
       <div className="flex items-center gap-1">
         <span className="text-orange-500">🔥</span>
         <span className="text-orange-500 font-medium">
-          {streak.current_streak || 0} day streak
+          {streak.current_streak} day streak
         </span>
       </div>
     );
