@@ -29,7 +29,7 @@ export default function Plans() {
   const [sharingItem, setSharingItem] = useState(null);
   const [selectedCommunity, setSelectedCommunity] = useState("");
   const [shareVisibility, setShareVisibility] = useState("community");
-  const [filter, setFilter] = useState('one-time'); // 'one-time', 'recurring'
+  const [filter, setFilter] = useState('all'); // 'all', 'one-time', 'recurring'
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [itemTypeFilter, setItemTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('open'); // 'open', 'completed'
@@ -170,6 +170,19 @@ export default function Plans() {
     ...(data.projects || [])
   ] : [];
 
+  // Debug logging
+  console.log('Plans Page Debug:', {
+    rawData: data,
+    extractedItems: items,
+    itemCount: items.length,
+    itemsByType: {
+      tasks: data?.tasks?.length || 0,
+      habits: data?.habits?.length || 0,
+      goals: data?.goals?.length || 0,
+      projects: data?.projects?.length || 0
+    }
+  });
+
   // Calculate overdue items (Tasks, Goals, Projects only - not Habits)
   const overdueItems = useMemo(() => {
     return items.filter(isItemOverdue);
@@ -192,6 +205,7 @@ export default function Plans() {
     } else if (filter === 'recurring') {
       filtered = filtered.filter((item: any) => item.recurrence_type && item.recurrence_type !== 'once');
     }
+    // 'all' filter - no additional filtering needed, show all items
 
     // Then apply type filters (stacked on top of recurrence filter)
     if (itemTypeFilter === 'shared') {
@@ -221,6 +235,26 @@ export default function Plans() {
     } else if (statusFilter === 'open') {
       filtered = filtered.filter((item: any) => !isItemCompleted(item));
     }
+
+    // Debug filtered results
+    console.log('Filtering Debug:', {
+      originalItems: items.length,
+      afterRecurrenceFilter: filtered.length,
+      filters: {
+        filter,
+        itemTypeFilter,
+        statusFilter,
+        userId: user?.uid
+      },
+      filteredItems: filtered.map(item => ({
+        id: item.id,
+        title: item.title,
+        item_type: item.item_type,
+        assigned_to: item.assigned_to,
+        created_by: item.created_by,
+        recurrence_type: item.recurrence_type
+      }))
+    });
 
     return filtered;
   }, [items, filter, itemTypeFilter, statusFilter, user?.uid]);
