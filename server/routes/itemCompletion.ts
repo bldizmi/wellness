@@ -236,6 +236,17 @@ router.post("/:id/complete", async (req, res) => {
       new Date().toISOString().split("T")[0];
     const today = new Date().toISOString().split("T")[0];
 
+    // Update user's overall streak FIRST for item-based tracking
+    // This ensures streak increments on every completion attempt, even if item already completed
+    try {
+      console.log(`🔥 STREAK UPDATE: Updating streak for user ${user_id} on date ${finalCompletionDate}`);
+      await updateUserStreak(user_id, finalCompletionDate);
+      console.log(`🔥 STREAK SUCCESS: Streak updated successfully for user ${user_id}`);
+    } catch (streakError) {
+      // Don't fail the entire completion if streak update fails
+      console.error(`⚠️ STREAK ERROR: Failed to update streak for user ${user_id}:`, streakError);
+    }
+
     // Check if completing early (for next occurrence only)
     let isEarlyCompletion = false;
     if (date_override && date_override !== today) {
@@ -520,15 +531,8 @@ router.post("/:id/complete", async (req, res) => {
       }
     }
 
-    // Update user's overall streak after successful completion
-    try {
-      console.log(`🔥 STREAK UPDATE: Updating streak for user ${user_id} on date ${finalCompletionDate}`);
-      await updateUserStreak(user_id, finalCompletionDate);
-      console.log(`🔥 STREAK SUCCESS: Streak updated successfully for user ${user_id}`);
-    } catch (streakError) {
-      // Don't fail the entire completion if streak update fails
-      console.error(`⚠️ STREAK ERROR: Failed to update streak for user ${user_id}:`, streakError);
-    }
+    // Streak update already happened at the beginning of the function
+    // No need to update again here
 
     const message = isEarlyCompletion
       ? `Item completed for ${finalCompletionDate} (early completion)`
