@@ -105,58 +105,16 @@ export async function calculateCompletionStreak(
   userId: string,
   recurrenceType: string
 ): Promise<CompletionStreak> {
-  // First, check if this is a recurring item by looking for its template_id
-  let templateId = null;
-  try {
-    const isDevelopment = process.env.NODE_ENV === "development";
-    const instancesTable = isDevelopment ? "dev_recurring_instances" : "recurring_instances";
-    
-    const instanceQuery = sql`
-      SELECT template_id FROM ${sql.raw(instancesTable)} 
-      WHERE id = ${itemId}
-      LIMIT 1
-    `;
-    const instanceResult = await db.execute(instanceQuery);
-    
-    if (instanceResult.rows.length > 0 && instanceResult.rows[0].template_id) {
-      templateId = instanceResult.rows[0].template_id;
-    }
-  } catch (error) {
-    // If we can't find template_id, treat as legacy item
-    console.log(`Could not find template_id for item ${itemId}, treating as legacy item`);
-  }
-
-  // Query completions: use template_id for recurring items, item_id for legacy items
-  let completions;
-  if (templateId && recurrenceType !== 'once') {
-    // For recurring items, query by template_id to get ALL completions across occurrences
-    completions = await db
-      .select()
-      .from(item_completions)
-      .where(
-        and(
-          eq(item_completions.template_id, templateId),
-          eq(item_completions.user_id, userId)
-        )
+  const completions = await db
+    .select()
+    .from(item_completions)
+    .where(
+      and(
+        eq(item_completions.item_id, itemId),
+        eq(item_completions.user_id, userId)
       )
-      .orderBy(item_completions.completion_date);
-    
-    console.log(`Streak calculation for recurring item: found ${completions.length} completions for template_id ${templateId}`);
-  } else {
-    // For legacy/one-time items, query by item_id
-    completions = await db
-      .select()
-      .from(item_completions)
-      .where(
-        and(
-          eq(item_completions.item_id, itemId),
-          eq(item_completions.user_id, userId)
-        )
-      )
-      .orderBy(item_completions.completion_date);
-    
-    console.log(`Streak calculation for legacy item: found ${completions.length} completions for item_id ${itemId}`);
-  }
+    )
+    .orderBy(item_completions.completion_date);
 
   if (completions.length === 0) {
     return {
