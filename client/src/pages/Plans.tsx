@@ -105,8 +105,11 @@ export default function Plans() {
   };
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['items'],
-    queryFn: () => apiRequest('/api/items'),
+    queryKey: ['plans-items'],
+    queryFn: () => {
+      const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+      return apiRequest(`/api/today/personal-progress?date=${today}`);
+    },
     staleTime: 0,
     refetchInterval: 1000
   });
@@ -159,7 +162,13 @@ export default function Plans() {
 
 
 
-  const items = data?.items || [];
+  // Extract items from grouped format returned by personal-progress endpoint
+  const items = data ? [
+    ...(data.tasks || []),
+    ...(data.habits || []),
+    ...(data.goals || []),
+    ...(data.projects || [])
+  ] : [];
 
   // Calculate overdue items (Tasks, Goals, Projects only - not Habits)
   const overdueItems = useMemo(() => {
