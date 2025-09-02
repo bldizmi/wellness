@@ -496,7 +496,7 @@ export function CreateOrEditItemModal({
         }
 
         // For recurring items, add next 7 days to ensure calendar updates
-        if (item?.recurrence_type && item.recurrence_type !== "once") {
+        if (item?.template_id) {
           for (let i = 0; i < 7; i++) {
             const futureDate = new Date(today);
             futureDate.setDate(today.getDate() + i);
@@ -1368,16 +1368,16 @@ export function CreateOrEditItemModal({
                     <AlertDialogHeader>
                       <AlertDialogTitle className="flex items-center gap-2 text-white">
                         <Trash2 className="h-5 w-5 text-red-400" />
-                        {item?.recurrence_type && item.recurrence_type !== "once" 
+                        {item?.template_id 
                           ? "Delete Recurring Item" 
                           : "Delete Item"
                         }
                       </AlertDialogTitle>
                       <AlertDialogDescription className="text-gray-300">
-                        {item?.recurrence_type && item.recurrence_type !== "once" ? (
+                        {item?.template_id ? (
                           <div className="space-y-4">
                             <p>
-                              This is a <strong>{item.recurrence_type}</strong> recurring item. Choose how to delete "{item?.title || "this item"}":
+                              This is a recurring item. Choose how to delete "{item?.title || "this item"}":
                             </p>
                             <RadioGroup 
                               value={deletionStrategy} 
