@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { item_completions, items } from '@shared/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 
 export interface CompletionStreak {

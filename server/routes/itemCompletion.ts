@@ -10,11 +10,10 @@ import {
 import { userHasItemAccess } from "../services/itemVisibilityService";
 import { cacheService } from "../services/cacheService";
 import { db } from "../db";
-import { items, recurring_instances, item_completions } from "@shared/schema";
+import { items, recurring_instances } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { createLogger } from "../services/logger";
 import { updateUserStreak } from "../services/streakService";
-import { nanoid } from "nanoid";
 
 /**
  * PHASE 1: Feature flag for targeted cache invalidation
@@ -377,28 +376,6 @@ router.post("/:id/complete", async (req, res) => {
         await db.execute(updateQuery);
         
         console.log(`✅ UPDATED: Instance ${itemId} marked as complete`);
-        
-        // IMPORTANT: Also store in item_completions table with template_id for streak tracking
-        try {
-          const completionId = nanoid();
-          await db.insert(item_completions).values({
-            id: completionId,
-            item_id: itemId,
-            template_id: instanceItem.template_id || null, // Store template_id for streak tracking (nullable)
-            user_id: user_id,
-            completion_date: finalCompletionDate,
-            completed_at: new Date().toISOString(),
-            verification_data: verification_data || null,
-            created_at: new Date().toISOString(),
-          });
-          
-          console.log(`📊 STREAK: Stored completion with template_id ${instanceItem.template_id} for streak tracking`);
-        } catch (completionError) {
-          // Don't fail the entire completion if streak tracking fails
-          console.error(`⚠️ STREAK WARNING: Failed to store completion for streak tracking:`, completionError);
-          console.error(`Details: item_id=${itemId}, template_id=${instanceItem.template_id}, user_id=${user_id}`);
-          // Continue with the completion process
-        }
         
         console.log(
           `✅ UPDATED: Instance ${itemId} with occurrence_date=${instanceItem.occurrence_date} now has status='complete'`,
@@ -763,53 +740,12 @@ router.get("/:id/streak", async (req, res) => {
       return res.status(404).json({ error: "Item not found or unauthorized" });
     }
 
-    // HYBRID ITEM LOOKUP: Check both legacy items table and new recurring_instances architecture
-    let item = null;
-    let recurrenceType = 'once';
-
-    // First, try to find in legacy items table
-    const [legacyItem] = await db
+    // Get item details for recurrence type
+    const [item] = await db
       .select()
       .from(items)
       .where(eq(items.id, itemId))
       .limit(1);
-
-    if (legacyItem) {
-      item = legacyItem;
-      recurrenceType = legacyItem.recurrence_type || 'once';
-      console.log(`📝 STREAK API: Found legacy item ${itemId} with recurrence_type: ${recurrenceType}`);
-    } else {
-      // If not found in legacy table, check recurring_instances table
-      try {
-        const isDevelopment = process.env.NODE_ENV === "development";
-        const instancesTable = isDevelopment ? "dev_recurring_instances" : "recurring_instances";
-        const templatesTable = isDevelopment ? "dev_recurring_templates" : "recurring_templates";
-        
-        const instanceQuery = sql`
-          SELECT ri.*, rt.recurrence_type, rt.title, rt.item_type
-          FROM ${sql.raw(instancesTable)} ri
-          JOIN ${sql.raw(templatesTable)} rt ON ri.template_id = rt.id
-          WHERE ri.id = ${itemId}
-          LIMIT 1
-        `;
-        const instanceResult = await db.execute(instanceQuery);
-        
-        if (instanceResult.rows.length > 0) {
-          const instanceData = instanceResult.rows[0];
-          // Convert instance to item-like structure
-          item = {
-            id: instanceData.id,
-            title: instanceData.title,
-            item_type: instanceData.item_type,
-            recurrence_type: instanceData.recurrence_type,
-          };
-          recurrenceType = instanceData.recurrence_type || 'daily';
-          console.log(`📝 STREAK API: Found recurring instance ${itemId} with recurrence_type: ${recurrenceType}`);
-        }
-      } catch (architectureError) {
-        console.error(`⚠️ STREAK API ARCHITECTURE ERROR: ${(architectureError as Error).message}`);
-      }
-    }
 
     if (!item) {
       return res.status(404).json({ error: "Item not found" });
@@ -819,7 +755,7 @@ router.get("/:id/streak", async (req, res) => {
     const streak = await calculateCompletionStreak(
       itemId,
       user_id,
-      recurrenceType,
+      item.recurrence_type || "once",
     );
 
     res.json({

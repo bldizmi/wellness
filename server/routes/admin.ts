@@ -4,7 +4,6 @@ import {
   users,
   updateUserSchema,
   createUserAdminSchema,
-  system_settings,
   type User,
   type UpdateUser,
   type CreateUserAdmin,
@@ -317,109 +316,6 @@ router.get("/users/:id", requireAdmin, async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching user:", error);
     res.status(500).json({ error: "Failed to fetch user" });
-  }
-});
-
-/**
- * Get AI verification prompt (admin only)
- * GET /api/admin/ai-prompt
- */
-router.get("/ai-prompt", requireAdmin, async (req: Request, res: Response) => {
-  try {
-    console.log("🔍 ADMIN: Fetching AI verification prompt");
-    
-    // Get the AI prompt from system settings
-    const [promptSetting] = await db
-      .select()
-      .from(system_settings)
-      .where(eq(system_settings.setting_key, 'ai_verification_prompt'))
-      .limit(1);
-    
-    if (promptSetting) {
-      res.json({ 
-        success: true, 
-        prompt: promptSetting.setting_value 
-      });
-    } else {
-      // Return default prompt if none exists
-      const defaultPrompt = `You are evaluating if a task has been completed based on a photo.
-Task: {task_title}
-
-Analyze the image and determine if the task has been completed:
-- For cleaning tasks: Look for clean, organized spaces
-- For exercise/outdoor tasks: Be lenient, any relevant activity counts
-- For work/study tasks: Look for evidence of completed work
-
-Respond with:
-- "complete" if the task appears done
-- "not_complete" if clearly not done
-- "unclear" if you cannot determine
-
-Provide brief, encouraging feedback.`;
-      
-      res.json({ 
-        success: true, 
-        prompt: defaultPrompt 
-      });
-    }
-  } catch (error) {
-    console.error("Failed to fetch AI prompt:", error);
-    res.status(500).json({ error: "Failed to fetch AI prompt" });
-  }
-});
-
-/**
- * Update AI verification prompt (admin only)
- * PUT /api/admin/ai-prompt
- */
-router.put("/ai-prompt", requireAdmin, async (req: Request, res: Response) => {
-  try {
-    const { prompt } = req.body;
-    
-    if (!prompt || typeof prompt !== 'string') {
-      return res.status(400).json({ error: "Valid prompt required" });
-    }
-    
-    console.log("📝 ADMIN: Updating AI verification prompt");
-    
-    // Check if setting exists
-    const [existingSetting] = await db
-      .select()
-      .from(system_settings)
-      .where(eq(system_settings.setting_key, 'ai_verification_prompt'))
-      .limit(1);
-    
-    if (existingSetting) {
-      // Update existing setting
-      await db
-        .update(system_settings)
-        .set({
-          setting_value: prompt,
-          updated_at: new Date().toISOString()
-        })
-        .where(eq(system_settings.setting_key, 'ai_verification_prompt'));
-    } else {
-      // Create new setting
-      await db
-        .insert(system_settings)
-        .values({
-          id: `ai_prompt_${Date.now()}`,
-          setting_key: 'ai_verification_prompt',
-          setting_value: prompt,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-    }
-    
-    console.log("✅ ADMIN: AI verification prompt updated successfully");
-    
-    res.json({ 
-      success: true, 
-      message: "AI prompt updated successfully" 
-    });
-  } catch (error) {
-    console.error("Failed to update AI prompt:", error);
-    res.status(500).json({ error: "Failed to update AI prompt" });
   }
 });
 

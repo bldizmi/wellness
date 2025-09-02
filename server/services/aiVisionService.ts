@@ -1,7 +1,4 @@
 import OpenAI from "openai";
-import { db } from "../db";
-import { system_settings } from "@shared/schema";
-import { eq } from "drizzle-orm";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -20,43 +17,6 @@ export interface VerificationResult {
  * @param userTimezone User's timezone for date context
  * @returns AI verification result and feedback
  */
-/**
- * Get the AI verification prompt from database or use default
- */
-async function getAIPrompt(): Promise<string> {
-  try {
-    const [promptSetting] = await db
-      .select()
-      .from(system_settings)
-      .where(eq(system_settings.setting_key, 'ai_verification_prompt'))
-      .limit(1);
-    
-    if (promptSetting?.setting_value) {
-      return promptSetting.setting_value;
-    }
-  } catch (error) {
-    console.error("Failed to fetch AI prompt from database:", error);
-  }
-  
-  // Return default prompt if database fetch fails or no prompt exists
-  return `You are an AI assistant helping users verify task completion through photos.
-
-Task to verify: {task_title}
-
-Analyze the image(s) and determine if the task has been completed:
-- For cleaning tasks: Look for clean, organized spaces
-- For exercise/outdoor tasks: Be lenient, any relevant activity counts
-- For work/study tasks: Look for evidence of completed work
-- For pill/medication tasks: Check if compartments are empty
-
-Respond with:
-- "complete" if the task appears done
-- "not_complete" if clearly not done
-- "unclear" if you cannot determine
-
-Provide brief, encouraging feedback.`;
-}
-
 export const verifyTaskWithPhoto = async (
   taskTitle: string,
   base64Images: Array<{ data: string; mimetype: string }>,
@@ -64,11 +24,6 @@ export const verifyTaskWithPhoto = async (
   userTimezone: string = "UTC",
 ): Promise<VerificationResult> => {
   try {
-    // Get custom prompt from database
-    const customPrompt = await getAIPrompt();
-    
-    // Replace {task_title} placeholder with actual task title
-    const processedPrompt = customPrompt.replace(/\{task_title\}/g, taskTitle);
     // Prepare image content for the AI
     const imageContents = base64Images.map((image, index) => ({
       type: "image_url" as const,
@@ -88,8 +43,9 @@ export const verifyTaskWithPhoto = async (
       messages: [
         {
           role: "system",
-          content: `${processedPrompt}
+          content: `You are an AI assistant helping users verify task completion through multiple photos. Analyze all images carefully together to determine completion status.
 
+Task to verify: "${taskTitle}"
 Current date: ${new Date().toLocaleDateString("en-US", {
             weekday: "long",
             year: "numeric",
@@ -115,19 +71,28 @@ Result: ${attempt.ai_verification_result}
     : ""
 }
 
-${
-  base64Images.length > 1
-    ? `Multiple images provided (${base64Images.length} total):
+Critical instructions for multiple images:
 • Analyze ALL images together as evidence
-• Look for consistency between images
-• Different angles might show different aspects of completion`
-    : "Single image provided for verification"
-}
+• Look for consistency or contradictions between images
+• Different angles might show different aspects of completion
+• Some images might show setup while others show results
+• For pill organizers: Check if ALL images show empty compartments for today
+• For cleaning tasks: Look for before/after evidence across images
+• For exercise: Multiple angles might better show completion
+• If any image clearly shows incompletion, the overall result should be "not_complete"
+• Only mark "complete" if ALL images collectively show clear evidence
+
+Analysis approach:
+1. Examine each image individually first
+2. Then look for relationships between images
+3. Note any inconsistencies
+4. Determine if images collectively prove completion
+5. Consider if additional angles would help verification
 
 Respond in JSON format with:
 {
   "ai_verification_result": "complete" | "not_complete" | "unclear",
-  "ai_feedback": "Your encouraging feedback here"
+  "ai_feedback": "• Image 1 shows...\n• Image 2 shows...\n• Combined they show..."
 }`,
         },
         {

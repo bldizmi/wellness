@@ -138,52 +138,30 @@ export async function userHasItemAccess(
 
   try {
     // PHASE 1: Check legacy items table first (preserves existing behavior)
-    // First check basic visibility (created_by or assigned_to)
     const legacyVisibilityFilter = and(
       eq(items.id, itemId),
       buildItemVisibilityFilter(userId, userCommunityIds),
     );
 
+    // const [legacyItem] = await db
+    //   .select()
+    //   .from(items)
+    //   .where(legacyVisibilityFilter);
     const [legacyItem] = await db
       .select({
         id: items.id,
         created_by: items.created_by,
         assigned_to: items.assigned_to,
         shared_with: items.shared_with,
-        community_id: items.community_id,
       })
       .from(items)
       .where(legacyVisibilityFilter);
 
     if (legacyItem) {
       console.log(
-        `✅ HYBRID ACCESS: Found item ${itemId} in legacy architecture (owner/assigned)`,
+        `✅ HYBRID ACCESS: Found item ${itemId} in legacy architecture`,
       );
       return true;
-    }
-
-    // Also check if user is in shared_with array (for shared items)
-    const [sharedItem] = await db
-      .select({
-        id: items.id,
-        shared_with: items.shared_with,
-        community_id: items.community_id,
-      })
-      .from(items)
-      .where(eq(items.id, itemId));
-
-    if (sharedItem && sharedItem.shared_with && Array.isArray(sharedItem.shared_with)) {
-      // Check if user is in shared_with array and community access
-      const hasSharedAccess = sharedItem.shared_with.includes(userId);
-      const hasCommunityAccess = !sharedItem.community_id || 
-        userCommunityIds.includes(sharedItem.community_id);
-      
-      if (hasSharedAccess && hasCommunityAccess) {
-        console.log(
-          `✅ HYBRID ACCESS: User ${userId} has shared access to item ${itemId}`,
-        );
-        return true;
-      }
     }
 
     // PHASE 2: Check new recurring_instances architecture (BOTH production and development tables)

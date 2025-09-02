@@ -80,7 +80,6 @@ export function CreateOrEditItemModal({
   const [markComplete, setMarkComplete] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteOption, setDeleteOption] = useState<"all" | "future">("future");
 
   // Type options
   const typeOptions = [
@@ -420,14 +419,14 @@ export function CreateOrEditItemModal({
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: async ({ deleteOption }: { deleteOption?: "all" | "future" } = {}) => {
+    mutationFn: async () => {
       if (!item?.id) {
         console.error("❌ DELETE ERROR: No item ID provided");
         throw new Error("No item ID");
       }
 
       console.log(
-        `🗑️ FRONTEND DELETE START: Deleting item "${item.id}" (${item.display_id}) with option: ${deleteOption || 'single'}`,
+        `🗑️ FRONTEND DELETE START: Deleting item "${item.id}" (${item.display_id})`,
       );
 
       try {
@@ -687,12 +686,7 @@ export function CreateOrEditItemModal({
 
   // Confirm delete - called when user confirms in dialog
   const confirmDelete = () => {
-    // For recurring items, pass the delete option
-    if (item?.recurrence_type && item.recurrence_type !== "once") {
-      deleteMutation.mutate({ deleteOption });
-    } else {
-      deleteMutation.mutate();
-    }
+    deleteMutation.mutate();
   };
 
   return (
@@ -1369,46 +1363,12 @@ export function CreateOrEditItemModal({
                     <AlertDialogHeader>
                       <AlertDialogTitle className="flex items-center gap-2 text-white">
                         <Trash2 className="h-5 w-5 text-red-400" />
-                        Delete {item?.recurrence_type && item.recurrence_type !== "once" ? "Recurring " : ""}Item
+                        Delete Item
                       </AlertDialogTitle>
                       <AlertDialogDescription className="text-gray-300">
-                        {item?.recurrence_type && item.recurrence_type !== "once" ? (
-                          <div className="space-y-3">
-                            <p>This is a recurring item. How would you like to delete it?</p>
-                            <div className="space-y-2">
-                              <label className="flex items-start gap-2 cursor-pointer">
-                                <input
-                                  type="radio"
-                                  name="deleteOption"
-                                  value="future"
-                                  checked={deleteOption === "future"}
-                                  onChange={(e) => setDeleteOption(e.target.value as "future")}
-                                  className="mt-1"
-                                />
-                                <div>
-                                  <div className="font-medium">Delete future occurrences only</div>
-                                  <div className="text-xs text-gray-400">Past completed items will remain for reporting</div>
-                                </div>
-                              </label>
-                              <label className="flex items-start gap-2 cursor-pointer">
-                                <input
-                                  type="radio"
-                                  name="deleteOption"
-                                  value="all"
-                                  checked={deleteOption === "all"}
-                                  onChange={(e) => setDeleteOption(e.target.value as "all")}
-                                  className="mt-1"
-                                />
-                                <div>
-                                  <div className="font-medium">Delete all occurrences</div>
-                                  <div className="text-xs text-gray-400">This will affect insights, rewards, and history</div>
-                                </div>
-                              </label>
-                            </div>
-                          </div>
-                        ) : (
-                          <>Are you sure you want to delete "{item?.title || "this item"}"? This action cannot be undone.</>
-                        )}
+                        Are you sure you want to delete "
+                        {item?.title || "this item"}"? This action cannot be
+                        undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
