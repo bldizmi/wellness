@@ -599,18 +599,10 @@ export default function Today() {
 
             {/* Metadata row */}
             <div className="flex items-center gap-3 text-xs">
-              {/* Streak indicator - calculate for all recurring items */}
-              {(() => {
-                const streakCount = calculateStreak(item);
-                return streakCount > 0 ? (
-                  <div className="flex items-center gap-1">
-                    <span className="text-orange-500">🔥</span>
-                    <span className="text-orange-500 font-medium">
-                      {streakCount} day streak
-                    </span>
-                  </div>
-                ) : null;
-              })()}
+              {/* Streak indicator - using proper API-based streak calculation */}
+              {item.recurrence_type && item.recurrence_type !== 'once' && (
+                <StreakDisplay itemId={item.id} recurrenceType={item.recurrence_type} />
+              )}
 
               {/* Photo verification indicator */}
               {item.verify_required && (
@@ -838,29 +830,32 @@ export default function Today() {
     );
   };
 
-  // Calculate streak for recurring items (habits, tasks, goals, projects)
-  const calculateStreak = (item: ItemData) => {
-    // Only calculate streaks for recurring items (habits, tasks, goals, projects)
-    if (
-      !item.is_recurring &&
-      (!item.recurrence_type || item.recurrence_type === "once")
-    ) {
-      return 0;
+  // Streak display component that matches original styling but uses proper API
+  const StreakDisplay = ({ itemId, recurrenceType }: { itemId: string, recurrenceType: string }) => {
+    const { data: streakData, isLoading } = useQuery({
+      queryKey: [`/api/item/${itemId}/streak`],
+      enabled: !!(itemId && recurrenceType && recurrenceType !== 'once'),
+    });
+
+    if (isLoading || !streakData?.streak) {
+      return null;
     }
 
-    // Check if this item is completed today
-    const isCompletedToday =
-      (item as any).is_completed_for_date === true ||
-      item.status === "completed" ||
-      item.status === "complete";
-
-    if (isCompletedToday) {
-      // For now, return 1 if completed today
-      // This can be enhanced to calculate actual historical streaks
-      return 1;
+    const streak = streakData.streak;
+    
+    // Don't show if no current streak
+    if (streak.current_streak === 0) {
+      return null;
     }
 
-    return 0;
+    return (
+      <div className="flex items-center gap-1">
+        <span className="text-orange-500">🔥</span>
+        <span className="text-orange-500 font-medium">
+          {streak.current_streak} day streak
+        </span>
+      </div>
+    );
   };
 
   // Calculate overall streak (for the yellow circle)
