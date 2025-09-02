@@ -242,6 +242,14 @@ router.post("/:id/complete", async (req, res) => {
       console.log(`🔥 STREAK UPDATE: Updating streak for user ${user_id} on date ${finalCompletionDate}`);
       await updateUserStreak(user_id, finalCompletionDate);
       console.log(`🔥 STREAK SUCCESS: Streak updated successfully for user ${user_id}`);
+      
+      // Invalidate streak cache to ensure UI shows updated streak immediately
+      try {
+        cacheService.invalidate(user_id, "/api/streak/overall");
+        console.log(`🗑️ STREAK CACHE: Invalidated streak cache for user ${user_id}`);
+      } catch (cacheError) {
+        console.error(`⚠️ STREAK CACHE ERROR: Failed to invalidate streak cache:`, cacheError);
+      }
     } catch (streakError) {
       // Don't fail the entire completion if streak update fails
       console.error(`⚠️ STREAK ERROR: Failed to update streak for user ${user_id}:`, streakError);
