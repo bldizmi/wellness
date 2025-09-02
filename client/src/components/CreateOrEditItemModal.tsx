@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -80,6 +81,7 @@ export function CreateOrEditItemModal({
   const [markComplete, setMarkComplete] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletionStrategy, setDeletionStrategy] = useState<"all" | "future">("future");
 
   // Type options
   const typeOptions = [
@@ -426,7 +428,7 @@ export function CreateOrEditItemModal({
       }
 
       console.log(
-        `🗑️ FRONTEND DELETE START: Deleting item "${item.id}" (${item.display_id})`,
+        `🗑️ FRONTEND DELETE START: Deleting item "${item.id}" (${item.display_id}) with strategy: ${deletionStrategy}`,
       );
 
       try {
@@ -435,6 +437,9 @@ export function CreateOrEditItemModal({
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            strategy: deletionStrategy
+          }),
         });
 
         console.log(`✅ FRONTEND DELETE API SUCCESS:`, response);
@@ -1359,16 +1364,61 @@ export function CreateOrEditItemModal({
                       Delete
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="sm:max-w-[425px] bg-gray-900 border-gray-700">
+                  <AlertDialogContent className="sm:max-w-[500px] bg-gray-900 border-gray-700">
                     <AlertDialogHeader>
                       <AlertDialogTitle className="flex items-center gap-2 text-white">
                         <Trash2 className="h-5 w-5 text-red-400" />
-                        Delete Item
+                        {item?.recurrence_type && item.recurrence_type !== "once" 
+                          ? "Delete Recurring Item" 
+                          : "Delete Item"
+                        }
                       </AlertDialogTitle>
                       <AlertDialogDescription className="text-gray-300">
-                        Are you sure you want to delete "
-                        {item?.title || "this item"}"? This action cannot be
-                        undone.
+                        {item?.recurrence_type && item.recurrence_type !== "once" ? (
+                          <div className="space-y-4">
+                            <p>
+                              This is a <strong>{item.recurrence_type}</strong> recurring item. Choose how to delete "{item?.title || "this item"}":
+                            </p>
+                            <RadioGroup 
+                              value={deletionStrategy} 
+                              onValueChange={(value) => setDeletionStrategy(value as "all" | "future")}
+                              className="space-y-3"
+                            >
+                              <div className="flex items-start space-x-2 p-3 rounded-lg border border-gray-700 hover:border-gray-600">
+                                <RadioGroupItem value="future" id="future" className="mt-1" />
+                                <div className="grid gap-1.5 leading-none">
+                                  <Label 
+                                    htmlFor="future" 
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white cursor-pointer"
+                                  >
+                                    Stop Future Occurrences Only
+                                  </Label>
+                                  <p className="text-xs text-gray-400">
+                                    Keeps past completions and data intact. Preserves historical data for reporting and insights.
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-start space-x-2 p-3 rounded-lg border border-gray-700 hover:border-gray-600">
+                                <RadioGroupItem value="all" id="all" className="mt-1" />
+                                <div className="grid gap-1.5 leading-none">
+                                  <Label 
+                                    htmlFor="all" 
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white cursor-pointer"
+                                  >
+                                    Delete All History
+                                  </Label>
+                                  <p className="text-xs text-gray-400">
+                                    Removes all past completions, data, and photos. Will impact reporting, insights, and rewards. Cannot be undone.
+                                  </p>
+                                </div>
+                              </div>
+                            </RadioGroup>
+                          </div>
+                        ) : (
+                          <p>
+                            Are you sure you want to delete "{item?.title || "this item"}"? This action cannot be undone.
+                          </p>
+                        )}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

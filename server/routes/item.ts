@@ -1817,18 +1817,19 @@ router.post("/:id/manual-review", authMiddleware, async (req, res) => {
   }
 });
 
-// DELETE /api/item/:id - Delete an item
+// DELETE /api/item/:id - Delete an item with strategy options
 router.delete("/:id", async (req, res) => {
   try {
     const { user_id } = req;
     const { id } = req.params;
+    const { strategy } = req.body || {}; // "all" or "future" (default: "future")
 
     if (!user_id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
     console.log(
-      `🗑️ DELETE REQUEST: Attempting to delete item ${id} by user ${user_id}`,
+      `🗑️ DELETE REQUEST: Attempting to delete item ${id} by user ${user_id} with strategy: ${strategy || 'future'}`,
     );
     console.log(
       `🔍 DELETE DEBUG: Item ID: "${id}", Type: ${typeof id}, Length: ${id.length}`,
@@ -1886,15 +1887,42 @@ router.delete("/:id", async (req, res) => {
           `🔍 HYBRID DELETE: Found item ${id} (${itemDisplayId}) in ${tableName} table`,
         );
 
-        // Delete related records first
-        await db
-          .delete(item_verification_attempts)
-          .where(eq(item_verification_attempts.item_id, id));
-        await db
-          .delete(item_completions)
-          .where(eq(item_completions.item_id, id));
+        // Handle deletion strategy for recurring items
+        const isRecurring = item.template_id; // If it has template_id, it's a recurring instance
+        
+        if (isRecurring && strategy === "future") {
+          // STRATEGY: Future Only - Keep completions and past data
+          console.log(`🔄 FUTURE ONLY: Deleting template to stop future instances, keeping completion data`);
+          
+          // Delete the template to prevent future instances
+          const templateId = item.template_id;
+          if (templateId) {
+            const templateDeleteResult = await db.execute(sql`
+              DELETE FROM ${sql.raw(templatesTable)} 
+              WHERE id = ${templateId}
+            `);
+            
+            if (templateDeleteResult.rowCount && templateDeleteResult.rowCount > 0) {
+              console.log(`✅ FUTURE ONLY: Deleted template ${templateId}, completion data preserved`);
+            }
+          }
+          
+          // Don't delete completion records - keep historical data
+          console.log(`📊 FUTURE ONLY: Preserving completion records and verification attempts for reporting`);
+        } else {
+          // STRATEGY: All (default for one-time items or "all" strategy)
+          console.log(`🗑️ DELETE ALL: Removing all records including completion data`);
+          
+          // Delete related records 
+          await db
+            .delete(item_verification_attempts)
+            .where(eq(item_verification_attempts.item_id, id));
+          await db
+            .delete(item_completions)
+            .where(eq(item_completions.item_id, id));
+        }
 
-        // OPTION C: Delete both the recurring instance AND the associated template
+        // Delete the current instance
         const result = await db.execute(sql`
           DELETE FROM ${sql.raw(tableName)} 
           WHERE id = ${id}
@@ -1909,8 +1937,11 @@ router.delete("/:id", async (req, res) => {
             `✅ DELETE SUCCESS: Database deletion confirmed, rowCount: ${result.rowCount}`,
           );
 
-          // ALSO DELETE THE TEMPLATE to prevent regeneration
-          const templateId = item.template_id;
+          // OLD TEMPLATE DELETION LOGIC (now handled by strategy-based logic above)
+          // Only run this for "all" strategy or non-recurring items
+          if (!isRecurring || strategy === "all") {
+            console.log(`🔄 LEGACY CLEANUP: Running additional cleanup for strategy: ${strategy || 'all'}`);
+            const templateId = item.template_id;
           if (templateId) {
             console.log(
               `🗑️ TEMPLATE DELETE: Also deleting template ${templateId} to prevent regeneration`,
@@ -1969,6 +2000,7 @@ router.delete("/:id", async (req, res) => {
               `⚠️ NO TEMPLATE ID: Instance ${id} has no template_id, skipping template deletion`,
             );
           }
+          } // End of strategy-based cleanup condition
         } else {
           console.log(
             `❌ DELETE FAILED: No rows affected in ${tableName} for item ${id}`,
@@ -1985,7 +2017,8 @@ router.delete("/:id", async (req, res) => {
     if (!deletedItem) {
       console.log(`📝 LEGACY DELETE: Using legacy deletion for item ${id}`);
 
-      // Delete related records first
+      // Handle strategy for legacy items (always delete all for legacy items since they're one-time)
+      console.log(`🗑️ LEGACY STRATEGY: Legacy items are always deleted with 'all' strategy`);
       await db
         .delete(item_verification_attempts)
         .where(eq(item_verification_attempts.item_id, id));
