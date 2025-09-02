@@ -8,13 +8,12 @@ const logger = createLogger({ service: "streakService" });
 
 /**
  * Calculate and update user streak after item completion
- * This should be called whenever a user completes any item (task, habit, goal, project)
+ * This increments streak for EVERY item completion (consecutive item-based tracking)
  */
 export async function updateUserStreak(userId: string, completionDate: string) {
   try {
-    logger.debug("Updating user streak", { userId, completionDate });
+    logger.debug("Updating user streak for item completion", { userId, completionDate });
 
-    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
     const completionDateObj = new Date(completionDate);
     const completionDateStr = completionDateObj.toISOString().split("T")[0];
 
@@ -59,48 +58,16 @@ export async function updateUserStreak(userId: string, completionDate: string) {
       };
 
       await db.insert(user_streaks).values(newStreak);
-      logger.info("Created new streak record", newStreak);
+      logger.info("Created new streak record for first item completion", newStreak);
       return newStreak;
     }
 
     const currentStreak = streakRecord[0];
-    const lastCompletionDate = currentStreak.last_completion_date;
-
-    // Don't update if we already recorded a completion for this date
-    if (lastCompletionDate === completionDateStr) {
-      logger.debug("Completion already recorded for this date", {
-        userId,
-        date: completionDateStr,
-      });
-      return currentStreak;
-    }
-
-    // Calculate days since last completion
-    const lastDate = lastCompletionDate ? new Date(lastCompletionDate) : null;
-    const daysDifference = lastDate
-      ? Math.floor(
-          (completionDateObj.getTime() - lastDate.getTime()) /
-            (1000 * 60 * 60 * 24)
-        )
-      : 1;
-
-    let newCurrentStreak: number;
-    let newStreakStartDate: string;
-
-    if (!lastDate || daysDifference === 1) {
-      // Consecutive day - extend streak
-      newCurrentStreak = currentStreak.current_streak + 1;
-      newStreakStartDate =
-        currentStreak.streak_start_date || completionDateStr;
-    } else if (daysDifference === 0) {
-      // Same day - shouldn't happen due to check above, but just in case
-      return currentStreak;
-    } else {
-      // Gap in completion - reset streak
-      newCurrentStreak = 1;
-      newStreakStartDate = completionDateStr;
-    }
-
+    
+    // ITEM-BASED STREAK: Always increment for each item completion
+    // No date-based restrictions - every item completion increases streak
+    const newCurrentStreak = currentStreak.current_streak + 1;
+    
     // Update longest streak if current streak is new record
     const newLongestStreak = Math.max(
       currentStreak.longest_streak,
@@ -111,7 +78,7 @@ export async function updateUserStreak(userId: string, completionDate: string) {
       current_streak: newCurrentStreak,
       longest_streak: newLongestStreak,
       last_completion_date: completionDateStr,
-      streak_start_date: newStreakStartDate,
+      streak_start_date: currentStreak.streak_start_date || completionDateStr,
       total_completion_days: currentStreak.total_completion_days + 1,
       updated_at: now,
     };
@@ -121,11 +88,11 @@ export async function updateUserStreak(userId: string, completionDate: string) {
       .set(updatedStreak)
       .where(eq(user_streaks.user_id, userId));
 
-    logger.info("Updated user streak", {
+    logger.info("Updated item-based streak", {
       userId,
       oldStreak: currentStreak.current_streak,
       newStreak: newCurrentStreak,
-      daysDifference,
+      message: "Streak increased for item completion"
     });
 
     return { ...currentStreak, ...updatedStreak };
@@ -180,42 +147,10 @@ export async function getUserStreak(userId: string) {
 
     const streak = streakRecord[0];
 
-    // Check if streak should be reset due to missed day
-    const today = new Date().toISOString().split("T")[0];
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
-
-    if (
-      streak.last_completion_date &&
-      streak.last_completion_date < yesterdayStr &&
-      streak.current_streak > 0
-    ) {
-      // Streak should be reset - user missed yesterday
-      logger.info("Resetting streak due to missed day", {
-        userId,
-        lastCompletion: streak.last_completion_date,
-        yesterday: yesterdayStr,
-      });
-
-      const now = new Date().toISOString();
-      await db
-        .update(user_streaks)
-        .set({
-          current_streak: 0,
-          streak_start_date: null,
-          updated_at: now,
-        })
-        .where(eq(user_streaks.user_id, userId));
-
-      return {
-        ...streak,
-        current_streak: 0,
-        streak_start_date: null,
-        updated_at: now,
-      };
-    }
-
+    // ITEM-BASED STREAK: No automatic resets based on days
+    // Streak persists until manually reset or user chooses to reset
+    // The streak represents consecutive item completions, not consecutive days
+    
     return streak;
   } catch (error) {
     logger.error("Error getting user streak", { userId, error });
