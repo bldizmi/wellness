@@ -182,6 +182,10 @@ export default function Today() {
         queryClient.invalidateQueries({
           queryKey: ["/api/today/shared", selectedDate],
         }),
+        // Invalidate streak cache to update header immediately
+        queryClient.invalidateQueries({
+          queryKey: ["/api/streak/overall"],
+        }),
       ]);
 
       // Show success feedback

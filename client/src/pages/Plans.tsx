@@ -556,6 +556,8 @@ export default function Plans() {
                         queryClient.invalidateQueries({ queryKey: ['items'] });
                         queryClient.invalidateQueries({ queryKey: ['/api/items'] });
                         queryClient.invalidateQueries({ queryKey: ['/api/today'] });
+                        // Invalidate streak cache to update header immediately
+                        queryClient.invalidateQueries({ queryKey: ['/api/streak/overall'] });
                       } catch (error: any) {
                         toast({ 
                           title: "Error", 
