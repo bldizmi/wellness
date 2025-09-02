@@ -1,12 +1,17 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { Home, Layers, Zap, Trophy, Search } from "lucide-react";
+import { Home, Layers, Zap, Trophy, Search, X } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { useState, useRef, useEffect } from "react";
 
 export default function Header() {
   const { data: profile } = useQuery({ queryKey: ["/api/profile"] });
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   
   // Fetch overall user streak from dedicated API
   const { data: streakData } = useQuery({
@@ -15,6 +20,7 @@ export default function Header() {
       return await apiRequest("/api/streak/overall");
     },
     staleTime: 30000,
+    refetchInterval: 30000, // Refetch every 30 seconds to update streak
   });
   const [location, navigate] = useLocation();
 
@@ -25,7 +31,22 @@ export default function Header() {
     }
 
     // Return the current streak (consecutive days with at least one completion)
-    return streakData.streak.current_streak;
+    return streakData.streak.current_streak || 0;
+  };
+
+  // Focus search input when expanded
+  useEffect(() => {
+    if (searchExpanded && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchExpanded]);
+
+  const handleSearch = () => {
+    if (searchValue.trim()) {
+      navigate(`/plans?search=${encodeURIComponent(searchValue)}`);
+      setSearchExpanded(false);
+      setSearchValue("");
+    }
   };
 
 
@@ -35,13 +56,38 @@ export default function Header() {
         <div className="flex flex-1 items-center justify-between">
           {/* Mobile Search Icon - positioned ~20px from edges */}
           <div className="md:hidden ml-[20px] mt-[5px]">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hover:opacity-80 transition-opacity"
-            >
-              <Search className="h-6 w-6 text-gray-300" />
-            </Button>
+            {searchExpanded ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  ref={searchInputRef}
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  placeholder="Search..."
+                  className="w-32 h-8 text-sm bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setSearchExpanded(false);
+                    setSearchValue("");
+                  }}
+                  className="hover:opacity-80 transition-opacity"
+                >
+                  <X className="h-5 w-5 text-gray-300" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSearchExpanded(true)}
+                className="hover:opacity-80 transition-opacity"
+              >
+                <Search className="h-6 w-6 text-gray-300" />
+              </Button>
+            )}
           </div>
 
           {/* Mobile Welcome Message - positioned in upper right */}
@@ -56,13 +102,38 @@ export default function Header() {
 
           {/* Desktop Search Icon - positioned ~20px from edges */}
           <div className="hidden md:flex lg:hidden ml-[20px] mt-[5px]">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hover:opacity-80 transition-opacity"
-            >
-              <Search className="h-6 w-6 text-gray-300" />
-            </Button>
+            {searchExpanded ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  ref={searchInputRef}
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  placeholder="Search your items..."
+                  className="w-48 h-9 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setSearchExpanded(false);
+                    setSearchValue("");
+                  }}
+                  className="hover:opacity-80 transition-opacity"
+                >
+                  <X className="h-5 w-5 text-gray-300" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSearchExpanded(true)}
+                className="hover:opacity-80 transition-opacity"
+              >
+                <Search className="h-6 w-6 text-gray-300" />
+              </Button>
+            )}
           </div>
 
           {/* Desktop Navigation */}

@@ -50,24 +50,68 @@ router.get('/:id/streak', authMiddleware, async (req, res) => {
     const userId = req.user_id;
     const TABLE_PREFIX = process.env.NODE_ENV === 'development' ? 'dev_' : '';
 
-    // Verify item belongs to user using Drizzle ORM
+    // Verify item belongs to user - check both legacy items and new recurring_instances tables
     const isDevelopment = process.env.NODE_ENV === 'development';
     const itemsTable = isDevelopment ? sql.identifier('dev_items') : sql.identifier('items');
+    const instancesTable = isDevelopment ? sql.identifier('dev_recurring_instances') : sql.identifier('recurring_instances');
+    
+    // First check legacy items table (user_id OR assigned_to for shared items)
     const itemCheck = await db.execute(
-      sql`SELECT id FROM ${itemsTable} WHERE id = ${itemId} AND user_id = ${userId}`
+      sql`SELECT id FROM ${itemsTable} WHERE id = ${itemId} AND (user_id = ${userId} OR assigned_to = ${userId})`
     );
 
+    // If not found in legacy, check new recurring_instances table
     if (itemCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Item not found' });
+      const instanceCheck = await db.execute(
+        sql`SELECT id FROM ${instancesTable} WHERE id = ${itemId} AND assigned_to = ${userId}`
+      );
+      
+      if (instanceCheck.rows.length === 0) {
+        return res.status(404).json({ error: 'Item not found' });
+      }
+    }
+
+    // First, check if this is a new architecture item and get its template_id
+    let templateId = null;
+    try {
+      const instanceResult = await db.execute(
+        sql`SELECT template_id FROM ${instancesTable} WHERE id = ${itemId} LIMIT 1`
+      );
+      if (instanceResult.rows.length > 0) {
+        templateId = instanceResult.rows[0].template_id;
+        console.log(`📊 STREAK: Found template_id ${templateId} for instance ${itemId}`);
+      }
+    } catch (error) {
+      console.log(`📊 STREAK: Item ${itemId} not in new architecture, using item_id for streak`);
     }
 
     // Get all completions for this item, ordered by date using Drizzle ORM
+    // If we have a template_id, use it for streak calculation (tracks across all instances)
+    // Otherwise, use item_id for legacy items
     const completionsTable = isDevelopment ? sql.identifier('dev_item_completions') : sql.identifier('item_completions');
-    const completionsResult = await db.execute(
-      sql`SELECT completion_date FROM ${completionsTable} WHERE item_id = ${itemId} AND user_id = ${userId} ORDER BY completion_date ASC`
-    );
+    
+    let completionsResult;
+    if (templateId) {
+      // For new architecture: query by template_id to get streaks across all instances
+      completionsResult = await db.execute(
+        sql`SELECT DISTINCT completion_date FROM ${completionsTable} 
+            WHERE template_id = ${templateId} AND user_id = ${userId} 
+            ORDER BY completion_date ASC`
+      );
+      console.log(`📊 STREAK: Querying completions by template_id ${templateId}`);
+    } else {
+      // For legacy items: query by item_id
+      completionsResult = await db.execute(
+        sql`SELECT completion_date FROM ${completionsTable} 
+            WHERE item_id = ${itemId} AND user_id = ${userId} 
+            ORDER BY completion_date ASC`
+      );
+      console.log(`📊 STREAK: Querying completions by item_id ${itemId}`);
+    }
 
     const completions = completionsResult.rows.map((row: any) => row.completion_date);
+    
+    console.log(`📊 STREAK DEBUG: Item ${itemId} has ${completions.length} completions:`, completions);
     
     if (completions.length === 0) {
       return res.json({
@@ -87,12 +131,18 @@ router.get('/:id/streak', authMiddleware, async (req, res) => {
     let foundRecent = false;
     
     // Check if completed today or yesterday to start streak calculation
+    console.log(`📊 STREAK DEBUG: Checking for recent completions. Today: ${today}, Yesterday: ${yesterday}`);
+    
     if (completions.includes(today)) {
       foundRecent = true;
       checkDate = today;
+      console.log(`📊 STREAK DEBUG: Found completion today`);
     } else if (completions.includes(yesterday)) {
       foundRecent = true;
       checkDate = yesterday;
+      console.log(`📊 STREAK DEBUG: Found completion yesterday`);
+    } else {
+      console.log(`📊 STREAK DEBUG: No recent completions found`);
     }
     
     if (foundRecent) {
@@ -106,6 +156,7 @@ router.get('/:id/streak', authMiddleware, async (req, res) => {
           currentStreak++;
           streakDate.setDate(streakDate.getDate() - 1);
         } else {
+          console.log(`📊 STREAK DEBUG: Streak broken at ${dateStr}, current streak: ${currentStreak}`);
           break;
         }
       }

@@ -105,7 +105,7 @@ export default function Plans() {
   };
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['items'],
+    queryKey: ['/api/items'],
     queryFn: () => apiRequest('/api/items'),
     staleTime: 0,
     refetchInterval: 1000

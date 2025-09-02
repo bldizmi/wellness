@@ -1428,9 +1428,30 @@ router.get("/:id/verification-history", async (req, res) => {
       `✅ VERIFICATION HISTORY PHASE 2: Successfully retrieved history for ${itemArchitecture} architecture item "${itemDetails?.title || "Unknown"}"`,
     );
 
+    // Format attempts to include proper image URL
+    const formattedAttempts = attempts.map(attempt => {
+      // Parse image_urls if it's a JSON string array
+      let imageUrl = null;
+      try {
+        if (attempt.image_urls) {
+          const urls = JSON.parse(attempt.image_urls);
+          // Get the first image URL from the array
+          imageUrl = Array.isArray(urls) && urls.length > 0 ? urls[0] : null;
+        }
+      } catch (e) {
+        // If not JSON, treat as single URL
+        imageUrl = attempt.image_urls;
+      }
+
+      return {
+        ...attempt,
+        image_url: imageUrl, // Add singular image_url for frontend compatibility
+      };
+    });
+
     res.json({
       success: true,
-      attempts: attempts,
+      attempts: formattedAttempts,
       reviewActions: reviewActions,
       // Phase 2 enhancement: Include architecture context for debugging
       _debug: {

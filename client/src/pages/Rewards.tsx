@@ -1278,13 +1278,16 @@ export default function Rewards() {
                   <Label htmlFor="target_metric" className="text-white">Metric Target *</Label>
                   <Select
                     value={formData.target_metric}
-                    onValueChange={(value) =>
+                    onValueChange={(value) => {
+                      const selectedOption = getMetricOptions().find(opt => opt.value === value);
+                      const suggestedTarget = selectedOption ? 
+                        (selectedOption.currentValue + (selectedOption.unit === "%" ? 10 : 5)) : 80;
                       setFormData((prev) => ({
                         ...prev,
                         target_metric: value,
-                        target_value: String((getMetricOptions().find(opt => opt.value === value)?.currentValue || 80) + 10),
-                      }))
-                    }
+                        target_value: String(suggestedTarget),
+                      }));
+                    }}
                   >
                     <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                       <SelectValue placeholder="Choose a metric to track..." />
@@ -1298,6 +1301,39 @@ export default function Rewards() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Target Value Input - Shows after metric is selected */}
+                {formData.target_metric && (
+                  <div className="space-y-2">
+                    <Label htmlFor="target_value" className="text-white">
+                      Target # 
+                      {(() => {
+                        const metric = getMetricOptions().find(opt => opt.value === formData.target_metric);
+                        return metric ? ` (${metric.unit})` : "";
+                      })()}
+                    </Label>
+                    <Input
+                      id="target_value"
+                      type="number"
+                      min="1"
+                      placeholder="Enter target value"
+                      value={formData.target_value}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, target_value: e.target.value }))
+                      }
+                      className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
+                    />
+                    <p className="text-xs text-gray-400">
+                      {(() => {
+                        const metric = getMetricOptions().find(opt => opt.value === formData.target_metric);
+                        if (metric) {
+                          return `Current: ${metric.currentValue}${metric.unit}. Set your target higher to earn this reward!`;
+                        }
+                        return "Set a target value to work towards";
+                      })()}
+                    </p>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="duration" className="text-white">Track progress for</Label>

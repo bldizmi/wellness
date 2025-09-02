@@ -464,25 +464,67 @@ export default function Today() {
     return { incompleteCount, isAllComplete, totalCount: categoryItems.length };
   };
 
-  // Get tab-specific progress data for progress line
+  // Get combined or tab-specific progress data for progress line
   const getTabProgress = (tabId: string) => {
+    // For Habits and Focus tabs, combine progress
+    if (tabId === "habits" || tabId === "focus") {
+      // Get all personal items (habits + focus items)
+      const habitsFromPersonal = personalProgressData?.habits || [];
+      const habitsAssignedToUser = habitsFromPersonal.filter((item) => item.assigned_to === user?.uid);
+      
+      const focusItems = [
+        ...(personalProgressData?.tasks || []),
+        ...(personalProgressData?.goals || []),
+        ...(personalProgressData?.projects || []),
+      ];
+      const focusAssignedToUser = focusItems.filter((item) => item.assigned_to === user?.uid);
+      
+      // Combine all personal items (habits + focus)
+      const allPersonalItems = [...habitsAssignedToUser, ...focusAssignedToUser];
+      
+      const incompleteCount = allPersonalItems.filter(
+        (item) => !isItemCompleted(item) && !(item as any).is_skipped_for_date
+      ).length;
+      
+      const completedCount = allPersonalItems.length - incompleteCount;
+      const progressPercentage =
+        allPersonalItems.length > 0 ? (completedCount / allPersonalItems.length) * 100 : 0;
+      
+      // Use a unified color for combined progress
+      return {
+        completed: completedCount,
+        total: allPersonalItems.length,
+        percentage: progressPercentage,
+        color: "from-blue-500 to-purple-600", // Gradient combining both colors
+      };
+    }
+    
+    // For Shared tab, calculate separately
+    if (tabId === "shared") {
+      const status = getFilterStatus(tabId);
+      const completedCount = status.totalCount - status.incompleteCount;
+      const progressPercentage =
+        status.totalCount > 0 ? (completedCount / status.totalCount) * 100 : 0;
+      
+      return {
+        completed: completedCount,
+        total: status.totalCount,
+        percentage: progressPercentage,
+        color: "from-gray-500 to-gray-600",
+      };
+    }
+    
+    // Default fallback
     const status = getFilterStatus(tabId);
     const completedCount = status.totalCount - status.incompleteCount;
     const progressPercentage =
       status.totalCount > 0 ? (completedCount / status.totalCount) * 100 : 0;
-
-    // Define colors for each tab
-    const colors = {
-      habits: "from-blue-500 to-blue-600",
-      focus: "from-purple-500 to-purple-600",
-      shared: "from-gray-500 to-gray-600",
-    };
-
+    
     return {
       completed: completedCount,
       total: status.totalCount,
       percentage: progressPercentage,
-      color: colors[tabId as keyof typeof colors] || colors.habits,
+      color: "from-blue-500 to-blue-600",
     };
   };
 
@@ -724,31 +766,41 @@ export default function Today() {
   const renderAssignmentSections = () => {
     const sharedGroups = groupSharedItemsByAssignee(filteredItems);
 
-    return sharedGroups.map((group, groupIndex) => (
-      <div key={`group-${groupIndex}`} className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-medium">
-                {group.assignee.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div>
-              <h2 className="text-white font-semibold">
-                Assigned to {group.assignee}
-              </h2>
-              <p className="text-gray-400 text-sm">
-                {group.completedCount}/{group.totalCount} complete •{" "}
-                {group.percentage}%
-              </p>
+    return sharedGroups.map((group, groupIndex) => {
+      // Filter out completed items from the group for display in the main section
+      const incompleteItems = group.items.filter(item => !isItemCompleted(item));
+      
+      // Skip this group if all items are completed (they'll show in Done section)
+      if (incompleteItems.length === 0) {
+        return null;
+      }
+      
+      return (
+        <div key={`group-${groupIndex}`} className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-medium">
+                  {group.assignee.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <h2 className="text-white font-semibold">
+                  Assigned to {group.assignee}
+                </h2>
+                <p className="text-gray-400 text-sm">
+                  {group.completedCount}/{group.totalCount} complete •{" "}
+                  {group.percentage}%
+                </p>
+              </div>
             </div>
           </div>
+          <div className="space-y-3">
+            {incompleteItems.map((item, index) => renderNewDesignItem(item, index))}
+          </div>
         </div>
-        <div className="space-y-3">
-          {group.items.map((item, index) => renderNewDesignItem(item, index))}
-        </div>
-      </div>
-    ));
+      );
+    }).filter(Boolean); // Remove null entries
   };
 
   // Keep original render function for backwards compatibility
@@ -1117,9 +1169,13 @@ export default function Today() {
           >
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-white mb-1">
-                {new Date(selectedDate).toLocaleDateString("en-US", {
-                  weekday: "long",
-                })}
+                {(() => {
+                  const [year, month, day] = selectedDate.split("-").map(Number);
+                  const date = new Date(year, month - 1, day);
+                  return date.toLocaleDateString("en-US", {
+                    weekday: "long",
+                  });
+                })()}
               </h1>
               <ChevronDown
                 className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
@@ -1128,11 +1184,15 @@ export default function Today() {
               />
             </div>
             <p className="text-gray-400 text-sm">
-              {new Date(selectedDate).toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
+              {(() => {
+                const [year, month, day] = selectedDate.split("-").map(Number);
+                const date = new Date(year, month - 1, day);
+                return date.toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                });
+              })()}
             </p>
           </div>
         </div>
@@ -1147,22 +1207,33 @@ export default function Today() {
           </div>
         )}
 
-        {/* Progress indicator - Tab specific */}
+        {/* Progress indicator - Combined for Habits/Focus, separate for Shared */}
         <div className="px-4 mb-6">
           <div className="text-right">
             <span className="text-gray-400 text-sm">
-              {getTabProgress(activeTab).completed}/
-              {getTabProgress(activeTab).total}
+              {(() => {
+                // Use combined progress for Habits and Focus tabs
+                const progressKey = (activeTab === "habits" || activeTab === "focus") ? "habits" : activeTab;
+                return `${getTabProgress(progressKey).completed}/${getTabProgress(progressKey).total}`;
+              })()}
             </span>
           </div>
         </div>
 
-        {/* Dynamic progress line - tab specific */}
+        {/* Dynamic progress line - Combined for Habits/Focus */}
         <div className="px-4 mb-4">
           <div className="h-0.5 w-full bg-gray-600 rounded-full relative">
             <div
-              className={`h-0.5 bg-gradient-to-r ${getTabProgress(activeTab).color} rounded-full absolute left-0 transition-all duration-300 ease-in-out`}
-              style={{ width: `${getTabProgress(activeTab).percentage}%` }}
+              className={`h-0.5 bg-gradient-to-r ${(() => {
+                // Use combined progress for Habits and Focus tabs
+                const progressKey = (activeTab === "habits" || activeTab === "focus") ? "habits" : activeTab;
+                return getTabProgress(progressKey).color;
+              })()} rounded-full absolute left-0 transition-all duration-300 ease-in-out`}
+              style={{ width: `${(() => {
+                // Use combined progress for Habits and Focus tabs
+                const progressKey = (activeTab === "habits" || activeTab === "focus") ? "habits" : activeTab;
+                return getTabProgress(progressKey).percentage;
+              })()}%` }}
             ></div>
           </div>
         </div>

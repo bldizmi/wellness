@@ -10,10 +10,11 @@ import {
 import { userHasItemAccess } from "../services/itemVisibilityService";
 import { cacheService } from "../services/cacheService";
 import { db } from "../db";
-import { items, recurring_instances } from "@shared/schema";
+import { items, recurring_instances, item_completions } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { createLogger } from "../services/logger";
 import { updateUserStreak } from "../services/streakService";
+import { nanoid } from "nanoid";
 
 /**
  * PHASE 1: Feature flag for targeted cache invalidation
@@ -376,6 +377,28 @@ router.post("/:id/complete", async (req, res) => {
         await db.execute(updateQuery);
         
         console.log(`✅ UPDATED: Instance ${itemId} marked as complete`);
+        
+        // IMPORTANT: Also store in item_completions table with template_id for streak tracking
+        try {
+          const completionId = nanoid();
+          await db.insert(item_completions).values({
+            id: completionId,
+            item_id: itemId,
+            template_id: instanceItem.template_id || null, // Store template_id for streak tracking (nullable)
+            user_id: user_id,
+            completion_date: finalCompletionDate,
+            completed_at: new Date().toISOString(),
+            verification_data: verification_data || null,
+            created_at: new Date().toISOString(),
+          });
+          
+          console.log(`📊 STREAK: Stored completion with template_id ${instanceItem.template_id} for streak tracking`);
+        } catch (completionError) {
+          // Don't fail the entire completion if streak tracking fails
+          console.error(`⚠️ STREAK WARNING: Failed to store completion for streak tracking:`, completionError);
+          console.error(`Details: item_id=${itemId}, template_id=${instanceItem.template_id}, user_id=${user_id}`);
+          // Continue with the completion process
+        }
         
         console.log(
           `✅ UPDATED: Instance ${itemId} with occurrence_date=${instanceItem.occurrence_date} now has status='complete'`,

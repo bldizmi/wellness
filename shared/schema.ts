@@ -187,6 +187,7 @@ export const items = pgTable(`${TABLE_PREFIX}items`, {
 export const item_completions = pgTable(`${TABLE_PREFIX}item_completions`, {
   id: text("id").primaryKey(),
   item_id: text("item_id").notNull(),
+  template_id: text("template_id"), // For tracking streaks across recurring instances
   user_id: text("user_id").notNull(),
   completion_date: text("completion_date").notNull(), // YYYY-MM-DD format
   completed_at: text("completed_at").notNull(),
@@ -284,6 +285,19 @@ export const insertManualReviewActionSchema = createInsertSchema(
   action: true,
   message: true,
 });
+
+// System Settings table - for storing application-wide settings
+export const system_settings = pgTable(
+  `${TABLE_PREFIX}system_settings`,
+  {
+    id: text("id").primaryKey(),
+    setting_key: text("setting_key").notNull().unique(),
+    setting_value: text("setting_value").notNull(),
+    description: text("description"),
+    created_at: text("created_at").notNull(),
+    updated_at: text("updated_at").notNull(),
+  }
+);
 
 export const insertRewardSchema = createInsertSchema(rewards).pick({
   title: true,

@@ -28,28 +28,39 @@ import {
   UserPlus,
   Plus,
   Mail,
-  Settings
+  Settings,
+  Bot,
+  AlertCircle
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTheme, ThemeMode, ThemeVariant, THEME_COLORS, getThemeDisplayName } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Profile() {
   const [, navigate] = useLocation();
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const { theme, updateMode, updateVariant } = useTheme();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Modal states
   const [showCreateCommunityModal, setShowCreateCommunityModal] = useState(false);
   const [showInviteMemberModal, setShowInviteMemberModal] = useState(false);
   const [selectedCommunityForInvite, setSelectedCommunityForInvite] = useState<any>(null);
+  const [showAIPromptModal, setShowAIPromptModal] = useState(false);
+  const [aiPrompt, setAIPrompt] = useState("");
+  const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
 
   // Form states
   const [newCommunityName, setNewCommunityName] = useState("");
   const [newCommunityType, setNewCommunityType] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+
+  // Check if user is admin (you can adjust this based on your admin identification logic)
+  const isAdmin = user?.email === 'admin@minddouble.com' || user?.uid === 'YOUR_ADMIN_UID';
 
   const {
     data: profile,
@@ -606,6 +617,42 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* Admin Section - Only visible to admins */}
+        {isAdmin && (
+          <div>
+            <h3 className="text-sm font-medium text-gray-400 mb-3">Admin Settings</h3>
+            <div className="space-y-1">
+              <div 
+                onClick={() => {
+                  setIsLoadingPrompt(true);
+                  // Fetch current prompt
+                  apiRequest('/api/admin/ai-prompt')
+                    .then(data => {
+                      setAIPrompt(data.prompt || '');
+                      setShowAIPromptModal(true);
+                    })
+                    .catch(err => {
+                      console.error('Failed to fetch AI prompt:', err);
+                      setAIPrompt('');
+                      setShowAIPromptModal(true);
+                    })
+                    .finally(() => setIsLoadingPrompt(false));
+                }}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center space-x-3">
+                  <Bot className="h-4 w-4 text-purple-400" />
+                  <div>
+                    <div className="font-medium">AI Verification Prompt</div>
+                    <div className="text-sm text-gray-400">Customize how AI verifies task completion</div>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Support Section */}
         <div>
           <h3 className="text-sm font-medium text-gray-400 mb-3">Support</h3>
@@ -753,6 +800,87 @@ export default function Profile() {
                 disabled={!inviteEmail.trim() || inviteMemberMutation.isPending}
               >
                 {inviteMemberMutation.isPending ? "Sending..." : "Send Invitation"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Prompt Settings Modal - Admin Only */}
+      <Dialog open={showAIPromptModal} onOpenChange={setShowAIPromptModal}>
+        <DialogContent className="bg-slate-800 text-white border-gray-700 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-purple-400" />
+              AI Verification Prompt Settings
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Customize how the AI evaluates task completion based on the task title and uploaded photo
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="ai-prompt" className="text-sm font-medium text-gray-300">
+                Verification Prompt
+              </Label>
+              <Textarea
+                id="ai-prompt"
+                value={aiPrompt}
+                onChange={(e) => setAIPrompt(e.target.value)}
+                placeholder="Enter the AI verification prompt..."
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1 min-h-[200px] font-mono text-sm"
+                rows={10}
+              />
+              <div className="mt-2 text-xs text-gray-400">
+                <AlertCircle className="h-3 w-3 inline mr-1" />
+                Variables: {"{task_title}"} will be replaced with the actual task name
+              </div>
+            </div>
+            <div className="bg-gray-900/50 p-3 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-300 mb-2">Example Guidelines:</h4>
+              <ul className="text-xs text-gray-400 space-y-1">
+                <li>• For "Clean kitchen": Require visible evidence of clean surfaces, organized items</li>
+                <li>• For "Take a walk": Be lenient, any outdoor photo is acceptable</li>
+                <li>• For "Complete homework": Require visible completed work or study materials</li>
+                <li>• Adjust strictness based on task importance and context</li>
+              </ul>
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowAIPromptModal(false)}
+                disabled={isLoadingPrompt}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                onClick={async () => {
+                  setIsLoadingPrompt(true);
+                  try {
+                    await apiRequest('/api/admin/ai-prompt', {
+                      method: 'PUT',
+                      body: JSON.stringify({ prompt: aiPrompt })
+                    });
+                    toast({
+                      title: "Success",
+                      description: "AI verification prompt updated successfully",
+                    });
+                    setShowAIPromptModal(false);
+                  } catch (error) {
+                    toast({
+                      title: "Error",
+                      description: "Failed to update AI prompt",
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setIsLoadingPrompt(false);
+                  }
+                }}
+                disabled={!aiPrompt.trim() || isLoadingPrompt}
+              >
+                {isLoadingPrompt ? "Saving..." : "Save Prompt"}
               </Button>
             </div>
           </div>
