@@ -832,27 +832,58 @@ export default function Today() {
 
   // Streak display component that matches original styling but uses proper API
   const StreakDisplay = ({ itemId, recurrenceType }: { itemId: string, recurrenceType: string }) => {
-    const { data: streakData, isLoading } = useQuery({
+    const { data: streakData, isLoading, error } = useQuery({
       queryKey: [`/api/item/${itemId}/streak`],
       enabled: !!(itemId && recurrenceType && recurrenceType !== 'once'),
     });
 
-    if (isLoading || !streakData?.streak) {
-      return null;
+    // Debug logging
+    console.log(`🔍 StreakDisplay Debug:`, {
+      itemId,
+      recurrenceType, 
+      isLoading,
+      error: error?.message,
+      streakData,
+      hasStreak: !!streakData?.streak,
+      currentStreak: streakData?.streak?.current_streak
+    });
+
+    if (isLoading) {
+      return (
+        <div className="flex items-center gap-1">
+          <span className="text-gray-400">🔥</span>
+          <span className="text-gray-400 font-medium text-xs">Loading...</span>
+        </div>
+      );
+    }
+
+    if (error) {
+      console.error('Streak API Error:', error);
+      return (
+        <div className="flex items-center gap-1">
+          <span className="text-red-400">❌</span>
+          <span className="text-red-400 font-medium text-xs">Error</span>
+        </div>
+      );
+    }
+
+    if (!streakData?.streak) {
+      return (
+        <div className="flex items-center gap-1">
+          <span className="text-yellow-400">⚠️</span>
+          <span className="text-yellow-400 font-medium text-xs">No data</span>
+        </div>
+      );
     }
 
     const streak = streakData.streak;
     
-    // Don't show if no current streak
-    if (streak.current_streak === 0) {
-      return null;
-    }
-
+    // Show streak even if it's 0 for debugging
     return (
       <div className="flex items-center gap-1">
         <span className="text-orange-500">🔥</span>
         <span className="text-orange-500 font-medium">
-          {streak.current_streak} day streak
+          {streak.current_streak || 0} day streak
         </span>
       </div>
     );
