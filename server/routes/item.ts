@@ -430,67 +430,117 @@ router.put("/:id", async (req, res) => {
     console.log("validated shared_with:", validatedData.shared_with);
 
     // First check if the user has access to this item
+    console.log(`🔍 EDIT ACCESS CHECK: User ${user_id} attempting to edit item ${id}`);
     const hasAccess = await userHasItemAccess(user_id, id);
     if (!hasAccess) {
+      console.log(`❌ EDIT ACCESS DENIED: User ${user_id} doesn't have access to item ${id}`);
       return res.status(404).json({ error: "Item not found or unauthorized" });
     }
+    console.log(`✅ EDIT ACCESS GRANTED: User ${user_id} has access to item ${id}`);
 
-    // PHASE 5: Check if this is a recurring_instances item first
-    console.log(`🔍 HYBRID: Checking if ${id} exists in new architecture`);
-    const [instanceItem] = await db
-      .select()
-      .from(recurring_instances)
-      .where(eq(recurring_instances.id, id))
-      .limit(1);
+    // PHASE 5: Check if this is a recurring_instances item first (with environment-aware table selection)
+    const isDevelopment = process.env.NODE_ENV === "development";
+    const instancesTable = isDevelopment ? "dev_recurring_instances" : "recurring_instances";
+    const templatesTable = isDevelopment ? "dev_recurring_templates" : "recurring_templates";
+    
+    console.log(`🔍 HYBRID UPDATE: Checking if ${id} exists in new architecture (${instancesTable})`);
+    
+    // Use raw SQL to ensure we're using the correct table name
+    const instanceQuery = await db.execute(sql`
+      SELECT * FROM ${sql.raw(instancesTable)} WHERE id = ${id} LIMIT 1
+    `);
+    const instanceItem = instanceQuery.rows[0] || null;
+    
+    console.log(`🔍 HYBRID UPDATE: Instance found in new architecture: ${!!instanceItem}`);
 
     if (instanceItem) {
       console.log(
         "🚀 PHASE 5: Updating item in new recurring_instances architecture",
       );
 
-      // Update the recurring instance
-      const [updatedInstance] = await db
-        .update(recurring_instances)
-        .set({
-          due_time: validatedData.due_date
-            ? new Date(validatedData.due_date)
-                .toISOString()
-                .split("T")[1]
-                .slice(0, 8)
-            : null,
-          notes: validatedData.why_it_matters,
-          updated_at: new Date().toISOString(),
-          shared_with:
-            validatedData.shared_with && validatedData.shared_with.length > 0
-              ? validatedData.shared_with
-              : null,
-        })
-        .where(eq(recurring_instances.id, id))
-        .returning();
+      // Update the recurring instance using environment-aware table
+      const updateResult = await db.execute(sql`
+        UPDATE ${sql.raw(instancesTable)}
+        SET 
+          due_time = ${validatedData.due_date
+            ? new Date(validatedData.due_date).toISOString().split("T")[1].slice(0, 8)
+            : null},
+          notes = ${validatedData.why_it_matters || null},
+          updated_at = ${new Date().toISOString()},
+          shared_with = ${validatedData.shared_with && validatedData.shared_with.length > 0
+            ? JSON.stringify(validatedData.shared_with)
+            : null}
+        WHERE id = ${id}
+        RETURNING *
+      `);
+      
+      const updatedInstance = updateResult.rows[0] || null;
 
       if (!updatedInstance) {
+        console.log(`❌ HYBRID UPDATE: Failed to update instance ${id} in new architecture`);
         return res.status(404).json({ error: "Instance not found" });
       }
+      
+      console.log(`✅ HYBRID UPDATE: Successfully updated instance ${id} in new architecture`);
 
-      // Also update the template if it exists
+      // Also update the template if it exists AND user has permission
       if (updatedInstance.template_id) {
-        console.log("🔄 PHASE 5: Also updating template for consistency");
-        await db
-          .update(recurring_templates)
-          .set({
-            title: validatedData.title,
-            item_type: validatedData.item_type,
-            verify_required: validatedData.verify_required || false,
-            time_frame: validatedData.time_frame,
-            why_it_matters: validatedData.why_it_matters,
-            assigned_to: validatedData.assigned_to,
-            shared_with:
-              validatedData.shared_with && validatedData.shared_with.length > 0
-                ? validatedData.shared_with
-                : null,
-            updated_at: new Date().toISOString(),
-          })
-          .where(eq(recurring_templates.id, updatedInstance.template_id));
+        // Check if user has permission to modify the template using environment-aware table
+        const templateQuery = await db.execute(sql`
+          SELECT id, created_by, assigned_to, shared_with 
+          FROM ${sql.raw(templatesTable)} 
+          WHERE id = ${updatedInstance.template_id}
+          LIMIT 1
+        `);
+        const templateInfo = templateQuery.rows[0] || null;
+
+        if (templateInfo) {
+          // Parse shared_with if it's a JSON string
+          let sharedWithArray = [];
+          if (templateInfo.shared_with) {
+            try {
+              sharedWithArray = typeof templateInfo.shared_with === 'string' 
+                ? JSON.parse(templateInfo.shared_with)
+                : templateInfo.shared_with;
+            } catch (e) {
+              console.log("⚠️ Failed to parse shared_with field:", templateInfo.shared_with);
+              sharedWithArray = [];
+            }
+          }
+
+          const canModifyTemplate = 
+            templateInfo.created_by === user_id ||
+            templateInfo.assigned_to === user_id ||
+            (Array.isArray(sharedWithArray) && sharedWithArray.includes(user_id));
+
+          console.log(`🔍 TEMPLATE PERMISSIONS: User ${user_id} can modify template ${updatedInstance.template_id}: ${canModifyTemplate}`);
+          console.log(`🔍 TEMPLATE PERMISSIONS: created_by=${templateInfo.created_by}, assigned_to=${templateInfo.assigned_to}, shared_with=${JSON.stringify(templateInfo.shared_with)}`);
+
+          if (canModifyTemplate) {
+            console.log("🔄 PHASE 5: Updating template - user has modification rights");
+            await db.execute(sql`
+              UPDATE ${sql.raw(templatesTable)}
+              SET 
+                title = ${validatedData.title},
+                item_type = ${validatedData.item_type},
+                verify_required = ${validatedData.verify_required || false},
+                time_frame = ${validatedData.time_frame || null},
+                why_it_matters = ${validatedData.why_it_matters || null},
+                assigned_to = ${validatedData.assigned_to || null},
+                shared_with = ${validatedData.shared_with && validatedData.shared_with.length > 0
+                  ? JSON.stringify(validatedData.shared_with)
+                  : null},
+                updated_at = ${new Date().toISOString()}
+              WHERE id = ${updatedInstance.template_id}
+            `);
+            console.log("✅ PHASE 5: Template updated successfully");
+          } else {
+            console.log("⚠️ PHASE 5: User doesn't have template modification rights - skipping template update");
+            console.log("ℹ️ PHASE 5: This is normal for shared items - instance was updated successfully");
+          }
+        } else {
+          console.log("⚠️ PHASE 5: Template not found for instance, skipping template update");
+        }
       }
 
       // Invalidate cache for affected users after successful update
