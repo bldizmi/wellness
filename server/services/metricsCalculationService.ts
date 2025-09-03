@@ -219,8 +219,6 @@ export class MetricsCalculationService {
   async calculateTrustScore30Days(userId: string): Promise<number> {
     const cacheKey = `trust_score_30:${userId}`;
     
-    console.log('🔥 METRICS DEBUG - calculateTrustScore30Days called for userId:', userId);
-    
     if (this.options.enableCaching) {
       const cached = this.getCachedResult(cacheKey);
       if (cached) return cached;
@@ -229,25 +227,19 @@ export class MetricsCalculationService {
     try {
       const startTime = Date.now();
       
-      // Step 1: Get Phase 4 instances (last 30 days)
+      // Step 1: Get Phase 4 instances (last 30 days) - Fixed to use direct assigned_to
       const phase4Query = sql`
         SELECT 
           COUNT(*) as total_instances,
-          COUNT(*) FILTER (WHERE ri.status = 'completed') as completed_instances
+          COUNT(*) FILTER (WHERE ri.status = 'complete') as completed_instances
         FROM ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri
-        JOIN ${sql.identifier(this.tablePrefix + 'items')} i ON ri.template_id = i.id
-        WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
+        WHERE ri.assigned_to = ${userId}
         AND ri.occurrence_date::date >= CURRENT_DATE - INTERVAL '30 days'
       `;
       
       const phase4Result = await db.execute(phase4Query);
       const phase4Row = phase4Result.rows[0] as any;
       
-      console.log('🔥 METRICS DEBUG - Phase 4 query result (30 days):', {
-        total_instances: phase4Row?.total_instances,
-        completed_instances: phase4Row?.completed_instances,
-        tablePrefix: this.tablePrefix
-      });
 
       // Step 2: Enhanced legacy calculation - separate recurring and one-time items
       const legacyRecurringQuery = sql`
@@ -284,16 +276,6 @@ export class MetricsCalculationService {
       const legacyRecurringRow = legacyRecurringResult.rows[0] as any;
       const legacyOneTimeRow = legacyOneTimeResult.rows[0] as any;
       
-      console.log('🔥 METRICS DEBUG - Legacy query results (30 days):', {
-        recurring: {
-          items_with_completions: legacyRecurringRow?.recurring_items_with_completions,
-          total_completions: legacyRecurringRow?.total_recurring_completions
-        },
-        oneTime: {
-          total_items: legacyOneTimeRow?.total_one_time_items,
-          completed_items: legacyOneTimeRow?.completed_one_time_items
-        }
-      });
 
       // Step 3: Enhanced calculation combining all data sources
       const phase4Total = parseInt(phase4Row.total_instances) || 0;
@@ -315,18 +297,6 @@ export class MetricsCalculationService {
       const trustScore = totalDue > 0 
         ? Math.round((totalCompleted / totalDue) * 100)
         : 0;
-        
-      console.log('🔥 METRICS DEBUG - Trust Score 30 days FINAL calculation:', {
-        phase4Total,
-        phase4Completed,
-        estimatedRecurringExpected,
-        recurringCompletions,
-        oneTimeTotal,
-        oneTimeCompleted,
-        totalDue,
-        totalCompleted,
-        trustScore
-      });
 
       const duration = Date.now() - startTime;
       
@@ -364,8 +334,6 @@ export class MetricsCalculationService {
   async calculateTrustScoreAllTime(userId: string): Promise<number> {
     const cacheKey = `trust_score_all:${userId}`;
     
-    console.log('🔥 METRICS DEBUG - calculateTrustScoreAllTime called for userId:', userId);
-    
     if (this.options.enableCaching) {
       const cached = this.getCachedResult(cacheKey);
       if (cached) return cached;
@@ -374,14 +342,13 @@ export class MetricsCalculationService {
     try {
       const startTime = Date.now();
       
-      // Step 1: Get all Phase 4 instances (all time)
+      // Step 1: Get all Phase 4 instances (all time) - Fixed to use direct assigned_to
       const phase4Query = sql`
         SELECT 
           COUNT(*) as total_instances,
-          COUNT(*) FILTER (WHERE ri.status = 'completed') as completed_instances
+          COUNT(*) FILTER (WHERE ri.status = 'complete') as completed_instances
         FROM ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri
-        JOIN ${sql.identifier(this.tablePrefix + 'items')} i ON ri.template_id = i.id
-        WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
+        WHERE ri.assigned_to = ${userId}
       `;
       
       const phase4Result = await db.execute(phase4Query);
@@ -477,8 +444,6 @@ export class MetricsCalculationService {
   async calculateStreaks(userId: string, itemId?: string): Promise<{ current: number; longest: number }> {
     const cacheKey = `streaks:${userId}:${itemId || 'all'}`;
     
-    console.log('🔥 METRICS DEBUG - calculateStreaks called for userId:', userId, 'itemId:', itemId);
-    
     if (this.options.enableCaching) {
       const cached = this.getCachedResult(cacheKey);
       if (cached) return cached;
@@ -499,20 +464,13 @@ export class MetricsCalculationService {
         : sql`
             SELECT ri.occurrence_date, ri.status
             FROM ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri
-            JOIN ${sql.identifier(this.tablePrefix + 'items')} i ON ri.template_id = i.id
-            WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
+            WHERE ri.assigned_to = ${userId}
             AND ri.occurrence_date::date >= CURRENT_DATE - INTERVAL '365 days'
             ORDER BY ri.occurrence_date DESC
           `;
 
       const result = await db.execute(query);
       const instances = result.rows as Array<{ occurrence_date: string; status: string }>;
-      
-      console.log('🔥 METRICS DEBUG - Streak instances found:', {
-        instanceCount: instances.length,
-        sampleInstances: instances.slice(0, 5),
-        tablePrefix: this.tablePrefix
-      });
       
       // Calculate streaks using simple iteration
       let currentStreak = 0;
@@ -712,15 +670,14 @@ export class MetricsCalculationService {
       const batchQuery = sql`
         WITH community_stats AS (
           SELECT 
-            COALESCE(i.assigned_to, i.user_id, i.created_by) as user_id,
+            ri.assigned_to as user_id,
             COUNT(*) as total_instances,
-            COUNT(*) FILTER (WHERE ri.status = 'completed') as completed_instances,
+            COUNT(*) FILTER (WHERE ri.status = 'complete') as completed_instances,
             COUNT(*) FILTER (WHERE ri.verification_status = 'verified') as verified_instances
           FROM ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri
-          JOIN ${sql.identifier(this.tablePrefix + 'items')} i ON ri.template_id = i.id
-          WHERE (i.assigned_to = ANY(${memberIds}) OR i.user_id = ANY(${memberIds}) OR i.created_by = ANY(${memberIds}))
+          WHERE ri.assigned_to = ANY(${memberIds})
           AND ri.occurrence_date >= CURRENT_DATE - INTERVAL '30 days'
-          GROUP BY COALESCE(i.assigned_to, i.user_id, i.created_by)
+          GROUP BY ri.assigned_to
         )
         SELECT 
           user_id,
@@ -810,10 +767,10 @@ export class MetricsCalculationService {
           COUNT(*) FILTER (WHERE ri.status = 'completed') as completed_instances,
           COUNT(*) FILTER (WHERE ri.verification_status = 'verified') as verified_instances
         FROM ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri
-        JOIN ${sql.identifier(this.tablePrefix + 'items')} i ON ri.template_id = i.id
-        WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
+        LEFT JOIN ${sql.identifier(this.tablePrefix + 'items')} i ON ri.template_id = i.id
+        WHERE ri.assigned_to = ${userId}
         AND ri.occurrence_date >= CURRENT_DATE - INTERVAL '30 days'
-        GROUP BY i.item_type
+        GROUP BY COALESCE(i.item_type, 'habit')
       `;
 
       const result = await db.execute(metricsQuery);

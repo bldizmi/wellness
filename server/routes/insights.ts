@@ -18,24 +18,16 @@ router.get('/personal', async (req, res) => {
   try {
     const { user_id } = req;
     
-    console.log('🔍 INSIGHTS DEBUG - User ID from request:', user_id);
-    
     if (!user_id) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // Calculate real user-specific metrics using Phase 4 system
-    console.log('🔍 INSIGHTS DEBUG - Calculating metrics for user:', user_id);
     const [trustScore30Days, trustScoreAllTime, streakData] = await Promise.all([
       metricsService.calculateTrustScore30Days(user_id),
       metricsService.calculateTrustScoreAllTime(user_id),
       metricsService.calculateStreaks(user_id)
     ]);
-    console.log('🔍 INSIGHTS DEBUG - Metrics results:', {
-      trustScore30Days,
-      trustScoreAllTime,
-      streakData
-    });
     
     // Get verification attempts with accurate success/failure and time filtering
     const verificationQuery = await db.execute(
@@ -52,13 +44,6 @@ router.get('/personal', async (req, res) => {
     const successfulVerifications = verificationRow?.successful_verifications || 0;
     const thisWeekSuccessful = verificationRow?.this_week_successful || 0;
     
-    console.log('🔍 INSIGHTS DEBUG - Verification data:', {
-      verificationRow,
-      totalVerificationAttempts,
-      successfulVerifications,
-      thisWeekSuccessful
-    });
-    
     const timeSavedTotal = Math.max(0, totalVerificationAttempts * 3.5); // Phase 4 calculation
     const timeSavedThisWeek = Math.max(0, (verificationRow?.this_week_attempts || 0) * 3.5);
     
@@ -70,20 +55,6 @@ router.get('/personal', async (req, res) => {
     );
     const userItems = itemsQuery.rows as any[];
     
-    console.log('🔍 INSIGHTS DEBUG - User items found:', {
-      itemCount: userItems.length,
-      sampleItems: userItems.slice(0, 3).map(item => ({
-        id: item.id,
-        title: item.title,
-        user_id: item.user_id,
-        created_by: item.created_by,
-        assigned_to: item.assigned_to,
-        item_type: item.item_type,
-        status: item.status,
-        completed_at: item.completed_at
-      }))
-    });
-
     // 3. Extract streak data from Phase 4 calculations
     const currentStreak = streakData.current;
     
@@ -192,16 +163,6 @@ router.get('/personal', async (req, res) => {
       areasForGrowth
     };
 
-    console.log('🔍 INSIGHTS DEBUG - Final response being sent:', {
-      timeSavedThisWeek: personalInsights.timeSavedThisWeek,
-      timeSavedTotal: personalInsights.timeSavedTotal,
-      completionRate: personalInsights.completionRate,
-      trustScore: personalInsights.trustScore,
-      trustScore30Days: personalInsights.trustScore30Days,
-      doubleCheckStats: personalInsights.doubleCheckStats,
-      topPerformingItems: personalInsights.topPerformingItems
-    });
-    
     res.json(personalInsights);
   } catch (error) {
     console.error('Error fetching personal insights:', error);
