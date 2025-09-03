@@ -219,6 +219,8 @@ export class MetricsCalculationService {
   async calculateTrustScore30Days(userId: string): Promise<number> {
     const cacheKey = `trust_score_30:${userId}`;
     
+    console.log('🔥 METRICS DEBUG - calculateTrustScore30Days called for userId:', userId);
+    
     if (this.options.enableCaching) {
       const cached = this.getCachedResult(cacheKey);
       if (cached) return cached;
@@ -240,6 +242,12 @@ export class MetricsCalculationService {
       
       const phase4Result = await db.execute(phase4Query);
       const phase4Row = phase4Result.rows[0] as any;
+      
+      console.log('🔥 METRICS DEBUG - Phase 4 query result (30 days):', {
+        total_instances: phase4Row?.total_instances,
+        completed_instances: phase4Row?.completed_instances,
+        tablePrefix: this.tablePrefix
+      });
 
       // Step 2: Enhanced legacy calculation - separate recurring and one-time items
       const legacyRecurringQuery = sql`
@@ -275,6 +283,17 @@ export class MetricsCalculationService {
       
       const legacyRecurringRow = legacyRecurringResult.rows[0] as any;
       const legacyOneTimeRow = legacyOneTimeResult.rows[0] as any;
+      
+      console.log('🔥 METRICS DEBUG - Legacy query results (30 days):', {
+        recurring: {
+          items_with_completions: legacyRecurringRow?.recurring_items_with_completions,
+          total_completions: legacyRecurringRow?.total_recurring_completions
+        },
+        oneTime: {
+          total_items: legacyOneTimeRow?.total_one_time_items,
+          completed_items: legacyOneTimeRow?.completed_one_time_items
+        }
+      });
 
       // Step 3: Enhanced calculation combining all data sources
       const phase4Total = parseInt(phase4Row.total_instances) || 0;
@@ -296,6 +315,18 @@ export class MetricsCalculationService {
       const trustScore = totalDue > 0 
         ? Math.round((totalCompleted / totalDue) * 100)
         : 0;
+        
+      console.log('🔥 METRICS DEBUG - Trust Score 30 days FINAL calculation:', {
+        phase4Total,
+        phase4Completed,
+        estimatedRecurringExpected,
+        recurringCompletions,
+        oneTimeTotal,
+        oneTimeCompleted,
+        totalDue,
+        totalCompleted,
+        trustScore
+      });
 
       const duration = Date.now() - startTime;
       
@@ -332,6 +363,8 @@ export class MetricsCalculationService {
    */
   async calculateTrustScoreAllTime(userId: string): Promise<number> {
     const cacheKey = `trust_score_all:${userId}`;
+    
+    console.log('🔥 METRICS DEBUG - calculateTrustScoreAllTime called for userId:', userId);
     
     if (this.options.enableCaching) {
       const cached = this.getCachedResult(cacheKey);
@@ -444,6 +477,8 @@ export class MetricsCalculationService {
   async calculateStreaks(userId: string, itemId?: string): Promise<{ current: number; longest: number }> {
     const cacheKey = `streaks:${userId}:${itemId || 'all'}`;
     
+    console.log('🔥 METRICS DEBUG - calculateStreaks called for userId:', userId, 'itemId:', itemId);
+    
     if (this.options.enableCaching) {
       const cached = this.getCachedResult(cacheKey);
       if (cached) return cached;
@@ -472,6 +507,12 @@ export class MetricsCalculationService {
 
       const result = await db.execute(query);
       const instances = result.rows as Array<{ occurrence_date: string; status: string }>;
+      
+      console.log('🔥 METRICS DEBUG - Streak instances found:', {
+        instanceCount: instances.length,
+        sampleInstances: instances.slice(0, 5),
+        tablePrefix: this.tablePrefix
+      });
       
       // Calculate streaks using simple iteration
       let currentStreak = 0;
