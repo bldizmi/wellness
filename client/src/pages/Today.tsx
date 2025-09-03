@@ -596,7 +596,13 @@ export default function Today() {
 
               {/* Photo verification indicator */}
               {item.verify_required && (
-                <div className="flex items-center gap-1">
+                <div 
+                  className="flex items-center gap-1 cursor-pointer hover:text-blue-300"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setVerifyingItem(item);
+                  }}
+                >
                   <span className="text-blue-400">📸</span>
                   <span className="text-blue-400">View photos</span>
                 </div>
