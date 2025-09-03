@@ -468,7 +468,7 @@ router.put("/:id", async (req, res) => {
           notes = ${validatedData.why_it_matters || null},
           updated_at = ${new Date().toISOString()},
           shared_with = ${validatedData.shared_with && validatedData.shared_with.length > 0
-            ? validatedData.shared_with
+            ? `{${validatedData.shared_with.join(',')}}`
             : null}
         WHERE id = ${id}
         RETURNING *
@@ -528,7 +528,7 @@ router.put("/:id", async (req, res) => {
                 why_it_matters = ${validatedData.why_it_matters || null},
                 assigned_to = ${validatedData.assigned_to || null},
                 shared_with = ${validatedData.shared_with && validatedData.shared_with.length > 0
-                  ? validatedData.shared_with
+                  ? `{${validatedData.shared_with.join(',')}}`
                   : null},
                 updated_at = ${new Date().toISOString()}
               WHERE id = ${updatedInstance.template_id}
