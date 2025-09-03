@@ -606,6 +606,28 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* Admin Section */}
+        {profile?.role === "admin" && (
+          <div>
+            <h3 className="text-sm font-medium text-gray-400 mb-3">Administration</h3>
+            <div className="space-y-1">
+              <div 
+                className="flex items-center justify-between p-3 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition-colors cursor-pointer"
+                onClick={() => navigate("/admin")}
+              >
+                <div className="flex items-center space-x-3">
+                  <Settings className="h-4 w-4 text-red-400" />
+                  <div>
+                    <div className="font-medium text-red-300">Manual Reviews</div>
+                    <div className="text-sm text-red-400">Review pending verification requests</div>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-red-400" />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Support Section */}
         <div>
           <h3 className="text-sm font-medium text-gray-400 mb-3">Support</h3>
