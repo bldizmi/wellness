@@ -12,6 +12,7 @@ import { eq, or, ilike, and, count, desc } from "drizzle-orm";
 import { Request, Response } from "express";
 import { nanoid } from "nanoid";
 import admin from "firebase-admin";
+import promptsRouter from "./admin/prompts";
 
 const router = Router();
 
@@ -318,5 +319,8 @@ router.get("/users/:id", requireAdmin, async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch user" });
   }
 });
+
+// Add prompts management routes
+router.use("/prompts", promptsRouter);
 
 export default router;

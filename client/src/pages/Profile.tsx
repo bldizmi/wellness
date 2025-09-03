@@ -624,6 +624,20 @@ export default function Profile() {
                 </div>
                 <ChevronRight className="h-4 w-4 text-red-400" />
               </div>
+              
+              <div 
+                className="flex items-center justify-between p-3 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition-colors cursor-pointer"
+                onClick={() => navigate("/admin/prompts")}
+              >
+                <div className="flex items-center space-x-3">
+                  <Settings className="h-4 w-4 text-red-400" />
+                  <div>
+                    <div className="font-medium text-red-300">AI Prompt Management</div>
+                    <div className="text-sm text-red-400">Customize AI prompts and verification rules</div>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-red-400" />
+              </div>
             </div>
           </div>
         )}

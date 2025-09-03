@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { PromptService } from "./promptService";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -38,62 +39,41 @@ export const verifyTaskWithPhoto = async (
       (_, index) => `Image ${index + 1} of ${base64Images.length}:`,
     );
 
+    // Get the dynamic prompt from database
+    const promptTemplate = await PromptService.getActivePrompt('image_verification');
+    
+    // Prepare variables for prompt rendering
+    const promptVariables = {
+      taskTitle,
+      currentDate: new Date().toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        timeZone: userTimezone,
+      }),
+      previousAttemptsSection: previousAttempts.length > 0
+        ? `Previous verification attempts:
+${previousAttempts
+  .slice(0, 3)
+  .map(
+    (attempt, index) => `Attempt ${previousAttempts.length - index}: ${attempt.ai_feedback}
+Result: ${attempt.ai_verification_result}`
+  )
+  .join("\n\n")}`
+        : "",
+      imageCount: base64Images.length
+    };
+
+    // Render the prompt with variables
+    const systemPrompt = PromptService.renderPrompt(promptTemplate, promptVariables);
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are an AI assistant helping users verify task completion through multiple photos. Analyze all images carefully together to determine completion status.
-
-Task to verify: "${taskTitle}"
-Current date: ${new Date().toLocaleDateString("en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-            timeZone: userTimezone,
-          })}
-
-${
-  previousAttempts.length > 0
-    ? `
-Previous verification attempts:
-${previousAttempts
-  .slice(0, 3)
-  .map(
-    (attempt, index) => `
-Attempt ${previousAttempts.length - index}: ${attempt.ai_feedback}
-Result: ${attempt.ai_verification_result}
-`,
-  )
-  .join("")}
-`
-    : ""
-}
-
-Critical instructions for multiple images:
-• Analyze ALL images together as evidence
-• Look for consistency or contradictions between images
-• Different angles might show different aspects of completion
-• Some images might show setup while others show results
-• For pill organizers: Check if ALL images show empty compartments for today
-• For cleaning tasks: Look for before/after evidence across images
-• For exercise: Multiple angles might better show completion
-• If any image clearly shows incompletion, the overall result should be "not_complete"
-• Only mark "complete" if ALL images collectively show clear evidence
-
-Analysis approach:
-1. Examine each image individually first
-2. Then look for relationships between images
-3. Note any inconsistencies
-4. Determine if images collectively prove completion
-5. Consider if additional angles would help verification
-
-Respond in JSON format with:
-{
-  "ai_verification_result": "complete" | "not_complete" | "unclear",
-  "ai_feedback": "• Image 1 shows...\n• Image 2 shows...\n• Combined they show..."
-}`,
+          content: systemPrompt,
         },
         {
           role: "user",
@@ -132,6 +112,48 @@ Respond in JSON format with:
     };
   } catch (error) {
     console.error("AI Vision verification error:", error);
+
+    // If error occurred during prompt rendering or AI call, try with fallback
+    if (error.message && error.message.includes("prompt")) {
+      console.warn("Prompt service failed, attempting with fallback prompt");
+      try {
+        const fallbackPrompt = await PromptService.getFallbackPrompt('image_verification');
+        const fallbackVariables = {
+          taskTitle,
+          currentDate: new Date().toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric", 
+            month: "long",
+            day: "numeric",
+            timeZone: userTimezone,
+          }),
+          previousAttemptsSection: "",
+          imageCount: base64Images.length
+        };
+        
+        const fallbackSystemPrompt = PromptService.renderPrompt(fallbackPrompt, fallbackVariables);
+        
+        const fallbackResponse = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            { role: "system", content: fallbackSystemPrompt },
+            { role: "user", content: [
+              { type: "text", text: `Please verify if this task has been completed: "${taskTitle}"` },
+              ...imageContents,
+            ]}
+          ],
+          response_format: { type: "json_object" },
+          max_tokens: 400,
+        });
+        
+        const fallbackResult = JSON.parse(fallbackResponse.choices[0].message.content || "{}");
+        if (fallbackResult.ai_verification_result && fallbackResult.ai_feedback) {
+          return fallbackResult;
+        }
+      } catch (fallbackError) {
+        console.error("Fallback prompt also failed:", fallbackError);
+      }
+    }
 
     return {
       ai_verification_result: "unclear",

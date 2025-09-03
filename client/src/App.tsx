@@ -20,6 +20,7 @@ import Plans from "@/pages/Plans";
 import Insights from "@/pages/Insights";
 import Rewards from "@/pages/Rewards";
 import AdminUsers from "@/pages/AdminUsers";
+import AdminPrompts from "@/pages/AdminPrompts";
 import AccountStatus from "@/pages/AccountStatus";
 
 import Header from "@/components/Header";
@@ -150,6 +151,11 @@ function Router() {
             <Route path="/admin">
               <ProtectedRoute requiredRole="admin">
                 <AdminUsers />
+              </ProtectedRoute>
+            </Route>
+            <Route path="/admin/prompts">
+              <ProtectedRoute requiredRole="admin">
+                <AdminPrompts />
               </ProtectedRoute>
             </Route>
             <Route path="/today">

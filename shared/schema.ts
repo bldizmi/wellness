@@ -788,3 +788,44 @@ export const insertRecurringInstanceSchema = recurringInstanceSchema.omit({
 export type InsertRecurringInstance = z.infer<
   typeof insertRecurringInstanceSchema
 >;
+
+// AI Prompts table for customizable system prompts
+export const ai_prompts = pgTable(`${TABLE_PREFIX}ai_prompts`, {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(), // Human-readable name
+  type: text("type").notNull(), // "image_verification", "task_estimation", etc.
+  version: integer("version").notNull().default(1),
+  content: text("content").notNull(), // The actual prompt template
+  variables: jsonb("variables"), // Available template variables
+  is_active: boolean("is_active").default(false), // Only one active per type
+  is_default: boolean("is_default").default(false), // Fallback prompt
+  created_by: text("created_by").notNull(), // Admin who created it
+  created_at: text("created_at").notNull(),
+  updated_at: text("updated_at").notNull(),
+  metadata: jsonb("metadata"), // Additional settings, A/B test data, etc.
+});
+
+// AI Prompts validation schema
+export const aiPromptSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, "Name is required"),
+  type: z.string().min(1, "Type is required"),
+  version: z.number().int().positive().default(1),
+  content: z.string().min(10, "Content must be at least 10 characters"),
+  variables: z.record(z.string()).optional(),
+  is_active: z.boolean().default(false),
+  is_default: z.boolean().default(false),
+  created_by: z.string().min(1, "Created by is required"),
+  created_at: z.string(),
+  updated_at: z.string(),
+  metadata: z.record(z.any()).optional(),
+});
+
+export type AiPrompt = z.infer<typeof aiPromptSchema>;
+
+export const insertAiPromptSchema = aiPromptSchema.omit({
+  created_at: true,
+  updated_at: true,
+});
+
+export type InsertAiPrompt = z.infer<typeof insertAiPromptSchema>;
