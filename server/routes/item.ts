@@ -1887,124 +1887,124 @@ router.delete("/:id", async (req, res) => {
           `🔍 HYBRID DELETE: Found item ${id} (${itemDisplayId}) in ${tableName} table`,
         );
 
-        // Handle deletion strategy for recurring items
-        const isRecurring = item.template_id; // If it has template_id, it's a recurring instance
+        // First, get template info to determine if this is truly a recurring item
+        let isRecurring = false;
+        let templateData = null;
         
+        if (item.template_id) {
+          const templateQuery = sql`
+            SELECT is_recurring, max_occurrences FROM ${sql.raw(templatesTable)} 
+            WHERE id = ${item.template_id}
+            LIMIT 1
+          `;
+          const templateResult = await db.execute(templateQuery);
+          if (templateResult.rows.length > 0) {
+            templateData = templateResult.rows[0];
+            isRecurring = templateData.is_recurring === true;
+          }
+        }
+
+        console.log(`🔍 DELETION STRATEGY: Item ${id} is recurring: ${isRecurring}, strategy: ${strategy || 'all'}`);
+
         if (isRecurring && strategy === "future") {
-          // STRATEGY: Future Only - Keep completions and past data
-          console.log(`🔄 FUTURE ONLY: Deleting template to stop future instances, keeping completion data`);
+          // STRATEGY: Future Only - Keep ALL existing data, only prevent future occurrences
+          console.log(`🔄 FUTURE ONLY: Deleting template to stop future instances, preserving ALL existing data including current instance`);
           
-          // Delete the template to prevent future instances
           const templateId = item.template_id;
           if (templateId) {
+            // Only delete the template to stop future generations
             const templateDeleteResult = await db.execute(sql`
               DELETE FROM ${sql.raw(templatesTable)} 
               WHERE id = ${templateId}
             `);
             
             if (templateDeleteResult.rowCount && templateDeleteResult.rowCount > 0) {
-              console.log(`✅ FUTURE ONLY: Deleted template ${templateId}, completion data preserved`);
+              console.log(`✅ FUTURE ONLY: Deleted template ${templateId}, all instances and completion data preserved`);
+              deletedItem = { id, title: itemTitle, display_id: itemDisplayId };
+              console.log(`✅ FUTURE ONLY: Template-only deletion successful - no instances were removed`);
+            } else {
+              console.log(`❌ FUTURE ONLY: Failed to delete template ${templateId}`);
             }
+          } else {
+            console.log(`⚠️ FUTURE ONLY: No template_id found, cannot stop future occurrences`);
           }
-          
-          // Don't delete completion records - keep historical data
-          console.log(`📊 FUTURE ONLY: Preserving completion records and verification attempts for reporting`);
         } else {
-          // STRATEGY: All (default for one-time items or "all" strategy)
-          console.log(`🗑️ DELETE ALL: Removing all records including completion data`);
+          // STRATEGY: All (default for one-time items or "all" strategy for recurring items)
+          console.log(`🗑️ DELETE ALL: Removing all records including completion data and instances`);
           
-          // Delete related records 
+          const templateId = item.template_id;
+          
+          // Delete related records for this specific item
           await db
             .delete(item_verification_attempts)
             .where(eq(item_verification_attempts.item_id, id));
           await db
             .delete(item_completions)
             .where(eq(item_completions.item_id, id));
-        }
 
-        // Delete the current instance
-        const result = await db.execute(sql`
-          DELETE FROM ${sql.raw(tableName)} 
-          WHERE id = ${id}
-        `);
+          // Delete the current instance
+          const result = await db.execute(sql`
+            DELETE FROM ${sql.raw(tableName)} 
+            WHERE id = ${id}
+          `);
 
-        if (result.rowCount && result.rowCount > 0) {
-          deletedItem = { id, title: itemTitle, display_id: itemDisplayId };
-          console.log(
-            `🔄 NEW ARCHITECTURE DELETE: Successfully deleted recurring instance ${id} (${itemDisplayId}) from ${tableName}`,
-          );
-          console.log(
-            `✅ DELETE SUCCESS: Database deletion confirmed, rowCount: ${result.rowCount}`,
-          );
+          if (result.rowCount && result.rowCount > 0) {
+            deletedItem = { id, title: itemTitle, display_id: itemDisplayId };
+            console.log(`🗑️ DELETE ALL: Deleted current instance ${id} (${itemDisplayId})`);
 
-          // OLD TEMPLATE DELETION LOGIC (now handled by strategy-based logic above)
-          // Only run this for "all" strategy or non-recurring items
-          if (!isRecurring || strategy === "all") {
-            console.log(`🔄 LEGACY CLEANUP: Running additional cleanup for strategy: ${strategy || 'all'}`);
-            const templateId = item.template_id;
-          if (templateId) {
-            console.log(
-              `🗑️ TEMPLATE DELETE: Also deleting template ${templateId} to prevent regeneration`,
-            );
+            // For recurring items with "all" strategy, also delete template and other instances
+            if (isRecurring && templateId) {
+              console.log(`🗑️ DELETE ALL RECURRING: Removing template and all other instances`);
+              
+              // Delete all other instances of this template first (to clean up their completion data)
+              const allInstancesQuery = sql`
+                SELECT id FROM ${sql.raw(instancesTable)} 
+                WHERE template_id = ${templateId} AND id != ${id}
+              `;
+              const allInstancesResult = await db.execute(allInstancesQuery);
+              
+              for (const instance of allInstancesResult.rows) {
+                // Clean up completion data for each instance
+                await db
+                  .delete(item_verification_attempts)
+                  .where(eq(item_verification_attempts.item_id, instance.id));
+                await db
+                  .delete(item_completions)
+                  .where(eq(item_completions.item_id, instance.id));
+              }
+              
+              // Delete all other instances
+              const instancesDeleteResult = await db.execute(sql`
+                DELETE FROM ${sql.raw(instancesTable)} 
+                WHERE template_id = ${templateId} AND id != ${id}
+              `);
+              
+              if (instancesDeleteResult.rowCount && instancesDeleteResult.rowCount > 0) {
+                console.log(`✅ DELETE ALL: Deleted ${instancesDeleteResult.rowCount} other instances`);
+              }
 
-            try {
+              // Finally delete the template
               const templateDeleteResult = await db.execute(sql`
                 DELETE FROM ${sql.raw(templatesTable)} 
                 WHERE id = ${templateId}
               `);
-
-              if (
-                templateDeleteResult.rowCount &&
-                templateDeleteResult.rowCount > 0
-              ) {
-                console.log(
-                  `✅ TEMPLATE DELETE SUCCESS: Deleted template ${templateId}, rowCount: ${templateDeleteResult.rowCount}`,
-                );
-
-                // ALSO DELETE ALL OTHER INSTANCES of this template to fully clean up
-                console.log(
-                  `🗑️ CLEANUP: Deleting all other instances of template ${templateId}`,
-                );
-                try {
-                  const instancesDeleteResult = await db.execute(sql`
-                    DELETE FROM ${sql.raw(instancesTable)} 
-                    WHERE template_id = ${templateId} AND id != ${id}
-                  `);
-
-                  if (
-                    instancesDeleteResult.rowCount &&
-                    instancesDeleteResult.rowCount > 0
-                  ) {
-                    console.log(
-                      `✅ INSTANCES CLEANUP: Deleted ${instancesDeleteResult.rowCount} other instances of template ${templateId}`,
-                    );
-                  } else {
-                    console.log(
-                      `✅ INSTANCES CLEANUP: No other instances found for template ${templateId}`,
-                    );
-                  }
-                } catch (instancesError) {
-                  console.error(`❌ INSTANCES CLEANUP ERROR:`, instancesError);
-                }
-              } else {
-                console.log(
-                  `⚠️ TEMPLATE DELETE: No template found with ID ${templateId} (might be shared template)`,
-                );
+              
+              if (templateDeleteResult.rowCount && templateDeleteResult.rowCount > 0) {
+                console.log(`✅ DELETE ALL: Deleted template ${templateId}`);
               }
-            } catch (templateError) {
-              console.error(`❌ TEMPLATE DELETE ERROR:`, templateError);
-              // Don't fail the main deletion if template deletion fails
+            } else if (templateId) {
+              // For one-time items, just delete the template
+              console.log(`🗑️ DELETE ALL ONE-TIME: Removing template for one-time item`);
+              await db.execute(sql`
+                DELETE FROM ${sql.raw(templatesTable)} 
+                WHERE id = ${templateId}
+              `);
             }
+            
+            console.log(`✅ DELETE ALL: Complete cleanup finished`);
           } else {
-            console.log(
-              `⚠️ NO TEMPLATE ID: Instance ${id} has no template_id, skipping template deletion`,
-            );
+            console.log(`❌ DELETE ALL: Failed to delete instance ${id}`);
           }
-          } // End of strategy-based cleanup condition
-        } else {
-          console.log(
-            `❌ DELETE FAILED: No rows affected in ${tableName} for item ${id}`,
-          );
         }
       }
     } catch (architectureError) {
