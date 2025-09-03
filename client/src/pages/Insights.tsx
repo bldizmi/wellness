@@ -149,9 +149,7 @@ export default function Insights() {
     queryKey: ['/api/insights/weekly-activity'],
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
-    onSuccess: (data) => {
-      console.log('📊 Weekly Activity Data:', data);
-    }
+
   });
 
   const formatTime = (minutes: number) => {
@@ -315,7 +313,7 @@ export default function Insights() {
                         : 8; // Very small bar for days with no instances
                       const isToday = day.date === new Date().toISOString().split('T')[0];
                       
-                      console.log('📊 Day:', day.day, 'Height:', height, 'Data:', day);
+                      
                       
                       return (
                         <div key={day.date} className="flex flex-col items-center gap-1 group relative">
