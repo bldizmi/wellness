@@ -87,7 +87,7 @@ export class MetricsCalculationService {
               COUNT(*) FILTER (WHERE ri.status = 'completed') as completed_instances
             FROM ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri
             JOIN ${sql.identifier(this.tablePrefix + 'items')} i ON ri.template_id = i.id
-            WHERE i.assigned_to = ${userId}
+            WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
             AND ri.occurrence_date::date BETWEEN ${dateRange.start}::date AND ${dateRange.end}::date
           `
         : sql`
@@ -96,7 +96,7 @@ export class MetricsCalculationService {
               COUNT(*) FILTER (WHERE ri.status = 'completed') as completed_instances
             FROM ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri
             JOIN ${sql.identifier(this.tablePrefix + 'items')} i ON ri.template_id = i.id
-            WHERE i.assigned_to = ${userId}
+            WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
             AND ri.occurrence_date::date >= CURRENT_DATE - INTERVAL '30 days'
           `;
 
@@ -114,7 +114,7 @@ export class MetricsCalculationService {
               ON i.id = ic.item_id 
             LEFT JOIN ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri 
               ON i.id = ri.template_id
-            WHERE i.assigned_to = ${userId}
+            WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
             AND i.recurrence_type IS NOT NULL
             AND ri.template_id IS NULL
             AND ic.completion_date::date BETWEEN ${dateRange.start}::date AND ${dateRange.end}::date
@@ -128,7 +128,7 @@ export class MetricsCalculationService {
               ON i.id = ic.item_id 
             LEFT JOIN ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri 
               ON i.id = ri.template_id
-            WHERE i.assigned_to = ${userId}
+            WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
             AND i.recurrence_type IS NOT NULL
             AND ri.template_id IS NULL
             AND ic.completion_date::date >= CURRENT_DATE - INTERVAL '30 days'
@@ -144,14 +144,40 @@ export class MetricsCalculationService {
       const legacyItemsWithCompletions = parseInt(legacyRow.items_with_completions) || 0;
       const legacyTotalCompletions = parseInt(legacyRow.total_completions) || 0;
       
-      // For legacy items: estimate expected occurrences based on recurrence patterns
-      // Conservative estimate: daily habits = 30 expected, weekly = 4 expected, monthly = 1 expected
-      // For now, use a simple average: total_completions / items suggests completion frequency
+      // Enhanced legacy calculation - also check one-time items that are completed
+      const legacyOneTimeQuery = dateRange
+        ? sql`
+            SELECT COUNT(DISTINCT i.id) as one_time_items_completed
+            FROM ${sql.identifier(this.tablePrefix + 'items')} i
+            LEFT JOIN ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri ON i.id = ri.template_id
+            WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
+            AND ri.template_id IS NULL
+            AND i.recurrence_type IS NULL
+            AND (i.completed_at IS NOT NULL OR (i.verify_required = true AND i.status = 'complete'))
+            AND (i.completed_at::date BETWEEN ${dateRange.start}::date AND ${dateRange.end}::date
+                 OR i.created_at::date BETWEEN ${dateRange.start}::date AND ${dateRange.end}::date)
+          `
+        : sql`
+            SELECT COUNT(DISTINCT i.id) as one_time_items_completed
+            FROM ${sql.identifier(this.tablePrefix + 'items')} i
+            LEFT JOIN ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri ON i.id = ri.template_id
+            WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
+            AND ri.template_id IS NULL
+            AND i.recurrence_type IS NULL
+            AND (i.completed_at IS NOT NULL OR (i.verify_required = true AND i.status = 'complete'))
+            AND (i.completed_at::date >= CURRENT_DATE - INTERVAL '30 days'
+                 OR i.created_at::date >= CURRENT_DATE - INTERVAL '30 days')
+          `;
+      
+      const oneTimeResult = await db.execute(legacyOneTimeQuery);
+      const oneTimeCompleted = parseInt((oneTimeResult.rows[0] as any).one_time_items_completed) || 0;
+      
+      // For recurring items: use a more realistic estimation
       const avgCompletionsPerItem = legacyItemsWithCompletions > 0 ? legacyTotalCompletions / legacyItemsWithCompletions : 0;
       const estimatedExpectedOccurrences = Math.round(legacyItemsWithCompletions * Math.max(avgCompletionsPerItem, 1));
       
-      const totalExpected = phase4Total + estimatedExpectedOccurrences;
-      const totalCompleted = phase4Completed + legacyTotalCompletions;
+      const totalExpected = phase4Total + estimatedExpectedOccurrences + oneTimeCompleted; // One-time items expected = completed
+      const totalCompleted = phase4Completed + legacyTotalCompletions + oneTimeCompleted;
       
       const completionRate = totalExpected > 0 
         ? Math.round((totalCompleted / totalExpected) * 100)
@@ -169,6 +195,7 @@ export class MetricsCalculationService {
         phase4_completed: instanceRow.completed_instances,
         legacy_completions: legacyRow.total_completions,
         legacy_items: legacyRow.items_with_completions,
+        one_time_completed: oneTimeCompleted,
         duration_ms: duration,
         optimization: 'hybrid_instance_legacy_counting'
       });
@@ -207,46 +234,64 @@ export class MetricsCalculationService {
           COUNT(*) FILTER (WHERE ri.status = 'completed') as completed_instances
         FROM ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri
         JOIN ${sql.identifier(this.tablePrefix + 'items')} i ON ri.template_id = i.id
-        WHERE i.assigned_to = ${userId}
+        WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
         AND ri.occurrence_date::date >= CURRENT_DATE - INTERVAL '30 days'
       `;
       
       const phase4Result = await db.execute(phase4Query);
       const phase4Row = phase4Result.rows[0] as any;
 
-      // Step 2: Get legacy one-time items active in last 30 days (excluding recurring items handled by Phase 4)
-      const legacyQuery = sql`
+      // Step 2: Enhanced legacy calculation - separate recurring and one-time items
+      const legacyRecurringQuery = sql`
         SELECT 
-          COUNT(DISTINCT i.id) as total_items_due,
-          COUNT(DISTINCT CASE WHEN (
-            ic.completion_date::date >= CURRENT_DATE - INTERVAL '30 days'
-            OR (i.completed_at IS NOT NULL AND i.completed_at::date >= CURRENT_DATE - INTERVAL '30 days')
-            OR (i.verify_required = true AND i.status = 'complete')
-          ) THEN i.id END) as items_completed
+          COUNT(DISTINCT ic.item_id) as recurring_items_with_completions,
+          COUNT(*) as total_recurring_completions
         FROM ${sql.identifier(this.tablePrefix + 'items')} i
-        LEFT JOIN ${sql.identifier(this.tablePrefix + 'item_completions')} ic ON i.id = ic.item_id
+        JOIN ${sql.identifier(this.tablePrefix + 'item_completions')} ic ON i.id = ic.item_id
         LEFT JOIN ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri ON i.id = ri.template_id
-        WHERE i.assigned_to = ${userId}
+        WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
         AND ri.template_id IS NULL
-        AND (
-          (i.due_date IS NOT NULL AND i.due_date != '' AND i.due_date::date >= CURRENT_DATE - INTERVAL '30 days')
-          OR (ic.completion_date IS NOT NULL AND ic.completion_date != '' AND ic.completion_date::date >= CURRENT_DATE - INTERVAL '30 days')
-          OR (i.completed_at IS NOT NULL AND i.completed_at::date >= CURRENT_DATE - INTERVAL '30 days')
-          OR (i.created_at::date >= CURRENT_DATE - INTERVAL '30 days')
-        )
+        AND i.recurrence_type IS NOT NULL
+        AND ic.completion_date::date >= CURRENT_DATE - INTERVAL '30 days'
       `;
-
-      const legacyResult = await db.execute(legacyQuery);
-      const legacyRow = legacyResult.rows[0] as any;
       
-      // Step 3: Simple calculation - items due vs items completed
+      const legacyOneTimeQuery = sql`
+        SELECT 
+          COUNT(DISTINCT i.id) as total_one_time_items,
+          COUNT(DISTINCT CASE WHEN (i.completed_at IS NOT NULL OR (i.verify_required = true AND i.status = 'complete')) THEN i.id END) as completed_one_time_items
+        FROM ${sql.identifier(this.tablePrefix + 'items')} i
+        LEFT JOIN ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri ON i.id = ri.template_id
+        WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
+        AND ri.template_id IS NULL
+        AND i.recurrence_type IS NULL
+        AND (i.created_at::date >= CURRENT_DATE - INTERVAL '30 days'
+             OR i.completed_at::date >= CURRENT_DATE - INTERVAL '30 days')
+      `;
+      
+      const [legacyRecurringResult, legacyOneTimeResult] = await Promise.all([
+        db.execute(legacyRecurringQuery),
+        db.execute(legacyOneTimeQuery)
+      ]);
+      
+      const legacyRecurringRow = legacyRecurringResult.rows[0] as any;
+      const legacyOneTimeRow = legacyOneTimeResult.rows[0] as any;
+
+      // Step 3: Enhanced calculation combining all data sources
       const phase4Total = parseInt(phase4Row.total_instances) || 0;
       const phase4Completed = parseInt(phase4Row.completed_instances) || 0;
-      const legacyTotal = parseInt(legacyRow.total_items_due) || 0;
-      const legacyCompleted = parseInt(legacyRow.items_completed) || 0;
       
-      const totalDue = phase4Total + legacyTotal;
-      const totalCompleted = phase4Completed + legacyCompleted;
+      // For recurring items: estimate expected occurrences in 30 days
+      const recurringItemsWithCompletions = parseInt(legacyRecurringRow.recurring_items_with_completions) || 0;
+      const recurringCompletions = parseInt(legacyRecurringRow.total_recurring_completions) || 0;
+      const avgRecurringCompletions = recurringItemsWithCompletions > 0 ? recurringCompletions / recurringItemsWithCompletions : 0;
+      const estimatedRecurringExpected = Math.round(recurringItemsWithCompletions * Math.max(avgRecurringCompletions, 1));
+      
+      // For one-time items: expected = total items (either completed or pending)
+      const oneTimeTotal = parseInt(legacyOneTimeRow.total_one_time_items) || 0;
+      const oneTimeCompleted = parseInt(legacyOneTimeRow.completed_one_time_items) || 0;
+      
+      const totalDue = phase4Total + estimatedRecurringExpected + oneTimeTotal;
+      const totalCompleted = phase4Completed + recurringCompletions + oneTimeCompleted;
       
       const trustScore = totalDue > 0 
         ? Math.round((totalCompleted / totalDue) * 100)
@@ -262,8 +307,10 @@ export class MetricsCalculationService {
         totalCompleted,
         phase4_instances: phase4Row.total_instances,
         phase4_completed: phase4Row.completed_instances,
-        legacy_total: legacyRow.total_items_due,
-        legacy_completed: legacyRow.items_completed,
+        legacy_recurring_items: legacyRecurringRow.recurring_items_with_completions,
+        legacy_recurring_completions: legacyRecurringRow.total_recurring_completions,
+        one_time_total: legacyOneTimeRow.total_one_time_items,
+        one_time_completed: legacyOneTimeRow.completed_one_time_items,
         duration_ms: duration,
         optimization: 'simple_due_vs_completed'
       });
@@ -301,34 +348,60 @@ export class MetricsCalculationService {
           COUNT(*) FILTER (WHERE ri.status = 'completed') as completed_instances
         FROM ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri
         JOIN ${sql.identifier(this.tablePrefix + 'items')} i ON ri.template_id = i.id
-        WHERE i.assigned_to = ${userId}
+        WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
       `;
       
       const phase4Result = await db.execute(phase4Query);
       const phase4Row = phase4Result.rows[0] as any;
 
-      // Step 2: Get all legacy items (all time) - items without recurring instances
-      const legacyQuery = sql`
+      // Step 2: Get all legacy items (all time) - separate recurring and one-time
+      const legacyRecurringQuery = sql`
         SELECT 
-          COUNT(DISTINCT i.id) as total_items_due,
-          COUNT(DISTINCT CASE WHEN i.completed_at IS NOT NULL OR (i.verify_required = true AND i.status = 'complete') THEN i.id END) as items_completed
+          COUNT(DISTINCT ic.item_id) as recurring_items_with_completions,
+          COUNT(*) as total_recurring_completions
+        FROM ${sql.identifier(this.tablePrefix + 'items')} i
+        JOIN ${sql.identifier(this.tablePrefix + 'item_completions')} ic ON i.id = ic.item_id
+        LEFT JOIN ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri ON i.id = ri.template_id
+        WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
+        AND ri.template_id IS NULL
+        AND i.recurrence_type IS NOT NULL
+      `;
+      
+      const legacyOneTimeQuery = sql`
+        SELECT 
+          COUNT(DISTINCT i.id) as total_one_time_items,
+          COUNT(DISTINCT CASE WHEN (i.completed_at IS NOT NULL OR (i.verify_required = true AND i.status = 'complete')) THEN i.id END) as completed_one_time_items
         FROM ${sql.identifier(this.tablePrefix + 'items')} i
         LEFT JOIN ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri ON i.id = ri.template_id
-        WHERE i.assigned_to = ${userId}
+        WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
         AND ri.template_id IS NULL
+        AND i.recurrence_type IS NULL
       `;
 
-      const legacyResult = await db.execute(legacyQuery);
-      const legacyRow = legacyResult.rows[0] as any;
+      const [legacyRecurringResult, legacyOneTimeResult] = await Promise.all([
+        db.execute(legacyRecurringQuery),
+        db.execute(legacyOneTimeQuery)
+      ]);
       
-      // Step 3: Simple calculation - items due vs items completed (all time)
+      const legacyRecurringRow = legacyRecurringResult.rows[0] as any;
+      const legacyOneTimeRow = legacyOneTimeResult.rows[0] as any;
+      
+      // Step 3: Enhanced calculation for all-time trust score
       const phase4Total = parseInt(phase4Row.total_instances) || 0;
       const phase4Completed = parseInt(phase4Row.completed_instances) || 0;
-      const legacyTotal = parseInt(legacyRow.total_items_due) || 0;
-      const legacyCompleted = parseInt(legacyRow.items_completed) || 0;
       
-      const totalDue = phase4Total + legacyTotal;
-      const totalCompleted = phase4Completed + legacyCompleted;
+      // For recurring items: estimate expected occurrences based on completion history
+      const recurringItemsWithCompletions = parseInt(legacyRecurringRow.recurring_items_with_completions) || 0;
+      const recurringCompletions = parseInt(legacyRecurringRow.total_recurring_completions) || 0;
+      const avgRecurringCompletions = recurringItemsWithCompletions > 0 ? recurringCompletions / recurringItemsWithCompletions : 0;
+      const estimatedRecurringExpected = Math.round(recurringItemsWithCompletions * Math.max(avgRecurringCompletions, 1));
+      
+      // For one-time items: expected = total items
+      const oneTimeTotal = parseInt(legacyOneTimeRow.total_one_time_items) || 0;
+      const oneTimeCompleted = parseInt(legacyOneTimeRow.completed_one_time_items) || 0;
+      
+      const totalDue = phase4Total + estimatedRecurringExpected + oneTimeTotal;
+      const totalCompleted = phase4Completed + recurringCompletions + oneTimeCompleted;
       
       const trustScore = totalDue > 0 
         ? Math.round((totalCompleted / totalDue) * 100)
@@ -344,10 +417,12 @@ export class MetricsCalculationService {
         totalCompleted,
         phase4_instances: phase4Row.total_instances,
         phase4_completed: phase4Row.completed_instances,
-        legacy_total: legacyRow.total_items_due,
-        legacy_completed: legacyRow.items_completed,
+        legacy_recurring_items: legacyRecurringRow.recurring_items_with_completions,
+        legacy_recurring_completions: legacyRecurringRow.total_recurring_completions,
+        one_time_total: legacyOneTimeRow.total_one_time_items,
+        one_time_completed: legacyOneTimeRow.completed_one_time_items,
         duration_ms: duration,
-        optimization: 'simple_due_vs_completed_all_time'
+        optimization: 'enhanced_all_time_calculation'
       });
 
       if (this.options.enableCaching) {
@@ -390,7 +465,7 @@ export class MetricsCalculationService {
             SELECT ri.occurrence_date, ri.status
             FROM ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri
             JOIN ${sql.identifier(this.tablePrefix + 'items')} i ON ri.template_id = i.id
-            WHERE i.assigned_to = ${userId}
+            WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
             AND ri.occurrence_date::date >= CURRENT_DATE - INTERVAL '365 days'
             ORDER BY ri.occurrence_date DESC
           `;
@@ -596,15 +671,15 @@ export class MetricsCalculationService {
       const batchQuery = sql`
         WITH community_stats AS (
           SELECT 
-            i.assigned_to as user_id,
+            COALESCE(i.assigned_to, i.user_id, i.created_by) as user_id,
             COUNT(*) as total_instances,
             COUNT(*) FILTER (WHERE ri.status = 'completed') as completed_instances,
             COUNT(*) FILTER (WHERE ri.verification_status = 'verified') as verified_instances
           FROM ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri
           JOIN ${sql.identifier(this.tablePrefix + 'items')} i ON ri.template_id = i.id
-          WHERE i.assigned_to = ANY(${memberIds})
+          WHERE (i.assigned_to = ANY(${memberIds}) OR i.user_id = ANY(${memberIds}) OR i.created_by = ANY(${memberIds}))
           AND ri.occurrence_date >= CURRENT_DATE - INTERVAL '30 days'
-          GROUP BY i.assigned_to
+          GROUP BY COALESCE(i.assigned_to, i.user_id, i.created_by)
         )
         SELECT 
           user_id,
@@ -695,7 +770,7 @@ export class MetricsCalculationService {
           COUNT(*) FILTER (WHERE ri.verification_status = 'verified') as verified_instances
         FROM ${sql.identifier(this.tablePrefix + 'recurring_instances')} ri
         JOIN ${sql.identifier(this.tablePrefix + 'items')} i ON ri.template_id = i.id
-        WHERE i.assigned_to = ${userId}
+        WHERE (i.assigned_to = ${userId} OR i.user_id = ${userId} OR i.created_by = ${userId})
         AND ri.occurrence_date >= CURRENT_DATE - INTERVAL '30 days'
         GROUP BY i.item_type
       `;
