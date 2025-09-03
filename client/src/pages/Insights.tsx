@@ -148,7 +148,10 @@ export default function Insights() {
   const { data: weeklyActivity, isLoading: weeklyLoading } = useQuery({
     queryKey: ['/api/insights/weekly-activity'],
     staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000 // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    onSuccess: (data) => {
+      console.log('📊 Weekly Activity Data:', data);
+    }
   });
 
   const formatTime = (minutes: number) => {
@@ -306,8 +309,13 @@ export default function Insights() {
                   ) : weeklyActivity?.weeklyActivity ? (
                     // Real weekly data
                     weeklyActivity.weeklyActivity.map((day: any, index: number) => {
-                      const height = Math.max(10, day.percentage); // Minimum 10% height for visibility
+                      // Calculate height in pixels for better visibility (max 80px for the h-20 container)
+                      const height = day.total > 0 
+                        ? Math.max(16, Math.min(80, Math.round(day.percentage * 0.8))) // Scale percentage to pixels
+                        : 8; // Very small bar for days with no instances
                       const isToday = day.date === new Date().toISOString().split('T')[0];
+                      
+                      console.log('📊 Day:', day.day, 'Height:', height, 'Data:', day);
                       
                       return (
                         <div key={day.date} className="flex flex-col items-center gap-1 group relative">
@@ -317,7 +325,10 @@ export default function Insights() {
                                 ? (isToday ? 'bg-green-500' : 'bg-blue-500')
                                 : 'bg-slate-600'
                             } hover:opacity-80`}
-                            style={{ height: `${height}%` }}
+                            style={{ 
+                              height: `${height}px`,  // Use px instead of % for more reliable rendering
+                              minHeight: '8px'        // Ensure minimum visible height
+                            }}
                           ></div>
                           
                           {/* Tooltip */}
