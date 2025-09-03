@@ -362,36 +362,42 @@ function useMotivationalMessage(
   });
 }
 
-// Hook to get approver names for rewards
-function useApproverNames(rewards: Reward[]) {
+// Hook to get approver names for rewards using community data
+function useApproverNames(rewards: Reward[], userProfile: any) {
   const { data: approverNamesMap } = useQuery({
-    queryKey: ["/api/approver-names", rewards.map(r => r.shared_with).filter(Boolean)],
+    queryKey: ["/api/approver-names", rewards.map(r => ({ community_id: r.community_id, shared_with: r.shared_with })).filter(r => r.community_id)],
     queryFn: async () => {
-      const uniqueUserIds = new Set<string>();
+      // Get unique community IDs from rewards that have approvers
+      const communityIds = new Set<string>();
       rewards.forEach(reward => {
-        if (reward.shared_with && Array.isArray(reward.shared_with)) {
-          reward.shared_with.forEach(userId => uniqueUserIds.add(userId));
+        if (reward.community_id && reward.shared_with && Array.isArray(reward.shared_with) && reward.shared_with.length > 0) {
+          communityIds.add(reward.community_id);
         }
       });
       
-      if (uniqueUserIds.size === 0) return {};
+      if (communityIds.size === 0) return {};
       
-      const userProfiles = await Promise.all(
-        Array.from(uniqueUserIds).map(userId => 
-          apiRequest(`/api/profile/${userId}`).catch(() => null)
-        )
+      // Fetch community members for all relevant communities
+      const communityMembersPromises = Array.from(communityIds).map(communityId =>
+        apiRequest(`/api/community/${communityId}/members`).catch(() => ({ members: [] }))
       );
       
+      const communityMembersResults = await Promise.all(communityMembersPromises);
+      
+      // Build a map of user_id -> display_name from all community members
       const nameMap: Record<string, string> = {};
-      Array.from(uniqueUserIds).forEach((userId, index) => {
-        const profile = userProfiles[index];
-        nameMap[userId] = profile?.display_name || profile?.username || 'Unknown user';
+      communityMembersResults.forEach(result => {
+        if (result?.members) {
+          result.members.forEach((member: any) => {
+            nameMap[member.user_id] = member.display_name || member.username || 'Unknown user';
+          });
+        }
       });
       
       return nameMap;
     },
-    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
-    enabled: rewards.length > 0,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    enabled: rewards.length > 0 && rewards.some(r => r.community_id && r.shared_with?.length),
   });
 
   return approverNamesMap || {};
@@ -908,7 +914,7 @@ export default function Rewards() {
 
   // Get approver names for rewards
   const rewardsForNames = (userRewards as any)?.rewards || [];
-  const approverNamesMap = useApproverNames(rewardsForNames);
+  const approverNamesMap = useApproverNames(rewardsForNames, userProfile);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
