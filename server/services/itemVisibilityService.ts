@@ -183,9 +183,16 @@ export async function userHasItemAccess(
         `🔍 ACCESS ENVIRONMENT: ${isDevelopment ? "development" : "production"}, using table: ${instancesTable}`,
       );
 
-      // Use the same table that delete function would use
+      // Use the same table that delete function would use, but JOIN with templates to get created_by
+      const templatesTable = isDevelopment
+        ? "dev_recurring_templates"
+        : "recurring_templates";
+        
       let candidateItem = await db.execute(sql`
-        SELECT * FROM ${sql.raw(instancesTable)} WHERE id = ${itemId}
+        SELECT ri.*, rt.created_by 
+        FROM ${sql.raw(instancesTable)} ri
+        LEFT JOIN ${sql.raw(templatesTable)} rt ON ri.template_id = rt.id
+        WHERE ri.id = ${itemId}
       `);
 
       console.log(
@@ -196,6 +203,9 @@ export async function userHasItemAccess(
         const item = candidateItem.rows[0];
         console.log(
           `🔄 HYBRID ACCESS: Found item ${itemId} in ${instancesTable}`,
+        );
+        console.log(
+          `🔍 DEBUG ACCESS: item.created_by="${item.created_by}", userId="${userId}", assigned_to="${item.assigned_to}"`,
         );
 
         // Check all permissions using JavaScript - no complex SQL
