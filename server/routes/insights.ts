@@ -202,7 +202,8 @@ router.get('/weekly-activity', async (req, res) => {
             ROUND(COUNT(*) FILTER (WHERE ri.status = 'complete') * 100.0 / COUNT(*), 0) as completion_percentage
           FROM ${sql.identifier(getTableName('recurring_instances'))} ri
           WHERE ri.assigned_to = ${user_id}
-          AND ri.occurrence_date::date = ANY(${weekDates})
+          AND ri.occurrence_date::date >= ${weekDates[0]}
+          AND ri.occurrence_date::date <= ${weekDates[6]}
           GROUP BY ri.occurrence_date::date
           ORDER BY ri.occurrence_date::date`
     );
