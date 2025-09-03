@@ -346,7 +346,8 @@ async function ensureSharedInstancesExistForDate(
       AND is_recurring = true
       AND (
         (created_by = ${userId} AND assigned_to != ${userId})
-        OR (${userId} = ANY(shared_with) AND assigned_to != ${userId})
+        OR (assigned_to = ${userId} AND created_by != ${userId})
+        OR (${userId} = ANY(shared_with))
       )
   `;
 
@@ -476,9 +477,9 @@ export async function getSharedItemsNew(userId: string, targetDate: string) {
       ON ri.template_id = rt.id
     WHERE ri.occurrence_date = ${targetDate}
       AND (rt.is_active = true OR rt.is_active IS NULL)
-      AND ri.assigned_to != ${userId}
       AND (
-        rt.created_by = ${userId}
+        (rt.created_by = ${userId} AND ri.assigned_to != ${userId})
+        OR (ri.assigned_to = ${userId} AND rt.created_by != ${userId})
         OR (ri.shared_with IS NOT NULL AND ${userId} = ANY(ri.shared_with))
       )
   `;
