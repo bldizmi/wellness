@@ -82,6 +82,7 @@ export function CreateOrEditItemModal({
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletionStrategy, setDeletionStrategy] = useState<"all" | "future">("future");
+  const [isItemRecurring, setIsItemRecurring] = useState(false);
 
   // Type options
   const typeOptions = [
@@ -201,6 +202,21 @@ export function CreateOrEditItemModal({
       setUploadedImage(null);
     }
   }, [isEditing, item?.id, isOpen, user?.uid]);
+
+  // Determine if item is recurring based on available data
+  useEffect(() => {
+    if (isEditing && item) {
+      if (item.template_id) {
+        // New architecture: Use is_recurring field from template
+        setIsItemRecurring(item.is_recurring === true);
+      } else {
+        // Legacy architecture: check recurrence_type
+        setIsItemRecurring(item.recurrence_type && item.recurrence_type !== "once");
+      }
+    } else {
+      setIsItemRecurring(false);
+    }
+  }, [isEditing, item]);
 
   // Update field helper
   const updateField = (field: string, value: any) => {
@@ -496,7 +512,7 @@ export function CreateOrEditItemModal({
         }
 
         // For recurring items, add next 7 days to ensure calendar updates
-        if (item?.template_id) {
+        if (item?.template_id && item?.is_recurring) {
           for (let i = 0; i < 7; i++) {
             const futureDate = new Date(today);
             futureDate.setDate(today.getDate() + i);
@@ -1368,13 +1384,13 @@ export function CreateOrEditItemModal({
                     <AlertDialogHeader>
                       <AlertDialogTitle className="flex items-center gap-2 text-white">
                         <Trash2 className="h-5 w-5 text-red-400" />
-                        {item?.template_id 
+                        {isItemRecurring 
                           ? "Delete Recurring Item" 
                           : "Delete Item"
                         }
                       </AlertDialogTitle>
                       <AlertDialogDescription className="text-gray-300">
-                        {item?.template_id ? (
+                        {isItemRecurring ? (
                           <div className="space-y-4">
                             <p>
                               This is a recurring item. Choose how to delete "{item?.title || "this item"}":
