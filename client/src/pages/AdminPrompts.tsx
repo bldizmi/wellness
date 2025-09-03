@@ -361,24 +361,24 @@ export default function AdminPrompts() {
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Header */}
-      <div className="p-6 border-b border-gray-800">
-        <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-6 border-b border-gray-800">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Settings className="h-6 w-6 text-red-400" />
             <div>
-              <h1 className="text-2xl font-bold">AI Prompt Management</h1>
-              <p className="text-gray-400">Customize AI prompts for different verification tasks</p>
+              <h1 className="text-xl sm:text-2xl font-bold">AI Prompt Management</h1>
+              <p className="text-gray-400 text-sm sm:text-base">Customize AI prompts for different verification tasks</p>
             </div>
           </div>
-          <Button onClick={openCreateModal} className="bg-red-600 hover:bg-red-700">
+          <Button onClick={openCreateModal} className="bg-red-600 hover:bg-red-700 w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
-            Create New Prompt
+            <span className="sm:inline">Create New Prompt</span>
           </Button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {/* Prompt Types Tabs */}
         <Tabs value={activeType} onValueChange={setActiveType} className="mb-6">
           <TabsList className="bg-gray-800">
@@ -402,29 +402,29 @@ export default function AdminPrompts() {
             <Card className="bg-gray-800 border-gray-700 mb-6">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <CheckCircle className="h-5 w-5 text-green-400" />
                     <CardTitle className="text-green-300">Currently Active Prompt</CardTitle>
                     <Badge className="bg-green-600">v{activePrompt.version}</Badge>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-shrink-0">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => openEditModal(activePrompt)}
-                      className="border-gray-600 hover:bg-gray-700"
+                      className="border-gray-600 hover:bg-gray-700 sm:px-3 px-2"
                     >
-                      <Edit3 className="h-4 w-4 mr-2" />
-                      Edit
+                      <Edit3 className="h-4 w-4 sm:mr-2 mr-0" />
+                      <span className="hidden sm:inline">Edit</span>
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => openTestModal(activePrompt)}
-                      className="border-gray-600 hover:bg-gray-700"
+                      className="border-gray-600 hover:bg-gray-700 sm:px-3 px-2"
                     >
-                      <Play className="h-4 w-4 mr-2" />
-                      Test
+                      <Play className="h-4 w-4 sm:mr-2 mr-0" />
+                      <span className="hidden sm:inline">Test</span>
                     </Button>
                   </div>
                 </div>
@@ -460,85 +460,104 @@ export default function AdminPrompts() {
             </CardHeader>
             <CardContent>
               {promptsData && promptsData.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-gray-700">
-                      <TableHead>Version</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {promptsData.map((prompt: AiPrompt) => (
-                      <TableRow key={prompt.id} className="border-gray-700">
-                        <TableCell>
-                          <Badge variant="outline">v{prompt.version}</Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{prompt.name}</TableCell>
-                        <TableCell>
-                          {prompt.is_active ? (
-                            <Badge className="bg-green-600">Active</Badge>
-                          ) : prompt.is_default ? (
-                            <Badge variant="outline" className="border-blue-400 text-blue-400">
-                              Default
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline">Inactive</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-gray-400">
-                          {formatDistanceToNow(new Date(prompt.created_at))} ago
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => openTestModal(prompt)}
-                              className="h-8 w-8 p-0 hover:bg-gray-700"
-                            >
-                              <Play className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => openEditModal(prompt)}
-                              className="h-8 w-8 p-0 hover:bg-gray-700"
-                            >
-                              <Edit3 className="h-4 w-4" />
-                            </Button>
-                            {!prompt.is_active && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleActivate(prompt)}
-                                className="h-8 w-8 p-0 hover:bg-green-700"
-                                disabled={activatePromptMutation.isPending}
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {!prompt.is_active && !prompt.is_default && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => {
-                                  setSelectedPrompt(prompt);
-                                  setShowDeleteDialog(true);
-                                }}
-                                className="h-8 w-8 p-0 hover:bg-red-700"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-gray-700">
+                        <TableHead className="min-w-[80px]">Version</TableHead>
+                        <TableHead className="min-w-[120px]">Name</TableHead>
+                        <TableHead className="hidden sm:table-cell min-w-[100px]">Status</TableHead>
+                        <TableHead className="hidden md:table-cell min-w-[100px]">Created</TableHead>
+                        <TableHead className="min-w-[120px]">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {promptsData.map((prompt: AiPrompt) => (
+                        <TableRow key={prompt.id} className="border-gray-700">
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">v{prompt.version}</Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <div className="max-w-[150px] truncate">{prompt.name}</div>
+                            <div className="sm:hidden mt-1">
+                              {prompt.is_active ? (
+                                <Badge className="bg-green-600 text-xs">Active</Badge>
+                              ) : prompt.is_default ? (
+                                <Badge variant="outline" className="border-blue-400 text-blue-400 text-xs">
+                                  Default
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs">Inactive</Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            {prompt.is_active ? (
+                              <Badge className="bg-green-600">Active</Badge>
+                            ) : prompt.is_default ? (
+                              <Badge variant="outline" className="border-blue-400 text-blue-400">
+                                Default
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline">Inactive</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-gray-400">
+                            {formatDistanceToNow(new Date(prompt.created_at))} ago
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openTestModal(prompt)}
+                                className="h-8 w-8 p-0 hover:bg-gray-700"
+                                title="Test"
+                              >
+                                <Play className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => openEditModal(prompt)}
+                                className="h-8 w-8 p-0 hover:bg-gray-700"
+                                title="Edit"
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                              {!prompt.is_active && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleActivate(prompt)}
+                                  className="h-8 w-8 p-0 hover:bg-green-700"
+                                  disabled={activatePromptMutation.isPending}
+                                  title="Activate"
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {!prompt.is_active && !prompt.is_default && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setSelectedPrompt(prompt);
+                                    setShowDeleteDialog(true);
+                                  }}
+                                  className="h-8 w-8 p-0 hover:bg-red-700"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               ) : (
                 <div className="text-center py-8 text-gray-400">
                   <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
