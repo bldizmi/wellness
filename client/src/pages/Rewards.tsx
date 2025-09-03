@@ -362,6 +362,41 @@ function useMotivationalMessage(
   });
 }
 
+// Hook to get approver names for rewards
+function useApproverNames(rewards: Reward[]) {
+  const { data: approverNamesMap } = useQuery({
+    queryKey: ["/api/approver-names", rewards.map(r => r.shared_with).filter(Boolean)],
+    queryFn: async () => {
+      const uniqueUserIds = new Set<string>();
+      rewards.forEach(reward => {
+        if (reward.shared_with && Array.isArray(reward.shared_with)) {
+          reward.shared_with.forEach(userId => uniqueUserIds.add(userId));
+        }
+      });
+      
+      if (uniqueUserIds.size === 0) return {};
+      
+      const userProfiles = await Promise.all(
+        Array.from(uniqueUserIds).map(userId => 
+          apiRequest(`/api/profile/${userId}`).catch(() => null)
+        )
+      );
+      
+      const nameMap: Record<string, string> = {};
+      Array.from(uniqueUserIds).forEach((userId, index) => {
+        const profile = userProfiles[index];
+        nameMap[userId] = profile?.display_name || profile?.username || 'Unknown user';
+      });
+      
+      return nameMap;
+    },
+    staleTime: 1000 * 60 * 10, // Cache for 10 minutes
+    enabled: rewards.length > 0,
+  });
+
+  return approverNamesMap || {};
+}
+
 // Community Member Selector Component
 interface CommunityMemberSelectorProps {
   communityId: string;
@@ -446,19 +481,24 @@ interface SimpleRewardItemProps {
     targetValue: number;
   };
   onViewDetails: (reward: Reward) => void;
+  approverNames?: string[];
 }
 
 function SimpleRewardItem({
   reward,
   progressData,
   onViewDetails,
+  approverNames,
 }: SimpleRewardItemProps) {
   const getStatusBadge = () => {
     if (progressData.progress >= 100) {
       return <Badge className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Earned!</Badge>;
     }
     if (reward.status === "pending") {
-      return <span className="text-gray-400 text-sm">Requires approval from Mom</span>;
+      const approverText = approverNames && approverNames.length > 0 
+        ? approverNames.join(", ")
+        : "community members";
+      return <span className="text-gray-400 text-sm">Requires approval from {approverText}</span>;
     }
     return null;
   };
@@ -866,6 +906,10 @@ export default function Rewards() {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Get approver names for rewards
+  const rewardsForNames = (userRewards as any)?.rewards || [];
+  const approverNamesMap = useApproverNames(rewardsForNames);
+
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -1182,14 +1226,15 @@ export default function Rewards() {
                 Create Reward
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl bg-slate-800 border-slate-700 text-white">
+            <DialogContent className="max-w-2xl max-h-[90vh] bg-slate-800 border-slate-700 text-white">
               <DialogHeader>
                 <DialogTitle className="text-white">
                   {editingReward ? "Edit Reward" : "Create New Reward"}
                 </DialogTitle>
               </DialogHeader>
               
-              {/* Metrics Cards at top */}
+              <div className="flex flex-col max-h-[calc(90vh-8rem)] overflow-hidden">
+                {/* Metrics Cards at top */}
               <div className="grid grid-cols-3 gap-3 mb-6">
                 {/* Earned Card - Green */}
                 <Card className="text-center p-3 bg-green-500 text-white border-0 rounded-xl">
@@ -1244,9 +1289,9 @@ export default function Rewards() {
                 </Card>
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title" className="text-white">Title *</Label>
+                <div className="flex-1 overflow-y-auto px-1 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title" className="text-white">Title *</Label>
                   <Input
                     id="title"
                     placeholder="e.g., iPhone 16 Pro, Concert tickets..."
@@ -1414,7 +1459,10 @@ export default function Rewards() {
                   )}
                 </div>
 
-                <div className="flex gap-2 justify-end pt-4">
+                </div>
+                
+                {/* Fixed footer with buttons */}
+                <div className="flex gap-2 justify-end pt-4 border-t border-slate-700 mt-4">
                   <Button 
                     variant="outline" 
                     onClick={handleCloseModal}
@@ -1475,14 +1523,21 @@ export default function Rewards() {
               </div>
             ) : (
               <div className="space-y-3">
-                {(userRewards as any).rewards.map((reward: Reward) => (
-                  <SimpleRewardItem
-                    key={reward.id}
-                    reward={reward}
-                    progressData={calculateProgress(reward, personalInsights)}
-                    onViewDetails={setViewingReward}
-                  />
-                ))}
+                {(userRewards as any).rewards.map((reward: Reward) => {
+                  const approverNames = reward.shared_with 
+                    ? reward.shared_with.map(userId => approverNamesMap[userId]).filter(Boolean)
+                    : [];
+                  
+                  return (
+                    <SimpleRewardItem
+                      key={reward.id}
+                      reward={reward}
+                      progressData={calculateProgress(reward, personalInsights)}
+                      onViewDetails={setViewingReward}
+                      approverNames={approverNames}
+                    />
+                  );
+                })}
               </div>
             )}
           </TabsContent>
