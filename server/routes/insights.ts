@@ -170,6 +170,87 @@ router.get('/personal', async (req, res) => {
   }
 });
 
+// GET /api/insights/weekly-activity - Get weekly activity data for chart
+router.get('/weekly-activity', async (req, res) => {
+  try {
+    const { user_id } = req;
+    
+    if (!user_id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Get current week dates (Sunday to Saturday)
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - dayOfWeek);
+    
+    // Generate array of dates for this week
+    const weekDates = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + i);
+      weekDates.push(date.toISOString().split('T')[0]);
+    }
+
+    // Get daily completion data from recurring_instances
+    const weeklyActivityQuery = await db.execute(
+      sql`SELECT 
+            ri.occurrence_date::date as date,
+            COUNT(*) as total_instances,
+            COUNT(*) FILTER (WHERE ri.status = 'complete') as completed_instances,
+            ROUND(COUNT(*) FILTER (WHERE ri.status = 'complete') * 100.0 / COUNT(*), 0) as completion_percentage
+          FROM ${sql.identifier(getTableName('recurring_instances'))} ri
+          WHERE ri.assigned_to = ${user_id}
+          AND ri.occurrence_date::date = ANY(${weekDates})
+          GROUP BY ri.occurrence_date::date
+          ORDER BY ri.occurrence_date::date`
+    );
+
+    const activityData = weeklyActivityQuery.rows as any[];
+    
+    // Create activity map for easy lookup
+    const activityMap = new Map();
+    activityData.forEach(row => {
+      activityMap.set(row.date, {
+        total: parseInt(row.total_instances),
+        completed: parseInt(row.completed_instances),
+        percentage: parseInt(row.completion_percentage) || 0
+      });
+    });
+
+    // Build complete week data with 0s for days without activity
+    const weeklyActivity = weekDates.map((date, index) => {
+      const activity = activityMap.get(date) || { total: 0, completed: 0, percentage: 0 };
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      
+      return {
+        date,
+        day: dayNames[index],
+        total: activity.total,
+        completed: activity.completed,
+        percentage: activity.percentage
+      };
+    });
+
+    res.json({
+      success: true,
+      weekDates,
+      weeklyActivity,
+      summary: {
+        totalInstances: activityData.reduce((sum, row) => sum + parseInt(row.total_instances), 0),
+        totalCompleted: activityData.reduce((sum, row) => sum + parseInt(row.completed_instances), 0),
+        averageCompletion: activityData.length > 0 
+          ? Math.round(activityData.reduce((sum, row) => sum + parseInt(row.completion_percentage || 0), 0) / activityData.length)
+          : 0
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching weekly activity:', error);
+    res.status(500).json({ error: 'Failed to fetch weekly activity' });
+  }
+});
+
 // GET /api/insights/community/members/:communityId - Get community members for dropdown
 router.get('/community/members/:communityId', async (req, res) => {
   try {

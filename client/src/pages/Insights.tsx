@@ -144,6 +144,13 @@ export default function Insights() {
     enabled: activeTab === 'community'
   });
 
+  // Fetch weekly activity data for chart
+  const { data: weeklyActivity, isLoading: weeklyLoading } = useQuery({
+    queryKey: ['/api/insights/weekly-activity'],
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000 // 5 minutes
+  });
+
   const formatTime = (minutes: number) => {
     if (minutes < 60) return `${Math.round(minutes)} minutes`;
     const hours = Math.floor(minutes / 60);
@@ -287,55 +294,94 @@ export default function Insights() {
                   </h3>
                 </div>
                 
-                {/* Simple Bar Chart */}
+                {/* Real Weekly Activity Bar Chart */}
                 <div className="flex items-end justify-center gap-1 h-20 mb-4">
-                  {(() => {
-                    // Generate dynamic weekly data based on current metrics
-                    const baseActivity = personalInsights.completionRate.thisWeek || 50;
-                    const trustScore = personalInsights.trustScore || 50;
-                    const streak = streakData?.streak?.current_streak || 0;
-                    
-                    // Create stable variation patterns based on existing data
-                    const weekData = [
-                      Math.max(20, Math.min(100, baseActivity - 20)),
-                      Math.max(20, Math.min(100, trustScore - 10)),
-                      Math.max(20, Math.min(100, baseActivity + 10)),
-                      Math.max(20, Math.min(100, trustScore)),
-                      Math.max(20, Math.min(100, baseActivity - 5)),
-                      Math.max(20, Math.min(100, (trustScore + baseActivity) / 2 - 15)),
-                      Math.max(20, Math.min(100, baseActivity + (streak * 2)))
-                    ];
-                    
-                    return weekData.map((height, index) => (
+                  {weeklyLoading ? (
+                    // Loading skeleton
+                    [...Array(7)].map((_, index) => (
                       <div key={index} className="flex flex-col items-center gap-1">
-                        <div 
-                          className="w-8 bg-blue-500 rounded-t"
-                          style={{ height: `${height}%` }}
-                        ></div>
+                        <div className="w-8 h-12 bg-slate-600 rounded-t animate-pulse"></div>
                       </div>
-                    ));
-                  })()}
+                    ))
+                  ) : weeklyActivity?.weeklyActivity ? (
+                    // Real weekly data
+                    weeklyActivity.weeklyActivity.map((day: any, index: number) => {
+                      const height = Math.max(10, day.percentage); // Minimum 10% height for visibility
+                      const isToday = day.date === new Date().toISOString().split('T')[0];
+                      
+                      return (
+                        <div key={day.date} className="flex flex-col items-center gap-1 group relative">
+                          <div 
+                            className={`w-8 rounded-t transition-all duration-200 ${
+                              day.completed > 0 
+                                ? (isToday ? 'bg-green-500' : 'bg-blue-500')
+                                : 'bg-slate-600'
+                            } hover:opacity-80`}
+                            style={{ height: `${height}%` }}
+                          ></div>
+                          
+                          {/* Tooltip */}
+                          <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-slate-700 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                            <div>{day.day}</div>
+                            <div>{day.completed}/{day.total}</div>
+                            <div>{day.percentage}%</div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    // Empty state
+                    [...Array(7)].map((_, index) => (
+                      <div key={index} className="flex flex-col items-center gap-1">
+                        <div className="w-8 h-4 bg-slate-600 rounded-t"></div>
+                      </div>
+                    ))
+                  )}
                 </div>
                 
                 {/* Day Labels */}
                 <div className="flex justify-center gap-1">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
-                    <div key={day} className="w-8 text-center">
-                      <p className="text-xs text-gray-300 font-medium">{day.slice(0, 1)}</p>
-                    </div>
-                  ))}
+                  {weeklyActivity?.weeklyActivity ? 
+                    weeklyActivity.weeklyActivity.map((day: any) => (
+                      <div key={day.date} className="w-8 text-center">
+                        <p className="text-xs text-gray-300 font-medium">{day.day.slice(0, 1)}</p>
+                      </div>
+                    )) : 
+                    ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                      <div key={index} className="w-8 text-center">
+                        <p className="text-xs text-gray-300 font-medium">{day}</p>
+                      </div>
+                    ))
+                  }
                 </div>
                 
-                {/* Legend */}
-                <div className="flex items-center justify-center gap-6 mt-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                    <span className="text-sm text-gray-300">Completed</span>
+                {/* Legend & Summary */}
+                <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                      <span className="text-sm text-gray-300">Completed</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-green-500 rounded"></div>
+                      <span className="text-sm text-gray-300">Today</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-slate-600 rounded"></div>
+                      <span className="text-sm text-gray-300">No Activity</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-gray-400 rounded"></div>
-                    <span className="text-sm text-gray-300">Planned</span>
-                  </div>
+                  
+                  {weeklyActivity?.summary && (
+                    <div className="text-right">
+                      <div className="text-sm text-white font-medium">
+                        {weeklyActivity.summary.totalCompleted}/{weeklyActivity.summary.totalInstances}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        This Week
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
