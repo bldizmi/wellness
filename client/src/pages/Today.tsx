@@ -38,6 +38,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { CreateOrEditItemModal } from "@/components/CreateOrEditItemModal";
 import { PhotoVerificationModal } from "@/components/PhotoVerificationModal";
+import { PhotoViewerModal } from "@/components/PhotoViewerModal";
 import { SlideUpDrawer } from "@/components/SlideUpDrawer";
 import { ItemStreakBadge } from "@/components/ItemStreakBadge";
 import { WeekCalendarStrip } from "@/components/WeekCalendarStrip";
@@ -90,6 +91,7 @@ export default function Today() {
   const { user } = useAuth();
   const [editingItem, setEditingItem] = useState<ItemData | null>(null);
   const [verifyingItem, setVerifyingItem] = useState<ItemData | null>(null);
+  const [viewingPhotosItem, setViewingPhotosItem] = useState<ItemData | null>(null);
   const [sharingItem, setSharingItem] = useState<ItemData | null>(null);
   const [selectedCommunity, setSelectedCommunity] = useState<string>("");
   const [shareVisibility, setShareVisibility] = useState<string>("community");
@@ -600,7 +602,7 @@ export default function Today() {
                   className="flex items-center gap-1 cursor-pointer hover:text-blue-300"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setVerifyingItem(item);
+                    setViewingPhotosItem(item);
                   }}
                 >
                   <span className="text-blue-400">📸</span>
@@ -1342,6 +1344,18 @@ export default function Today() {
               if (verified) {
                 toast({ title: "Task verified successfully!" });
               }
+            }}
+          />
+        )}
+        {viewingPhotosItem && (
+          <PhotoViewerModal
+            item={viewingPhotosItem as any}
+            open={!!viewingPhotosItem}
+            onOpenChange={(open) => !open && setViewingPhotosItem(null)}
+            onSubmitPhotos={() => {
+              // Switch from viewing to submitting photos
+              setViewingPhotosItem(null);
+              setVerifyingItem(viewingPhotosItem);
             }}
           />
         )}
