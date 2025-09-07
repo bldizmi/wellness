@@ -57,9 +57,10 @@ export function PhotoViewerModal({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showFullImage, setShowFullImage] = useState(false);
 
-  // For completed items: Fetch item details directly (has image_urls and ai_feedback)
-  const { data: itemDetails, isLoading: isLoadingItem } = useQuery({
-    queryKey: ["/api/item", item?.id],
+  // For completed items: Fetch verification history (has image_urls from attempts)
+  const { data: verificationHistory, isLoading: isLoadingHistory } = useQuery({
+    queryKey: ["/api/item", item?.id, "verification-history"],
+    queryFn: () => apiRequest(`/api/item/${item?.id}/verification-history`),
     enabled: !!item?.id && open,
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
@@ -71,14 +72,17 @@ export function PhotoViewerModal({
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
-  const isLoading = isLoadingItem || isLoadingPending;
+  const isLoading = isLoadingHistory || isLoadingPending;
 
   // Find the specific item in pending reviews (for non-completed items)
   const pendingItem = pendingReviews?.items?.find(pendingItem => pendingItem.id === item?.id);
   
+  // For completed items, get the most recent verification attempt
+  const latestAttempt = verificationHistory?.attempts?.[0]; // Most recent attempt
+  
   // Determine which data source to use
-  const currentImages = pendingItem?.image_urls || itemDetails?.image_urls || [];
-  const currentAiFeedback = pendingItem?.ai_feedback || itemDetails?.ai_feedback;
+  const currentImages = pendingItem?.image_urls || latestAttempt?.image_urls || [];
+  const currentAiFeedback = pendingItem?.ai_feedback || latestAttempt?.ai_feedback || (item as any)?.ai_feedback;
   const currentImage = currentImages[selectedImageIndex];
 
   const handleClose = () => {
