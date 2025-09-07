@@ -1,11 +1,9 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { Home, Layers, Zap, Trophy, Search, X } from "lucide-react";
+import { Home, Layers, Zap, Trophy, Search } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { useState, useRef, useEffect } from "react";
 
 export default function Header() {
   const { data: profile } = useQuery({ queryKey: ["/api/profile"] });
@@ -20,31 +18,9 @@ export default function Header() {
   });
   const [location, navigate] = useLocation();
   
-  // Search functionality
-  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const searchInputRef = useRef<HTMLInputElement>(null);
-
-  // Focus the input when search is expanded
-  useEffect(() => {
-    if (isSearchExpanded && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isSearchExpanded]);
-
-  const handleSearchToggle = () => {
-    setIsSearchExpanded(!isSearchExpanded);
-    if (isSearchExpanded) {
-      setSearchQuery("");
-    }
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // TODO: Implement search functionality
-      console.log("Search query:", searchQuery);
-    }
+  const handleSearchClick = () => {
+    // Navigate to Plans page when search icon is clicked
+    navigate("/plans");
   };
 
   // Get current streak from API
@@ -64,36 +40,14 @@ export default function Header() {
         <div className="flex flex-1 items-center justify-between">
           {/* Mobile Search - positioned ~20px from edges */}
           <div className="md:hidden ml-[20px] mt-[5px] flex items-center">
-            {!isSearchExpanded ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hover:opacity-80 transition-opacity"
-                onClick={handleSearchToggle}
-              >
-                <Search className="h-6 w-6 text-gray-300" />
-              </Button>
-            ) : (
-              <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-                <Input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-8 w-40 text-sm bg-gray-800 border-gray-600 text-gray-300 placeholder:text-gray-500"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:opacity-80 transition-opacity h-8 w-8"
-                  onClick={handleSearchToggle}
-                  type="button"
-                >
-                  <X className="h-4 w-4 text-gray-300" />
-                </Button>
-              </form>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hover:opacity-80 transition-opacity"
+              onClick={handleSearchClick}
+            >
+              <Search className="h-6 w-6 text-gray-300" />
+            </Button>
           </div>
 
           {/* Mobile Welcome Message - positioned in upper right */}
@@ -108,36 +62,14 @@ export default function Header() {
 
           {/* Desktop Search - positioned ~20px from edges */}
           <div className="hidden md:flex lg:hidden ml-[20px] mt-[5px] items-center">
-            {!isSearchExpanded ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hover:opacity-80 transition-opacity"
-                onClick={handleSearchToggle}
-              >
-                <Search className="h-6 w-6 text-gray-300" />
-              </Button>
-            ) : (
-              <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-                <Input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-9 w-48 text-sm bg-gray-800 border-gray-600 text-gray-300 placeholder:text-gray-500"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="hover:opacity-80 transition-opacity"
-                  onClick={handleSearchToggle}
-                  type="button"
-                >
-                  <X className="h-5 w-5 text-gray-300" />
-                </Button>
-              </form>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hover:opacity-80 transition-opacity"
+              onClick={handleSearchClick}
+            >
+              <Search className="h-6 w-6 text-gray-300" />
+            </Button>
           </div>
 
           {/* Desktop Navigation */}
