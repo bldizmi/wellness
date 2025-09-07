@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 interface UserData {
   role: "member" | "admin" | "pilot";
+  timezone?: string;
   // Add other user properties you need
 }
 

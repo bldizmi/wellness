@@ -43,6 +43,7 @@ import { SlideUpDrawer } from "@/components/SlideUpDrawer";
 import { ItemStreakBadge } from "@/components/ItemStreakBadge";
 import { WeekCalendarStrip } from "@/components/WeekCalendarStrip";
 import { useAuth } from "@/contexts/AuthContext";
+import { getUserToday, detectUserTimezone } from "@shared/timezoneUtils";
 
 interface ItemData {
   id: string;
@@ -88,7 +89,7 @@ interface TodayResponse {
 
 export default function Today() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const [editingItem, setEditingItem] = useState<ItemData | null>(null);
   const [verifyingItem, setVerifyingItem] = useState<ItemData | null>(null);
   const [viewingPhotosItem, setViewingPhotosItem] = useState<ItemData | null>(null);
@@ -102,15 +103,29 @@ export default function Today() {
   const [showCompleted, setShowCompleted] = useState(false);
   const [isCalendarVisible, setIsCalendarVisible] = useState(false);
 
-  // Calendar date selection state
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toLocaleDateString("en-CA"), // YYYY-MM-DD format
-  );
+  // Get user's timezone, fallback to browser timezone if not available
+  const userTimezone = userData?.timezone || detectUserTimezone();
+
+  // Calendar date selection state - use user's timezone for "today"
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    return getUserToday(userTimezone);
+  });
 
   // Component mount effect
   useEffect(() => {
     // console.log(`🔄 MOUNT: Today component mounted`);
   }, []);
+
+  // Update selectedDate when user timezone changes
+  useEffect(() => {
+    if (userData?.timezone) {
+      const newToday = getUserToday(userData.timezone);
+      if (newToday !== selectedDate) {
+        console.log(`🌍 TIMEZONE: Updating selected date from ${selectedDate} to ${newToday} for timezone ${userData.timezone}`);
+        setSelectedDate(newToday);
+      }
+    }
+  }, [userData?.timezone]);
 
   // Handle date selection - React Query will automatically fetch new data
   const handleDateSelect = (date: string) => {
@@ -1175,6 +1190,7 @@ export default function Today() {
             <WeekCalendarStrip
               selectedDate={selectedDate}
               onDateSelect={handleDateSelect}
+              userTimezone={userTimezone}
             />
           </div>
         )}

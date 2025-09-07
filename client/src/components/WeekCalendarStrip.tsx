@@ -5,15 +5,18 @@ import { cn } from "@/lib/utils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ProgressRing } from "./ProgressRing";
 import { useAuth } from "@/contexts/AuthContext";
+import { getUserToday, detectUserTimezone } from "@shared/timezoneUtils";
 
 interface WeekCalendarStripProps {
   selectedDate: string;
   onDateSelect: (date: string) => void;
+  userTimezone?: string;
 }
 
 export function WeekCalendarStrip({
   selectedDate,
   onDateSelect,
+  userTimezone,
 }: WeekCalendarStripProps) {
   const { user } = useAuth();
 
@@ -78,8 +81,9 @@ export function WeekCalendarStrip({
 
   // Generate 7 consecutive days starting from startOfWeek
   const days = useMemo(() => {
-    const today = new Date();
-    const todayString = today.toLocaleDateString("en-CA"); // YYYY-MM-DD format
+    // Use user's timezone for "today" calculation
+    const timezone = userTimezone || detectUserTimezone();
+    const todayString = getUserToday(timezone);
 
     return Array.from({ length: 7 }, (_, i) => {
       const currentDate = new Date(startOfWeek);
@@ -100,7 +104,7 @@ export function WeekCalendarStrip({
         dayOfWeek: i, // 0 = Sunday, 1 = Monday, etc.
       };
     });
-  }, [startOfWeek]);
+  }, [startOfWeek, userTimezone]);
 
   // Fetch personal progress data for all 7 days in one batch request
   const startDateString = startOfWeek.toISOString().split("T")[0];
