@@ -80,8 +80,11 @@ export function PhotoViewerModal({
   // For completed items, get the most recent verification attempt
   const latestAttempt = verificationHistory?.attempts?.[0]; // Most recent attempt
   
-  // Determine which data source to use
-  const currentImages = pendingItem?.image_urls || latestAttempt?.image_urls || [];
+  // Determine which data source to use - ensure arrays are properly handled
+  const pendingImages = Array.isArray(pendingItem?.image_urls) ? pendingItem.image_urls : [];
+  const historyImages = Array.isArray(latestAttempt?.image_urls) ? latestAttempt.image_urls : [];
+  
+  const currentImages = pendingImages.length > 0 ? pendingImages : historyImages;
   const currentAiFeedback = pendingItem?.ai_feedback || latestAttempt?.ai_feedback || (item as any)?.ai_feedback;
   const currentImage = currentImages[selectedImageIndex];
 
