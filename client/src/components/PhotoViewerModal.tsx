@@ -17,6 +17,7 @@ import {
   Upload,
   Eye,
   X,
+  XCircle,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -56,37 +57,29 @@ export function PhotoViewerModal({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showFullImage, setShowFullImage] = useState(false);
 
-  // Fetch pending reviews (same as admin) and filter for our item
-  const { data: pendingReviews, isLoading, error } = useQuery<PendingReviewsResponse>({
+  // For completed items: Fetch item details directly (has image_urls and ai_feedback)
+  const { data: itemDetails, isLoading: isLoadingItem } = useQuery({
+    queryKey: ["/api/item", item?.id],
+    enabled: !!item?.id && open,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+
+  // For non-completed items: Fetch pending reviews (same as admin) 
+  const { data: pendingReviews, isLoading: isLoadingPending } = useQuery<PendingReviewsResponse>({
     queryKey: ["/api/manual-review/pending"],
     enabled: !!item?.id && open,
     staleTime: 1000 * 60 * 2, // 2 minutes
-    onSuccess: (data) => {
-      console.log("🔍 PhotoViewerModal API Success:");
-      console.log("Item ID being searched:", item?.id);
-      console.log("Pending reviews response:", data);
-      console.log("All pending items:", data?.items);
-      const foundItem = data?.items?.find(pendingItem => pendingItem.id === item?.id);
-      console.log("Found matching item:", foundItem);
-      console.log("Image URLs found:", foundItem?.image_urls);
-      console.log("AI Feedback found:", foundItem?.ai_feedback);
-    },
-    onError: (err) => {
-      console.log("🔍 PhotoViewerModal API Error:", err);
-    }
   });
 
-  // Find the specific item in pending reviews
-  const currentItem = pendingReviews?.items?.find(pendingItem => pendingItem.id === item?.id);
-  const currentImages = currentItem?.image_urls || [];
-  const currentImage = currentImages[selectedImageIndex];
+  const isLoading = isLoadingItem || isLoadingPending;
 
-  // DEBUG LOGGING - Remove after fixing
-  console.log("🔍 PhotoViewerModal Debug:");
-  console.log("Pending reviews:", pendingReviews);
-  console.log("Current item found:", currentItem);
-  console.log("Current images:", currentImages);
-  console.log("Images length:", currentImages.length);
+  // Find the specific item in pending reviews (for non-completed items)
+  const pendingItem = pendingReviews?.items?.find(pendingItem => pendingItem.id === item?.id);
+  
+  // Determine which data source to use
+  const currentImages = pendingItem?.image_urls || itemDetails?.image_urls || [];
+  const currentAiFeedback = pendingItem?.ai_feedback || itemDetails?.ai_feedback;
+  const currentImage = currentImages[selectedImageIndex];
 
   const handleClose = () => {
     setSelectedImageIndex(0);
@@ -179,11 +172,6 @@ export function PhotoViewerModal({
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               <p className="text-sm text-muted-foreground mt-2">Loading photos...</p>
             </div>
-          ) : error ? (
-            <div className="text-center py-8">
-              <XCircle className="h-12 w-12 text-red-500 mx-auto mb-2" />
-              <p className="text-sm text-red-600">Failed to load photo history</p>
-            </div>
           ) : currentImages.length === 0 ? (
             // Empty State - No photos submitted yet
             <div className="text-center py-8 space-y-4">
@@ -241,17 +229,17 @@ export function PhotoViewerModal({
               </div>
 
               {/* AI Feedback */}
-              {currentItem?.ai_feedback && (
+              {currentAiFeedback && (
                 <div className="bg-muted p-3 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <MessageSquare className="h-4 w-4" />
                     <span className="text-sm font-medium">AI Feedback</span>
                   </div>
                   <p className="text-sm">
-                    {currentItem.ai_feedback.split('\n').map((line, index) => (
+                    {currentAiFeedback.split('\n').map((line, index) => (
                       <span key={index}>
                         {line}
-                        {index < currentItem.ai_feedback.split('\n').length - 1 && <br />}
+                        {index < currentAiFeedback.split('\n').length - 1 && <br />}
                       </span>
                     ))}
                   </p>
