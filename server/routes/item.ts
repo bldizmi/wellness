@@ -1347,6 +1347,61 @@ router.patch("/:id/share", async (req, res) => {
   }
 });
 
+// GET /api/item/:id - Get item details with photos for completed items
+router.get("/:id", authMiddleware, async (req, res) => {
+  try {
+    const { user_id } = req;
+    const { id } = req.params;
+
+    if (!user_id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // Check if user has access to this item
+    const hasAccess = await userHasItemAccess(user_id, id);
+    if (!hasAccess) {
+      return res.status(404).json({ error: "Item not found or unauthorized" });
+    }
+
+    // HYBRID: Check both new and legacy architecture
+    // First check recurring_instances (new architecture)
+    const [instanceItem] = await db
+      .select()
+      .from(recurring_instances)
+      .where(eq(recurring_instances.id, id))
+      .limit(1);
+
+    if (instanceItem) {
+      return res.json({
+        success: true,
+        item: instanceItem,
+        architecture: "new"
+      });
+    }
+
+    // Fall back to legacy items table
+    const [legacyItem] = await db
+      .select()
+      .from(items)
+      .where(eq(items.id, id))
+      .limit(1);
+
+    if (legacyItem) {
+      return res.json({
+        success: true,
+        item: legacyItem,
+        architecture: "legacy"
+      });
+    }
+
+    return res.status(404).json({ error: "Item not found" });
+
+  } catch (error) {
+    console.error("Error fetching item:", error);
+    res.status(500).json({ error: "Failed to fetch item" });
+  }
+});
+
 // GET /api/item/:id/verification-history - Get verification attempt history - PHASE 2 HYBRID ARCHITECTURE
 router.get("/:id/verification-history", async (req, res) => {
   try {

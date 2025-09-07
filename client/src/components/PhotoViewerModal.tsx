@@ -57,10 +57,10 @@ export function PhotoViewerModal({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showFullImage, setShowFullImage] = useState(false);
 
-  // For completed items: Fetch verification history (has image_urls from attempts)
-  const { data: verificationHistory, isLoading: isLoadingHistory } = useQuery({
-    queryKey: ["/api/item", item?.id, "verification-history"],
-    queryFn: () => apiRequest(`/api/item/${item?.id}/verification-history`),
+  // For completed items: Fetch item details directly (has image_urls and ai_feedback)
+  const { data: itemDetails, isLoading: isLoadingItem } = useQuery({
+    queryKey: ["/api/item", item?.id],
+    queryFn: () => apiRequest(`/api/item/${item?.id}`),
     enabled: !!item?.id && open,
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
@@ -72,20 +72,20 @@ export function PhotoViewerModal({
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
-  const isLoading = isLoadingHistory || isLoadingPending;
+  const isLoading = isLoadingItem || isLoadingPending;
 
   // Find the specific item in pending reviews (for non-completed items)
   const pendingItem = pendingReviews?.items?.find(pendingItem => pendingItem.id === item?.id);
   
-  // For completed items, get the most recent verification attempt
-  const latestAttempt = verificationHistory?.attempts?.[0]; // Most recent attempt
+  // For completed items, get the item details from the new endpoint
+  const completedItemData = itemDetails?.item;
   
   // Determine which data source to use - ensure arrays are properly handled
   const pendingImages = Array.isArray(pendingItem?.image_urls) ? pendingItem.image_urls : [];
-  const historyImages = Array.isArray(latestAttempt?.image_urls) ? latestAttempt.image_urls : [];
+  const completedImages = Array.isArray(completedItemData?.image_urls) ? completedItemData.image_urls : [];
   
-  const currentImages = pendingImages.length > 0 ? pendingImages : historyImages;
-  const currentAiFeedback = pendingItem?.ai_feedback || latestAttempt?.ai_feedback || (item as any)?.ai_feedback;
+  const currentImages = pendingImages.length > 0 ? pendingImages : completedImages;
+  const currentAiFeedback = pendingItem?.ai_feedback || completedItemData?.ai_feedback || (item as any)?.ai_feedback;
   const currentImage = currentImages[selectedImageIndex];
 
   const handleClose = () => {
