@@ -30,14 +30,21 @@ interface PhotoViewerModalProps {
   onSubmitPhotos?: () => void; // Callback to switch to submission modal
 }
 
-interface ItemData {
+interface PendingReviewItem {
   id: string;
   title: string;
-  image_urls?: string[];
-  ai_feedback?: string;
-  status?: string;
-  created_at?: string;
-  updated_at?: string;
+  item_type: string;
+  created_by: any;
+  assigned_to: any;
+  community_id: string;
+  image_urls: string[];
+  ai_feedback: string;
+  manual_review_requested_at: string;
+  manual_review_reason: string;
+}
+
+interface PendingReviewsResponse {
+  items: PendingReviewItem[];
 }
 
 export function PhotoViewerModal({
@@ -49,32 +56,35 @@ export function PhotoViewerModal({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showFullImage, setShowFullImage] = useState(false);
 
-  // Fetch item data directly (same approach as admin reviews)
-  const { data: itemData, isLoading, error } = useQuery<ItemData>({
-    queryKey: [`/api/item/${item?.id}`],
+  // Fetch pending reviews (same as admin) and filter for our item
+  const { data: pendingReviews, isLoading, error } = useQuery<PendingReviewsResponse>({
+    queryKey: ["/api/manual-review/pending"],
     enabled: !!item?.id && open,
     staleTime: 1000 * 60 * 2, // 2 minutes
     onSuccess: (data) => {
       console.log("🔍 PhotoViewerModal API Success:");
-      console.log("Item ID being queried:", item?.id);
-      console.log("API URL:", `/api/item/${item?.id}`);
-      console.log("Item data response:", data);
-      console.log("Image URLs found:", data?.image_urls);
-      console.log("Image URLs type:", typeof data?.image_urls);
-      console.log("Image URLs length:", data?.image_urls?.length);
+      console.log("Item ID being searched:", item?.id);
+      console.log("Pending reviews response:", data);
+      console.log("All pending items:", data?.items);
+      const foundItem = data?.items?.find(pendingItem => pendingItem.id === item?.id);
+      console.log("Found matching item:", foundItem);
+      console.log("Image URLs found:", foundItem?.image_urls);
+      console.log("AI Feedback found:", foundItem?.ai_feedback);
     },
     onError: (err) => {
       console.log("🔍 PhotoViewerModal API Error:", err);
     }
   });
 
-  // Get images directly from item data
-  const currentImages = itemData?.image_urls || [];
+  // Find the specific item in pending reviews
+  const currentItem = pendingReviews?.items?.find(pendingItem => pendingItem.id === item?.id);
+  const currentImages = currentItem?.image_urls || [];
   const currentImage = currentImages[selectedImageIndex];
 
   // DEBUG LOGGING - Remove after fixing
   console.log("🔍 PhotoViewerModal Debug:");
-  console.log("Item data:", itemData);
+  console.log("Pending reviews:", pendingReviews);
+  console.log("Current item found:", currentItem);
   console.log("Current images:", currentImages);
   console.log("Images length:", currentImages.length);
 
@@ -231,17 +241,17 @@ export function PhotoViewerModal({
               </div>
 
               {/* AI Feedback */}
-              {itemData?.ai_feedback && (
+              {currentItem?.ai_feedback && (
                 <div className="bg-muted p-3 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <MessageSquare className="h-4 w-4" />
                     <span className="text-sm font-medium">AI Feedback</span>
                   </div>
                   <p className="text-sm">
-                    {itemData.ai_feedback.split('\n').map((line, index) => (
+                    {currentItem.ai_feedback.split('\n').map((line, index) => (
                       <span key={index}>
                         {line}
-                        {index < itemData.ai_feedback.split('\n').length - 1 && <br />}
+                        {index < currentItem.ai_feedback.split('\n').length - 1 && <br />}
                       </span>
                     ))}
                   </p>
