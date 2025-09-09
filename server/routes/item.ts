@@ -2013,22 +2013,23 @@ router.delete("/:id", async (req, res) => {
 
         if (isRecurring && strategy === "future") {
           // STRATEGY: Future Only - Keep ALL existing data, only prevent future occurrences
-          console.log(`🔄 FUTURE ONLY: Deleting template to stop future instances, preserving ALL existing data including current instance`);
+          console.log(`🔄 FUTURE ONLY: Marking template as inactive to stop future instances, preserving ALL existing data including current instance`);
           
           const templateId = item.template_id;
           if (templateId) {
-            // Only delete the template to stop future generations
-            const templateDeleteResult = await db.execute(sql`
-              DELETE FROM ${sql.raw(templatesTable)} 
+            // Mark template as inactive instead of deleting to preserve historical data in insights
+            const templateUpdateResult = await db.execute(sql`
+              UPDATE ${sql.raw(templatesTable)} 
+              SET is_active = false, updated_at = ${new Date().toISOString()}
               WHERE id = ${templateId}
             `);
             
-            if (templateDeleteResult.rowCount && templateDeleteResult.rowCount > 0) {
-              console.log(`✅ FUTURE ONLY: Deleted template ${templateId}, all instances and completion data preserved`);
+            if (templateUpdateResult.rowCount && templateUpdateResult.rowCount > 0) {
+              console.log(`✅ FUTURE ONLY: Marked template ${templateId} as inactive, all instances and completion data preserved for insights`);
               deletedItem = { id, title: itemTitle, display_id: itemDisplayId };
-              console.log(`✅ FUTURE ONLY: Template-only deletion successful - no instances were removed`);
+              console.log(`✅ FUTURE ONLY: Template deactivation successful - no instances were removed`);
             } else {
-              console.log(`❌ FUTURE ONLY: Failed to delete template ${templateId}`);
+              console.log(`❌ FUTURE ONLY: Failed to deactivate template ${templateId}`);
             }
           } else {
             console.log(`⚠️ FUTURE ONLY: No template_id found, cannot stop future occurrences`);
