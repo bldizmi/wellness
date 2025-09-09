@@ -1164,9 +1164,14 @@ export default function Today() {
           >
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-white mb-1">
-                {new Date(selectedDate).toLocaleDateString("en-US", {
-                  weekday: "long",
-                })}
+                {(() => {
+                  // Parse YYYY-MM-DD format in local timezone to avoid UTC conversion issues
+                  const [year, month, day] = selectedDate.split("-").map(Number);
+                  const date = new Date(year, month - 1, day); // month is 0-indexed
+                  return date.toLocaleDateString("en-US", {
+                    weekday: "long",
+                  });
+                })()}
               </h1>
               <ChevronDown
                 className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
@@ -1175,11 +1180,16 @@ export default function Today() {
               />
             </div>
             <p className="text-gray-400 text-sm">
-              {new Date(selectedDate).toLocaleDateString("en-US", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
+              {(() => {
+                // Parse YYYY-MM-DD format in local timezone to avoid UTC conversion issues
+                const [year, month, day] = selectedDate.split("-").map(Number);
+                const date = new Date(year, month - 1, day); // month is 0-indexed
+                return date.toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                });
+              })()}
             </p>
           </div>
         </div>
