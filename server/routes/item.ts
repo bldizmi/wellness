@@ -2081,22 +2081,6 @@ router.delete("/:id", async (req, res) => {
             } else {
               console.log(`❌ FUTURE ONLY: Failed to deactivate template ${templateId}`);
 
-            if (
-              templateUpdateResult.rowCount &&
-              templateUpdateResult.rowCount > 0
-            ) {
-              console.log(
-                `✅ FUTURE ONLY: Deleted template ${templateId}, all instances and completion data preserved`,
-              );
-              deletedItem = { id, title: itemTitle, display_id: itemDisplayId };
-              console.log(
-                `✅ FUTURE ONLY: Template-only deletion successful - no instances were removed`,
-              );
-            } else {
-              console.log(
-                `❌ FUTURE ONLY: Failed to delete template ${templateId}`,
-              );
-
             }
           } else {
             console.log(
