@@ -239,10 +239,12 @@ router.post("/", authMiddleware, async (req, res) => {
     console.log("Creating item with data:", req.body);
     console.log("Environment:", process.env.NODE_ENV);
     console.log("shared_with field received:", req.body.shared_with);
-    
+
     // CLIENT DATE CONTEXT: Log received client date and timezone
     if (req.body.client_date) {
-      console.log(`🌍 CLIENT DATE CONTEXT: Received client_date="${req.body.client_date}", timezone="${req.body.client_timezone}"`);
+      console.log(
+        `🌍 CLIENT DATE CONTEXT: Received client_date="${req.body.client_date}", timezone="${req.body.client_timezone}"`,
+      );
     }
 
     // Prepare data with proper handling for production + CLIENT DATE CONTEXT
@@ -430,28 +432,42 @@ router.put("/:id", async (req, res) => {
     console.log("validated shared_with:", validatedData.shared_with);
 
     // First check if the user has access to this item
-    console.log(`🔍 EDIT ACCESS CHECK: User ${user_id} attempting to edit item ${id}`);
+    console.log(
+      `🔍 EDIT ACCESS CHECK: User ${user_id} attempting to edit item ${id}`,
+    );
     const hasAccess = await userHasItemAccess(user_id, id);
     if (!hasAccess) {
-      console.log(`❌ EDIT ACCESS DENIED: User ${user_id} doesn't have access to item ${id}`);
+      console.log(
+        `❌ EDIT ACCESS DENIED: User ${user_id} doesn't have access to item ${id}`,
+      );
       return res.status(404).json({ error: "Item not found or unauthorized" });
     }
-    console.log(`✅ EDIT ACCESS GRANTED: User ${user_id} has access to item ${id}`);
+    console.log(
+      `✅ EDIT ACCESS GRANTED: User ${user_id} has access to item ${id}`,
+    );
 
     // PHASE 5: Check if this is a recurring_instances item first (with environment-aware table selection)
     const isDevelopment = process.env.NODE_ENV === "development";
-    const instancesTable = isDevelopment ? "dev_recurring_instances" : "recurring_instances";
-    const templatesTable = isDevelopment ? "dev_recurring_templates" : "recurring_templates";
-    
-    console.log(`🔍 HYBRID UPDATE: Checking if ${id} exists in new architecture (${instancesTable})`);
-    
+    const instancesTable = isDevelopment
+      ? "dev_recurring_instances"
+      : "recurring_instances";
+    const templatesTable = isDevelopment
+      ? "dev_recurring_templates"
+      : "recurring_templates";
+
+    console.log(
+      `🔍 HYBRID UPDATE: Checking if ${id} exists in new architecture (${instancesTable})`,
+    );
+
     // Use raw SQL to ensure we're using the correct table name
     const instanceQuery = await db.execute(sql`
       SELECT * FROM ${sql.raw(instancesTable)} WHERE id = ${id} LIMIT 1
     `);
     const instanceItem = instanceQuery.rows[0] || null;
-    
-    console.log(`🔍 HYBRID UPDATE: Instance found in new architecture: ${!!instanceItem}`);
+
+    console.log(
+      `🔍 HYBRID UPDATE: Instance found in new architecture: ${!!instanceItem}`,
+    );
 
     if (instanceItem) {
       console.log(
@@ -462,26 +478,37 @@ router.put("/:id", async (req, res) => {
       const updateResult = await db.execute(sql`
         UPDATE ${sql.raw(instancesTable)}
         SET 
-          due_time = ${validatedData.due_date
-            ? new Date(validatedData.due_date).toISOString().split("T")[1].slice(0, 8)
-            : null},
+          due_time = ${
+            validatedData.due_date
+              ? new Date(validatedData.due_date)
+                  .toISOString()
+                  .split("T")[1]
+                  .slice(0, 8)
+              : null
+          },
           notes = ${validatedData.why_it_matters || null},
           updated_at = ${new Date().toISOString()},
-          shared_with = ${validatedData.shared_with && validatedData.shared_with.length > 0
-            ? `{${validatedData.shared_with.join(',')}}`
-            : null}
+          shared_with = ${
+            validatedData.shared_with && validatedData.shared_with.length > 0
+              ? `{${validatedData.shared_with.join(",")}}`
+              : null
+          }
         WHERE id = ${id}
         RETURNING *
       `);
-      
+
       const updatedInstance = updateResult.rows[0] || null;
 
       if (!updatedInstance) {
-        console.log(`❌ HYBRID UPDATE: Failed to update instance ${id} in new architecture`);
+        console.log(
+          `❌ HYBRID UPDATE: Failed to update instance ${id} in new architecture`,
+        );
         return res.status(404).json({ error: "Instance not found" });
       }
-      
-      console.log(`✅ HYBRID UPDATE: Successfully updated instance ${id} in new architecture`);
+
+      console.log(
+        `✅ HYBRID UPDATE: Successfully updated instance ${id} in new architecture`,
+      );
 
       // Also update the template if it exists AND user has permission
       if (updatedInstance.template_id) {
@@ -499,25 +526,36 @@ router.put("/:id", async (req, res) => {
           let sharedWithArray = [];
           if (templateInfo.shared_with) {
             try {
-              sharedWithArray = typeof templateInfo.shared_with === 'string' 
-                ? JSON.parse(templateInfo.shared_with)
-                : templateInfo.shared_with;
+              sharedWithArray =
+                typeof templateInfo.shared_with === "string"
+                  ? JSON.parse(templateInfo.shared_with)
+                  : templateInfo.shared_with;
             } catch (e) {
-              console.log("⚠️ Failed to parse shared_with field:", templateInfo.shared_with);
+              console.log(
+                "⚠️ Failed to parse shared_with field:",
+                templateInfo.shared_with,
+              );
               sharedWithArray = [];
             }
           }
 
-          const canModifyTemplate = 
+          const canModifyTemplate =
             templateInfo.created_by === user_id ||
             templateInfo.assigned_to === user_id ||
-            (Array.isArray(sharedWithArray) && sharedWithArray.includes(user_id));
+            (Array.isArray(sharedWithArray) &&
+              sharedWithArray.includes(user_id));
 
-          console.log(`🔍 TEMPLATE PERMISSIONS: User ${user_id} can modify template ${updatedInstance.template_id}: ${canModifyTemplate}`);
-          console.log(`🔍 TEMPLATE PERMISSIONS: created_by=${templateInfo.created_by}, assigned_to=${templateInfo.assigned_to}, shared_with=${JSON.stringify(templateInfo.shared_with)}`);
+          console.log(
+            `🔍 TEMPLATE PERMISSIONS: User ${user_id} can modify template ${updatedInstance.template_id}: ${canModifyTemplate}`,
+          );
+          console.log(
+            `🔍 TEMPLATE PERMISSIONS: created_by=${templateInfo.created_by}, assigned_to=${templateInfo.assigned_to}, shared_with=${JSON.stringify(templateInfo.shared_with)}`,
+          );
 
           if (canModifyTemplate) {
-            console.log("🔄 PHASE 5: Updating template - user has modification rights");
+            console.log(
+              "🔄 PHASE 5: Updating template - user has modification rights",
+            );
             await db.execute(sql`
               UPDATE ${sql.raw(templatesTable)}
               SET 
@@ -527,19 +565,28 @@ router.put("/:id", async (req, res) => {
                 time_frame = ${validatedData.time_frame || null},
                 why_it_matters = ${validatedData.why_it_matters || null},
                 assigned_to = ${validatedData.assigned_to || null},
-                shared_with = ${validatedData.shared_with && validatedData.shared_with.length > 0
-                  ? `{${validatedData.shared_with.join(',')}}`
-                  : null},
+                shared_with = ${
+                  validatedData.shared_with &&
+                  validatedData.shared_with.length > 0
+                    ? `{${validatedData.shared_with.join(",")}}`
+                    : null
+                },
                 updated_at = ${new Date().toISOString()}
               WHERE id = ${updatedInstance.template_id}
             `);
             console.log("✅ PHASE 5: Template updated successfully");
           } else {
-            console.log("⚠️ PHASE 5: User doesn't have template modification rights - skipping template update");
-            console.log("ℹ️ PHASE 5: This is normal for shared items - instance was updated successfully");
+            console.log(
+              "⚠️ PHASE 5: User doesn't have template modification rights - skipping template update",
+            );
+            console.log(
+              "ℹ️ PHASE 5: This is normal for shared items - instance was updated successfully",
+            );
           }
         } else {
-          console.log("⚠️ PHASE 5: Template not found for instance, skipping template update");
+          console.log(
+            "⚠️ PHASE 5: Template not found for instance, skipping template update",
+          );
         }
       }
 
@@ -1375,7 +1422,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
       return res.json({
         success: true,
         item: instanceItem,
-        architecture: "new"
+        architecture: "new",
       });
     }
 
@@ -1390,12 +1437,11 @@ router.get("/:id", authMiddleware, async (req, res) => {
       return res.json({
         success: true,
         item: legacyItem,
-        architecture: "legacy"
+        architecture: "legacy",
       });
     }
 
     return res.status(404).json({ error: "Item not found" });
-
   } catch (error) {
     console.error("Error fetching item:", error);
     res.status(500).json({ error: "Failed to fetch item" });
@@ -1934,7 +1980,7 @@ router.delete("/:id", async (req, res) => {
     }
 
     console.log(
-      `🗑️ DELETE REQUEST: Attempting to delete item ${id} by user ${user_id} with strategy: ${strategy || 'future'}`,
+      `🗑️ DELETE REQUEST: Attempting to delete item ${id} by user ${user_id} with strategy: ${strategy || "future"}`,
     );
     console.log(
       `🔍 DELETE DEBUG: Item ID: "${id}", Type: ${typeof id}, Length: ${id.length}`,
@@ -1995,7 +2041,7 @@ router.delete("/:id", async (req, res) => {
         // First, get template info to determine if this is truly a recurring item
         let isRecurring = false;
         let templateData = null;
-        
+
         if (item.template_id) {
           const templateQuery = sql`
             SELECT is_recurring, max_occurrences FROM ${sql.raw(templatesTable)} 
@@ -2009,12 +2055,16 @@ router.delete("/:id", async (req, res) => {
           }
         }
 
-        console.log(`🔍 DELETION STRATEGY: Item ${id} is recurring: ${isRecurring}, strategy: ${strategy || 'all'}`);
+        console.log(
+          `🔍 DELETION STRATEGY: Item ${id} is recurring: ${isRecurring}, strategy: ${strategy || "all"}`,
+        );
 
         if (isRecurring && strategy === "future") {
           // STRATEGY: Future Only - Keep ALL existing data, only prevent future occurrences
           console.log(`🔄 FUTURE ONLY: Marking template as inactive to stop future instances, preserving ALL existing data including current instance`);
           
+
+
           const templateId = item.template_id;
           if (templateId) {
             // Mark template as inactive instead of deleting to preserve historical data in insights
@@ -2030,16 +2080,37 @@ router.delete("/:id", async (req, res) => {
               console.log(`✅ FUTURE ONLY: Template deactivation successful - no instances were removed`);
             } else {
               console.log(`❌ FUTURE ONLY: Failed to deactivate template ${templateId}`);
+
+            if (
+              templateUpdateResult.rowCount &&
+              templateUpdateResult.rowCount > 0
+            ) {
+              console.log(
+                `✅ FUTURE ONLY: Deleted template ${templateId}, all instances and completion data preserved`,
+              );
+              deletedItem = { id, title: itemTitle, display_id: itemDisplayId };
+              console.log(
+                `✅ FUTURE ONLY: Template-only deletion successful - no instances were removed`,
+              );
+            } else {
+              console.log(
+                `❌ FUTURE ONLY: Failed to delete template ${templateId}`,
+              );
+
             }
           } else {
-            console.log(`⚠️ FUTURE ONLY: No template_id found, cannot stop future occurrences`);
+            console.log(
+              `⚠️ FUTURE ONLY: No template_id found, cannot stop future occurrences`,
+            );
           }
         } else {
           // STRATEGY: All (default for one-time items or "all" strategy for recurring items)
-          console.log(`🗑️ DELETE ALL: Removing all records including completion data and instances`);
-          
+          console.log(
+            `🗑️ DELETE ALL: Removing all records including completion data and instances`,
+          );
+
           const templateId = item.template_id;
-          
+
           // Delete related records for this specific item
           await db
             .delete(item_verification_attempts)
@@ -2056,19 +2127,23 @@ router.delete("/:id", async (req, res) => {
 
           if (result.rowCount && result.rowCount > 0) {
             deletedItem = { id, title: itemTitle, display_id: itemDisplayId };
-            console.log(`🗑️ DELETE ALL: Deleted current instance ${id} (${itemDisplayId})`);
+            console.log(
+              `🗑️ DELETE ALL: Deleted current instance ${id} (${itemDisplayId})`,
+            );
 
             // For recurring items with "all" strategy, also delete template and other instances
             if (isRecurring && templateId) {
-              console.log(`🗑️ DELETE ALL RECURRING: Removing template and all other instances`);
-              
+              console.log(
+                `🗑️ DELETE ALL RECURRING: Removing template and all other instances`,
+              );
+
               // Delete all other instances of this template first (to clean up their completion data)
               const allInstancesQuery = sql`
                 SELECT id FROM ${sql.raw(instancesTable)} 
                 WHERE template_id = ${templateId} AND id != ${id}
               `;
               const allInstancesResult = await db.execute(allInstancesQuery);
-              
+
               for (const instance of allInstancesResult.rows) {
                 // Clean up completion data for each instance
                 await db
@@ -2078,15 +2153,20 @@ router.delete("/:id", async (req, res) => {
                   .delete(item_completions)
                   .where(eq(item_completions.item_id, instance.id));
               }
-              
+
               // Delete all other instances
               const instancesDeleteResult = await db.execute(sql`
                 DELETE FROM ${sql.raw(instancesTable)} 
                 WHERE template_id = ${templateId} AND id != ${id}
               `);
-              
-              if (instancesDeleteResult.rowCount && instancesDeleteResult.rowCount > 0) {
-                console.log(`✅ DELETE ALL: Deleted ${instancesDeleteResult.rowCount} other instances`);
+
+              if (
+                instancesDeleteResult.rowCount &&
+                instancesDeleteResult.rowCount > 0
+              ) {
+                console.log(
+                  `✅ DELETE ALL: Deleted ${instancesDeleteResult.rowCount} other instances`,
+                );
               }
 
               // Finally delete the template
@@ -2094,19 +2174,24 @@ router.delete("/:id", async (req, res) => {
                 DELETE FROM ${sql.raw(templatesTable)} 
                 WHERE id = ${templateId}
               `);
-              
-              if (templateDeleteResult.rowCount && templateDeleteResult.rowCount > 0) {
+
+              if (
+                templateDeleteResult.rowCount &&
+                templateDeleteResult.rowCount > 0
+              ) {
                 console.log(`✅ DELETE ALL: Deleted template ${templateId}`);
               }
             } else if (templateId) {
               // For one-time items, just delete the template
-              console.log(`🗑️ DELETE ALL ONE-TIME: Removing template for one-time item`);
+              console.log(
+                `🗑️ DELETE ALL ONE-TIME: Removing template for one-time item`,
+              );
               await db.execute(sql`
                 DELETE FROM ${sql.raw(templatesTable)} 
                 WHERE id = ${templateId}
               `);
             }
-            
+
             console.log(`✅ DELETE ALL: Complete cleanup finished`);
           } else {
             console.log(`❌ DELETE ALL: Failed to delete instance ${id}`);
@@ -2124,7 +2209,9 @@ router.delete("/:id", async (req, res) => {
       console.log(`📝 LEGACY DELETE: Using legacy deletion for item ${id}`);
 
       // Handle strategy for legacy items (always delete all for legacy items since they're one-time)
-      console.log(`🗑️ LEGACY STRATEGY: Legacy items are always deleted with 'all' strategy`);
+      console.log(
+        `🗑️ LEGACY STRATEGY: Legacy items are always deleted with 'all' strategy`,
+      );
       await db
         .delete(item_verification_attempts)
         .where(eq(item_verification_attempts.item_id, id));
