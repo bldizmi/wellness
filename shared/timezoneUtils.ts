@@ -7,24 +7,36 @@
  * Convert UTC timestamp to user's local timezone
  */
 export function convertUTCToUserTimezone(utcTimestamp: string, userTimezone: string): Date {
-  const utcDate = new Date(utcTimestamp);
-  return new Date(utcDate.toLocaleString("en-US", { timeZone: userTimezone }));
+  // The Date object itself remains in UTC internally
+  // Timezone conversion should happen during display/formatting
+  return new Date(utcTimestamp);
 }
 
 /**
  * Convert user's local time to UTC for database storage
  */
 export function convertUserTimezoneToUTC(localTimestamp: string, userTimezone: string): Date {
-  // Create date as if it's in user's timezone
-  const localDate = new Date(localTimestamp);
+  // Parse the timestamp assuming it's in the user's timezone
+  // This is complex because JS Date always interprets strings in local time
+  // We need to calculate the offset between user timezone and UTC
   
-  // Get timezone offset
-  const userDate = new Date(localDate.toLocaleString("en-US", { timeZone: userTimezone }));
-  const utcDate = new Date(localDate.toLocaleString("en-US", { timeZone: "UTC" }));
-  const offset = userDate.getTime() - utcDate.getTime();
+  const date = new Date(localTimestamp);
   
-  // Adjust for timezone
-  return new Date(localDate.getTime() - offset);
+  // Get the offset in minutes for the user's timezone at this specific date/time
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: userTimezone,
+    timeZoneName: 'short'
+  });
+  
+  // This is a workaround since JS doesn't have a direct way to get timezone offset
+  // We format the date in both UTC and user timezone and calculate the difference
+  const utcTime = date.getTime();
+  const userTimeString = date.toLocaleString('en-US', { timeZone: userTimezone });
+  const userTime = new Date(userTimeString).getTime();
+  
+  // Calculate offset and return adjusted date
+  const offset = userTime - utcTime;
+  return new Date(date.getTime() - offset);
 }
 
 /**
@@ -32,56 +44,118 @@ export function convertUserTimezoneToUTC(localTimestamp: string, userTimezone: s
  */
 export function getUserToday(userTimezone: string): string {
   const now = new Date();
-  const userDate = new Date(now.toLocaleString("en-US", { timeZone: userTimezone }));
-  return userDate.toISOString().split('T')[0];
+  // Use Intl.DateTimeFormat to properly format date in user's timezone
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: userTimezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  // en-CA locale returns YYYY-MM-DD format directly
+  return formatter.format(now);
 }
 
 /**
  * Get user's current time in their timezone
  */
 export function getUserCurrentTime(userTimezone: string): Date {
-  const now = new Date();
-  return new Date(now.toLocaleString("en-US", { timeZone: userTimezone }));
+  // Return the current Date object - the timezone conversion
+  // should be handled when displaying/formatting the date
+  return new Date();
 }
 
 /**
  * Format timestamp for display in user's timezone
  */
 export function formatTimestampForUser(utcTimestamp: string, userTimezone: string, format: 'date' | 'datetime' | 'time' = 'datetime'): string {
-  const userDate = convertUTCToUserTimezone(utcTimestamp, userTimezone);
+  const date = new Date(utcTimestamp);
+  
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: userTimezone
+  };
   
   switch (format) {
     case 'date':
-      return userDate.toLocaleDateString();
+      options.year = 'numeric';
+      options.month = 'numeric';
+      options.day = 'numeric';
+      break;
     case 'time':
-      return userDate.toLocaleTimeString();
+      options.hour = 'numeric';
+      options.minute = 'numeric';
+      options.second = 'numeric';
+      break;
     case 'datetime':
     default:
-      return userDate.toLocaleString();
+      options.year = 'numeric';
+      options.month = 'numeric';
+      options.day = 'numeric';
+      options.hour = 'numeric';
+      options.minute = 'numeric';
+      options.second = 'numeric';
+      break;
   }
+  
+  return new Intl.DateTimeFormat('en-US', options).format(date);
 }
 
 /**
  * Check if two timestamps are on the same day in user's timezone
  */
 export function isSameDayInUserTimezone(timestamp1: string, timestamp2: string, userTimezone: string): boolean {
-  const date1 = convertUTCToUserTimezone(timestamp1, userTimezone);
-  const date2 = convertUTCToUserTimezone(timestamp2, userTimezone);
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: userTimezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
   
-  return date1.toDateString() === date2.toDateString();
+  const date1String = formatter.format(new Date(timestamp1));
+  const date2String = formatter.format(new Date(timestamp2));
+  
+  return date1String === date2String;
 }
 
 /**
  * Get start and end of day in user's timezone (in UTC)
  */
 export function getUserDayBounds(date: string, userTimezone: string): { start: Date; end: Date } {
-  const startOfDay = new Date(`${date}T00:00:00`);
-  const endOfDay = new Date(`${date}T23:59:59.999`);
+  // Create date at midnight in user's timezone
+  // We need to find what UTC time corresponds to midnight in user's timezone
   
-  const startUTC = convertUserTimezoneToUTC(startOfDay.toISOString(), userTimezone);
-  const endUTC = convertUserTimezoneToUTC(endOfDay.toISOString(), userTimezone);
+  // Parse the date parts
+  const [year, month, day] = date.split('-').map(Number);
   
-  return { start: startUTC, end: endUTC };
+  // Create a date object for the start of day in UTC
+  // Then adjust it to find when it's midnight in the user's timezone
+  const startOfDayUTC = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  const endOfDayUTC = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+  
+  // Get timezone offset for this specific date
+  // Format the UTC date in the user's timezone to get the offset
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: userTimezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+  
+  // Find the UTC times that correspond to start/end of day in user timezone
+  // This is approximate but should work for most cases
+  const testDate = new Date(`${date}T12:00:00Z`); // Noon UTC on the target date
+  const parts = formatter.formatToParts(testDate);
+  
+  const hourInUserTZ = parseInt(parts.find(p => p.type === 'hour')?.value || '12');
+  const offsetHours = hourInUserTZ - 12; // Approximate offset
+  
+  // Adjust the bounds by the offset
+  const start = new Date(startOfDayUTC.getTime() - offsetHours * 3600000);
+  const end = new Date(endOfDayUTC.getTime() - offsetHours * 3600000);
+  
+  return { start, end };
 }
 
 /**
