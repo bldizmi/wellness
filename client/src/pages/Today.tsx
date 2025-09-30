@@ -347,7 +347,8 @@ export default function Today() {
     const groups: {
       [key: string]: {
         assignee: string;
-        items: ItemData[];
+        incompleteItems: ItemData[];
+        completedItems: ItemData[];
         completedCount: number;
         totalCount: number;
         percentage: number;
@@ -362,19 +363,23 @@ export default function Today() {
         if (!groups[assigneeId]) {
           groups[assigneeId] = {
             assignee: assigneeName,
-            items: [],
+            incompleteItems: [],
+            completedItems: [],
             completedCount: 0,
             totalCount: 0,
             percentage: 0,
           };
         }
 
-        groups[assigneeId].items.push(item);
-        groups[assigneeId].totalCount++;
-
+        // Separate completed and incomplete items
         if (isItemCompleted(item)) {
+          groups[assigneeId].completedItems.push(item);
           groups[assigneeId].completedCount++;
+        } else {
+          groups[assigneeId].incompleteItems.push(item);
         }
+
+        groups[assigneeId].totalCount++;
 
         groups[assigneeId].percentage =
           groups[assigneeId].totalCount > 0
@@ -792,9 +797,33 @@ export default function Today() {
             </div>
           </div>
         </div>
-        <div className="space-y-3">
-          {group.items.map((item, index) => renderNewDesignItem(item, index))}
-        </div>
+
+        {/* Incomplete items */}
+        {group.incompleteItems.length > 0 && (
+          <div className="space-y-3">
+            {group.incompleteItems.map((item, index) => renderNewDesignItem(item, index))}
+          </div>
+        )}
+
+        {/* Done subsection for this assignee */}
+        {group.completedItems.length > 0 && (
+          <div className="mt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-green-400 text-base">✓</span>
+              <span className="text-white font-medium text-sm">Done</span>
+              <span className="text-gray-400 text-xs">
+                {group.completedItems.length} completed
+              </span>
+            </div>
+            <div className="space-y-2">
+              {group.completedItems.map((item, index) => (
+                <div key={item.id} className="opacity-60">
+                  {renderNewDesignItem(item, index)}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     ));
   };
@@ -1269,8 +1298,8 @@ export default function Today() {
             <div className="space-y-6">{renderAssignmentSections()}</div>
           )}
 
-          {/* Done Section */}
-          {filteredItems.some((item) => isItemCompleted(item)) && (
+          {/* Done Section - only show for habits and focus tabs, not for shared */}
+          {activeTab !== "shared" && filteredItems.some((item) => isItemCompleted(item)) && (
             <div className="mt-6">
               <button
                 onClick={() => setShowCompleted(!showCompleted)}
