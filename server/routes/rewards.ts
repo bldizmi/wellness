@@ -29,8 +29,8 @@ router.get('/', async (req, res) => {
     // Check for expired rewards and update their status
     const now = new Date();
     for (const reward of userRewards) {
-      // Only check rewards that are currently active or approved
-      if (reward.status === 'approved' || reward.status === 'active') {
+      // Check rewards that are pending, active, or approved
+      if (reward.status === 'pending' || reward.status === 'approved' || reward.status === 'active') {
         if (reward.end_date && new Date(reward.end_date) < now) {
           // Mark as expired
           await db
@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
           // Update the object being returned
           reward.status = 'expired';
 
-          console.log(`✅ Reward "${reward.title}" (${reward.id}) marked as expired`);
+          console.log(`✅ Reward "${reward.title}" (${reward.id}) marked as expired from status: ${reward.status}`);
         }
       }
     }
@@ -104,8 +104,8 @@ router.get('/shared', async (req, res) => {
     // Check for expired rewards and update their status
     const now = new Date();
     for (const reward of sharedRewards) {
-      // Only check rewards that are currently active or approved
-      if (reward.status === 'approved' || reward.status === 'active') {
+      // Check rewards that are pending, active, or approved
+      if (reward.status === 'pending' || reward.status === 'approved' || reward.status === 'active') {
         if (reward.end_date && new Date(reward.end_date) < now) {
           // Mark as expired
           await db
@@ -119,7 +119,7 @@ router.get('/shared', async (req, res) => {
           // Update the object being returned
           reward.status = 'expired';
 
-          console.log(`✅ Shared reward "${reward.title}" (${reward.id}) marked as expired`);
+          console.log(`✅ Shared reward "${reward.title}" (${reward.id}) marked as expired from status: ${reward.status}`);
         }
       }
     }
