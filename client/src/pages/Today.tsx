@@ -1159,26 +1159,24 @@ export default function Today() {
         {/* Header with Day Name and Date - Clickable to toggle calendar */}
         <div className="pt-10 px-4 pb-4">
           <div
-            className="flex flex-col items-center justify-center mb-4 cursor-pointer hover:bg-gray-800 rounded-lg py-2 px-4 transition-colors duration-200"
+            className="flex flex-col items-center justify-center mb-4 cursor-pointer hover:bg-gray-800 rounded-lg py-2 px-4 transition-colors duration-200 relative"
             onClick={() => setIsCalendarVisible(!isCalendarVisible)}
           >
-            <div className="flex items-center gap-2">
-              <h1 className="text-6xl font-serif font-normal text-white mb-1">
-                {(() => {
-                  // Parse YYYY-MM-DD format in local timezone to avoid UTC conversion issues
-                  const [year, month, day] = selectedDate.split("-").map(Number);
-                  const date = new Date(year, month - 1, day); // month is 0-indexed
-                  return date.toLocaleDateString("en-US", {
-                    weekday: "long",
-                  });
-                })()}
-              </h1>
-              <ChevronDown
-                className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
-                  isCalendarVisible ? "rotate-180" : ""
-                }`}
-              />
-            </div>
+            <h1 className="text-6xl font-serif font-normal text-white mb-1">
+              {(() => {
+                // Parse YYYY-MM-DD format in local timezone to avoid UTC conversion issues
+                const [year, month, day] = selectedDate.split("-").map(Number);
+                const date = new Date(year, month - 1, day); // month is 0-indexed
+                return date.toLocaleDateString("en-US", {
+                  weekday: "long",
+                });
+              })()}
+            </h1>
+            <ChevronDown
+              className={`h-4 w-4 text-gray-400 transition-transform duration-200 absolute right-4 top-1/2 -translate-y-1/2 ${
+                isCalendarVisible ? "rotate-180" : ""
+              }`}
+            />
             <p className="text-gray-400 text-base">
               {(() => {
                 // Parse YYYY-MM-DD format in local timezone to avoid UTC conversion issues
