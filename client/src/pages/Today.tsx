@@ -1163,7 +1163,7 @@ export default function Today() {
             onClick={() => setIsCalendarVisible(!isCalendarVisible)}
           >
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-white mb-1">
+              <h1 className="text-6xl font-serif font-normal text-white mb-1">
                 {(() => {
                   // Parse YYYY-MM-DD format in local timezone to avoid UTC conversion issues
                   const [year, month, day] = selectedDate.split("-").map(Number);
@@ -1179,7 +1179,7 @@ export default function Today() {
                 }`}
               />
             </div>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-base">
               {(() => {
                 // Parse YYYY-MM-DD format in local timezone to avoid UTC conversion issues
                 const [year, month, day] = selectedDate.split("-").map(Number);
