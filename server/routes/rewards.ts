@@ -15,7 +15,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 router.get('/', async (req, res) => {
   try {
     const { user_id } = req;
-    
+
     if (!user_id) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -25,6 +25,29 @@ router.get('/', async (req, res) => {
       .from(rewards)
       .where(eq(rewards.created_by, user_id))
       .orderBy(sql`${rewards.created_at} DESC`);
+
+    // Check for expired rewards and update their status
+    const now = new Date();
+    for (const reward of userRewards) {
+      // Only check rewards that are currently active or approved
+      if (reward.status === 'approved' || reward.status === 'active') {
+        if (reward.end_date && new Date(reward.end_date) < now) {
+          // Mark as expired
+          await db
+            .update(rewards)
+            .set({
+              status: 'expired',
+              updated_at: now.toISOString()
+            })
+            .where(eq(rewards.id, reward.id));
+
+          // Update the object being returned
+          reward.status = 'expired';
+
+          console.log(`✅ Reward "${reward.title}" (${reward.id}) marked as expired`);
+        }
+      }
+    }
 
     res.json({ rewards: userRewards });
   } catch (error) {
@@ -37,7 +60,7 @@ router.get('/', async (req, res) => {
 router.get('/shared', async (req, res) => {
   try {
     const { user_id } = req;
-    
+
     if (!user_id) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -64,6 +87,7 @@ router.get('/shared', async (req, res) => {
         delivered_at: rewards.delivered_at,
         rejection_reason: rewards.rejection_reason,
         community_id: rewards.community_id,
+        shared_with: rewards.shared_with,
         created_at: rewards.created_at,
         updated_at: rewards.updated_at,
       })
@@ -76,6 +100,29 @@ router.get('/shared', async (req, res) => {
         )
       )
       .orderBy(sql`${rewards.created_at} DESC`);
+
+    // Check for expired rewards and update their status
+    const now = new Date();
+    for (const reward of sharedRewards) {
+      // Only check rewards that are currently active or approved
+      if (reward.status === 'approved' || reward.status === 'active') {
+        if (reward.end_date && new Date(reward.end_date) < now) {
+          // Mark as expired
+          await db
+            .update(rewards)
+            .set({
+              status: 'expired',
+              updated_at: now.toISOString()
+            })
+            .where(eq(rewards.id, reward.id));
+
+          // Update the object being returned
+          reward.status = 'expired';
+
+          console.log(`✅ Shared reward "${reward.title}" (${reward.id}) marked as expired`);
+        }
+      }
+    }
 
     res.json({ rewards: sharedRewards });
   } catch (error) {

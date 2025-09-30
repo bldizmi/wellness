@@ -34,6 +34,8 @@ import {
   Sparkles,
   TrendingUp,
   Info,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import {
   Tooltip,
@@ -592,7 +594,6 @@ function RewardProgressCard({
   progressData,
   onEdit,
 }: RewardProgressCardProps) {
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -667,8 +668,7 @@ function RewardProgressCard({
   return (
     <>
       <Card
-        className="overflow-hidden border-l-4 border-l-purple-500 hover:shadow-lg transition-all duration-300 cursor-pointer"
-        onClick={() => setShowEditModal(true)}
+        className="overflow-hidden border-l-4 border-l-purple-500 hover:shadow-lg transition-all duration-300"
       >
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start">
@@ -686,6 +686,25 @@ function RewardProgressCard({
                   {reward.description}
                 </p>
               )}
+            </div>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 ml-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(reward)}
+                className="h-8 w-8 p-0 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="h-8 w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -798,38 +817,6 @@ function RewardProgressCard({
           </div>
         </CardContent>
       </Card>
-
-      {/* Edit/Delete Modal */}
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Reward</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p>Would you like to edit or delete this reward?</p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowEditModal(false);
-                  onEdit(reward);
-                }}
-              >
-                Edit Details
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  setShowEditModal(false);
-                  setShowDeleteConfirm(true);
-                }}
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation Modal */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
