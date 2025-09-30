@@ -45,11 +45,14 @@ export default function Profile() {
   const [showCreateCommunityModal, setShowCreateCommunityModal] = useState(false);
   const [showInviteMemberModal, setShowInviteMemberModal] = useState(false);
   const [selectedCommunityForInvite, setSelectedCommunityForInvite] = useState<any>(null);
+  const [showProfileEditModal, setShowProfileEditModal] = useState(false);
 
   // Form states
   const [newCommunityName, setNewCommunityName] = useState("");
   const [newCommunityType, setNewCommunityType] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [editDisplayName, setEditDisplayName] = useState("");
+  const [editAvatarUrl, setEditAvatarUrl] = useState("");
 
   const {
     data: profile,
@@ -127,6 +130,21 @@ export default function Profile() {
     },
   });
 
+  // Mutation for updating profile
+  const updateProfileMutation = useMutation({
+    mutationFn: async ({ display_name, avatar_url }: { display_name: string; avatar_url: string }) => {
+      return await apiRequest("/api/profile", {
+        method: "PATCH",
+        body: JSON.stringify({ display_name, avatar_url }),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+      setShowProfileEditModal(false);
+    },
+  });
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -183,6 +201,27 @@ export default function Profile() {
   const openInviteModal = (community: any) => {
     setSelectedCommunityForInvite(community);
     setShowInviteMemberModal(true);
+  };
+
+  const openProfileEditModal = () => {
+    setEditDisplayName(profile?.display_name || "");
+    setEditAvatarUrl(profile?.avatar_url || "");
+    setShowProfileEditModal(true);
+  };
+
+  const handlePasswordReset = async () => {
+    if (!profile?.email) return;
+
+    try {
+      // Use Firebase Auth to send password reset email
+      const { sendPasswordResetEmail, getAuth } = await import("firebase/auth");
+      const auth = getAuth();
+      await sendPasswordResetEmail(auth, profile.email);
+      alert("Password reset email sent! Check your inbox.");
+    } catch (error) {
+      console.error("Password reset error:", error);
+      alert("Failed to send password reset email. Please try again.");
+    }
   };
 
   const selectMode = (mode: ThemeMode) => {
@@ -324,7 +363,10 @@ export default function Profile() {
         <div>
           <h3 className="text-sm font-medium text-gray-400 mb-3">Account</h3>
           <div className="space-y-1">
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer">
+            <div
+              className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer"
+              onClick={openProfileEditModal}
+            >
               <div className="flex items-center space-x-3">
                 <User className="h-4 w-4 text-gray-400" />
                 <div>
@@ -789,6 +831,95 @@ export default function Profile() {
                 disabled={!inviteEmail.trim() || inviteMemberMutation.isPending}
               >
                 {inviteMemberMutation.isPending ? "Sending..." : "Send Invitation"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Profile Edit Modal */}
+      <Dialog open={showProfileEditModal} onOpenChange={setShowProfileEditModal}>
+        <DialogContent className="bg-slate-800 text-white border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-blue-400" />
+              Edit Profile
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Update your profile information
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="display-name" className="text-sm font-medium text-gray-300">
+                Display Name
+              </Label>
+              <Input
+                id="display-name"
+                type="text"
+                value={editDisplayName}
+                onChange={(e) => setEditDisplayName(e.target.value)}
+                placeholder="Enter your display name..."
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email" className="text-sm font-medium text-gray-300">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={profile?.email || ""}
+                disabled
+                className="bg-gray-700/50 border-gray-600 text-gray-400 mt-1 cursor-not-allowed"
+              />
+              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+            </div>
+            <div>
+              <Label htmlFor="avatar-url" className="text-sm font-medium text-gray-300">
+                Avatar URL (optional)
+              </Label>
+              <Input
+                id="avatar-url"
+                type="url"
+                value={editAvatarUrl}
+                onChange={(e) => setEditAvatarUrl(e.target.value)}
+                placeholder="https://example.com/avatar.jpg"
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
+              />
+            </div>
+            <div className="pt-2">
+              <Button
+                variant="outline"
+                className="w-full border-orange-500 text-orange-500 hover:bg-orange-500/10"
+                onClick={handlePasswordReset}
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Reset Password
+              </Button>
+              <p className="text-xs text-gray-500 mt-1 text-center">
+                A password reset link will be sent to your email
+              </p>
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowProfileEditModal(false)}
+                disabled={updateProfileMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                onClick={() => updateProfileMutation.mutate({
+                  display_name: editDisplayName.trim(),
+                  avatar_url: editAvatarUrl.trim()
+                })}
+                disabled={!editDisplayName.trim() || updateProfileMutation.isPending}
+              >
+                {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </div>
