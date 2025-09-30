@@ -1355,6 +1355,30 @@ export default function Rewards() {
                   </Select>
                 </div>
 
+                {/* Target Value Input - Show when metric is selected */}
+                {formData.target_metric && (
+                  <div className="space-y-2">
+                    <Label htmlFor="target_value" className="text-white">
+                      Target Value *
+                    </Label>
+                    <Input
+                      id="target_value"
+                      type="number"
+                      min="1"
+                      placeholder="Enter target value"
+                      value={formData.target_value}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, target_value: e.target.value }))
+                      }
+                      className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
+                    />
+                    <p className="text-xs text-gray-400">
+                      Current: {getMetricOptions().find(opt => opt.value === formData.target_metric)?.currentValue || 0}
+                      {getMetricOptions().find(opt => opt.value === formData.target_metric)?.unit || ''}
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="duration" className="text-white">Track progress for</Label>
                   <div className="grid grid-cols-2 gap-4">
@@ -1517,17 +1541,12 @@ export default function Rewards() {
             ) : (
               <div className="space-y-3">
                 {(userRewards as any).rewards.map((reward: Reward) => {
-                  const approverNames = reward.shared_with 
-                    ? reward.shared_with.map(userId => approverNamesMap[userId]).filter(Boolean)
-                    : [];
-                  
                   return (
-                    <SimpleRewardItem
+                    <RewardProgressCard
                       key={reward.id}
                       reward={reward}
                       progressData={calculateProgress(reward, personalInsights)}
-                      onViewDetails={setViewingReward}
-                      approverNames={approverNames}
+                      onEdit={handleEditReward}
                     />
                   );
                 })}
