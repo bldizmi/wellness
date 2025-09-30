@@ -355,7 +355,7 @@ export function PhotoVerificationModal({
                       {item?.title}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Please upload photos for this task
+                      Please upload photos to complete this task
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

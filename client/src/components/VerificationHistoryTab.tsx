@@ -13,7 +13,7 @@ interface VerificationAttempt {
   id: string;
   item_id: string;
   user_id: string;
-  image_url: string;
+  image_urls: string; // JSON string containing array of image URLs
   ai_verification_result: 'complete' | 'not_complete' | 'unclear';
   ai_feedback: string;
   created_at: string;
@@ -371,16 +371,34 @@ export function VerificationHistoryTab({
               <h4 className="font-medium text-sm mb-2">AI Feedback:</h4>
               <p className="text-sm text-gray-600 dark:text-gray-300">{attempt.ai_feedback}</p>
             </div>
-            
-            {attempt.image_url && (
-              <div className="border rounded-lg overflow-hidden">
-                <img 
-                  src={attempt.image_url} 
-                  alt="Verification attempt" 
-                  className="w-full h-32 object-cover"
-                />
-              </div>
-            )}
+
+            {attempt.image_urls && (() => {
+              try {
+                const imageUrls = JSON.parse(attempt.image_urls);
+                if (Array.isArray(imageUrls) && imageUrls.length > 0) {
+                  return (
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm">Submitted Photos:</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {imageUrls.map((imageUrl: string, idx: number) => (
+                          <div key={idx} className="border rounded-lg overflow-hidden">
+                            <img
+                              src={imageUrl}
+                              alt={`Verification photo ${idx + 1}`}
+                              className="w-full h-32 object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => window.open(imageUrl, '_blank')}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+              } catch (e) {
+                console.error('Failed to parse image_urls:', e);
+              }
+              return null;
+            })()}
           </div>
         ))}
       </div>
