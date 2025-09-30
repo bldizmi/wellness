@@ -72,6 +72,7 @@ interface ItemData {
   occurrence_date?: string;
   is_recurring?: boolean;
   streak_count?: number; // Add streak data if available from backend
+  image_urls?: string[]; // Array of uploaded photo URLs
 }
 
 interface TodayData {
@@ -611,9 +612,9 @@ export default function Today() {
                 ) : null;
               })()}
 
-              {/* Photo verification indicator */}
-              {item.verify_required && (
-                <div 
+              {/* Photo verification indicator - only show if photos have been uploaded */}
+              {item.verify_required && item.image_urls && item.image_urls.length > 0 && (
+                <div
                   className="flex items-center gap-1 cursor-pointer hover:text-blue-300"
                   onClick={(e) => {
                     e.stopPropagation();
