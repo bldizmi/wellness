@@ -35,6 +35,7 @@ export default function Plans() {
   const [statusFilter, setStatusFilter] = useState('open'); // 'open', 'completed'
   const [isOverdueCollapsed, setIsOverdueCollapsed] = useState(false);
   const [showAllOverdue, setShowAllOverdue] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -196,10 +197,21 @@ export default function Plans() {
   // Filter items based on all selected filters - stacked properly
   const filteredItems = useMemo(() => {
     if (!items) return [];
-    
+
     let filtered = [...items];
 
-    // First apply main recurrence filter
+    // First apply search filter
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter((item: any) => {
+        const titleMatch = item.title?.toLowerCase().includes(searchLower);
+        const descriptionMatch = item.description?.toLowerCase().includes(searchLower);
+        const whyItMattersMatch = item.why_it_matters?.toLowerCase().includes(searchLower);
+        return titleMatch || descriptionMatch || whyItMattersMatch;
+      });
+    }
+
+    // Then apply main recurrence filter
     if (filter === 'one-time') {
       filtered = filtered.filter((item: any) => !item.recurrence_type || item.recurrence_type === 'once');
     } else if (filter === 'recurring') {
@@ -211,16 +223,16 @@ export default function Plans() {
     if (itemTypeFilter === 'shared') {
       filtered = filtered.filter((item: any) => {
         // Show items shared BY user (created by user and shared with others)
-        const sharedByUser = item.shared_with && 
+        const sharedByUser = item.shared_with &&
                             item.shared_with.length > 0 &&
                             item.created_by === user?.uid;
-        
+
         // Show items shared WITH user (user is in shared_with array) BUT NOT assigned to them
-        const sharedWithUser = item.shared_with && 
+        const sharedWithUser = item.shared_with &&
                               Array.isArray(item.shared_with) &&
                               item.shared_with.includes(user?.uid) &&
                               item.assigned_to !== user?.uid;
-        
+
         return sharedByUser || sharedWithUser;
       });
     } else if (itemTypeFilter === 'open') {
@@ -239,8 +251,10 @@ export default function Plans() {
     // Debug filtered results
     console.log('Filtering Debug:', {
       originalItems: items.length,
+      afterSearch: searchTerm ? filtered.length : 'no search',
       afterRecurrenceFilter: filtered.length,
       filters: {
+        searchTerm,
         filter,
         itemTypeFilter,
         statusFilter,
@@ -257,7 +271,7 @@ export default function Plans() {
     });
 
     return filtered;
-  }, [items, filter, itemTypeFilter, statusFilter, user?.uid]);
+  }, [items, searchTerm, filter, itemTypeFilter, statusFilter, user?.uid]);
 
   if (isLoading) {
     return (
@@ -337,6 +351,8 @@ export default function Plans() {
           <div className="mb-4">
             <Input
               placeholder="Search your plans..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="bg-gray-800 border-gray-700 text-white placeholder-gray-400"
             />
           </div>
@@ -465,7 +481,16 @@ export default function Plans() {
                 </div>
                 
                 <div className="flex-1">
-                  <p className="text-white font-medium text-sm">{item.title}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-white font-medium text-sm">{item.title}</p>
+                    {/* Recurrence indicator */}
+                    {item.recurrence_type && item.recurrence_type !== 'once' && (
+                      <span className="text-blue-400 text-xs flex items-center gap-1">
+                        <Repeat className="h-3 w-3" />
+                        {item.recurrence_type.charAt(0).toUpperCase() + item.recurrence_type.slice(1)}
+                      </span>
+                    )}
+                  </div>
                   {item.due_date && (
                     <p className="text-gray-400 text-xs">
                       {(() => {
@@ -474,6 +499,10 @@ export default function Plans() {
                         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                       })()}
                     </p>
+                  )}
+                  {/* Display ID */}
+                  {item.display_id && (
+                    <p className="text-gray-500 text-xs font-mono">{item.display_id}</p>
                   )}
                 </div>
               </div>
