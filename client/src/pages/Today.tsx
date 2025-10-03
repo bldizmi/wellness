@@ -592,7 +592,7 @@ export default function Today() {
     return (
       <div
         key={item.id}
-        className="bg-gray-800 rounded-xl p-3 cursor-pointer transition-all duration-200 hover:bg-gray-750"
+        className="bg-card-theme rounded-xl p-3 cursor-pointer transition-all duration-200 bg-card-hover-theme"
         onClick={() => setEditingItem(item)}
       >
         <div className="flex items-center justify-between">
@@ -646,7 +646,7 @@ export default function Today() {
                   setVerifyingItem(item);
                 }}
               >
-                <Camera className="h-4 w-4 text-white" />
+                <Camera className="h-4 w-4 text-primary-theme" />
               </button>
             ) : (
               <button
@@ -662,9 +662,9 @@ export default function Today() {
                 disabled={isSkipped || isLoading}
               >
                 {isLoading ? (
-                  <Loader2 className="h-4 w-4 text-white animate-spin" />
+                  <Loader2 className="h-4 w-4 text-primary-theme animate-spin" />
                 ) : (
-                  isCompleted && <Check className="h-4 w-4 text-white" />
+                  isCompleted && <Check className="h-4 w-4 text-primary-theme" />
                 )}
               </button>
             )}
@@ -757,10 +757,10 @@ export default function Today() {
       .map((section) => (
         <div key={section.key} className="space-y-3">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
+            <div className="w-6 h-6 bg-accent-primary rounded-full flex items-center justify-center">
               <span className="text-xs">{section.icon}</span>
             </div>
-            <h2 className="text-white font-medium text-base">
+            <h2 className="text-primary-theme font-medium text-base">
               {section.label}
             </h2>
           </div>
@@ -781,16 +781,16 @@ export default function Today() {
       <div key={`group-${groupIndex}`} className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-accent-primary rounded-full flex items-center justify-center">
               <span className="text-white text-sm font-medium">
                 {group.assignee.charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
-              <h2 className="text-white font-semibold">
+              <h2 className="text-primary-theme font-semibold">
                 Assigned to {group.assignee}
               </h2>
-              <p className="text-gray-400 text-sm">
+              <p className="text-secondary-theme text-sm">
                 {group.completedCount}/{group.totalCount} complete •{" "}
                 {group.percentage}%
               </p>
@@ -810,8 +810,8 @@ export default function Today() {
           <div className="mt-4">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-green-400 text-base">✓</span>
-              <span className="text-white font-medium text-sm">Done</span>
-              <span className="text-gray-400 text-xs">
+              <span className="text-primary-theme font-medium text-sm">Done</span>
+              <span className="text-secondary-theme text-xs">
                 {group.completedItems.length} completed
               </span>
             </div>
@@ -1245,7 +1245,7 @@ export default function Today() {
 
         {/* Dynamic progress line - tab specific */}
         <div className="px-4 mb-4">
-          <div className="h-0.5 w-full bg-gray-600 rounded-full relative">
+          <div className="h-0.5 w-full bg-border-primary-theme rounded-full relative">
             <div
               className={`h-0.5 bg-gradient-to-r ${getTabProgress(activeTab).color} rounded-full absolute left-0 transition-all duration-300 ease-in-out`}
               style={{ width: `${getTabProgress(activeTab).percentage}%` }}
@@ -1269,7 +1269,7 @@ export default function Today() {
                   className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 text-sm font-medium ${
                     isActive
                       ? "bg-accent-primary text-white"
-                      : "bg-gray-800/50 text-gray-400 hover:text-gray-200 hover:bg-gray-700/50"
+                      : "bg-card-theme border border-border-primary-theme text-secondary-theme hover:text-primary-theme hover:bg-card-hover-theme"
                   }`}
                   onClick={() => setActiveTab(tab.id)}
                 >
