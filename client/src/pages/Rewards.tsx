@@ -1144,7 +1144,7 @@ export default function Rewards() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 pb-24 max-w-4xl bg-slate-900 min-h-screen">
+    <div className="container mx-auto px-4 py-6 pb-24 max-w-4xl bg-page min-h-screen">
       <div className="space-y-6">
         {/* Header */}
         <div className="mb-6">

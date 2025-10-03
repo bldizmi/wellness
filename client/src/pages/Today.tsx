@@ -598,7 +598,7 @@ export default function Today() {
         <div className="flex items-center justify-between">
           {/* Left side: Content */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-white font-medium text-sm mb-1">
+            <h3 className="text-primary-theme font-medium text-sm mb-1">
               {item.title}
             </h3>
 
@@ -1184,15 +1184,15 @@ export default function Today() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <div className="w-full max-w-sm mx-auto bg-gray-950 min-h-screen text-white">
+    <div className="min-h-screen bg-page">
+      <div className="w-full max-w-sm mx-auto bg-page min-h-screen text-primary-theme">
         {/* Header with Day Name and Date - Clickable to toggle calendar */}
         <div className="pt-10 px-4 pb-4">
           <div
-            className="flex flex-col items-center justify-center mb-4 cursor-pointer hover:bg-gray-800 rounded-lg py-2 px-4 transition-colors duration-200 relative"
+            className="flex flex-col items-center justify-center mb-4 cursor-pointer bg-card-hover-theme rounded-lg py-2 px-4 transition-colors duration-200 relative"
             onClick={() => setIsCalendarVisible(!isCalendarVisible)}
           >
-            <h1 className="text-6xl font-serif font-normal text-white mb-1">
+            <h1 className="text-6xl font-serif font-normal text-primary-theme mb-1">
               {(() => {
                 // Parse YYYY-MM-DD format in local timezone to avoid UTC conversion issues
                 const [year, month, day] = selectedDate.split("-").map(Number);
@@ -1203,11 +1203,11 @@ export default function Today() {
               })()}
             </h1>
             <ChevronDown
-              className={`h-4 w-4 text-gray-400 transition-transform duration-200 absolute right-4 top-1/2 -translate-y-1/2 ${
+              className={`h-4 w-4 text-secondary-theme transition-transform duration-200 absolute right-4 top-1/2 -translate-y-1/2 ${
                 isCalendarVisible ? "rotate-180" : ""
               }`}
             />
-            <p className="text-gray-400 text-base">
+            <p className="text-secondary-theme text-base">
               {(() => {
                 // Parse YYYY-MM-DD format in local timezone to avoid UTC conversion issues
                 const [year, month, day] = selectedDate.split("-").map(Number);

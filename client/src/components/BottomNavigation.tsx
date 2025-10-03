@@ -73,14 +73,14 @@ export default function BottomNavigation() {
 
   return (
     <>
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900 safe-area-pb z-50">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-header safe-area-pb z-50">
         <div className="relative flex items-center justify-between px-6 py-3 max-w-md mx-auto">
           {/* Home/Today Button */}
           <button
             className={`flex flex-col items-center justify-center min-h-[60px] min-w-[60px] p-2 transition-all duration-150 bg-transparent hover:bg-transparent ${
               location === "/today"
                 ? "text-accent-primary"
-                : "text-gray-400 hover:text-gray-300"
+                : "text-secondary-theme hover:text-muted-theme"
             }`}
             onClick={() => navigate("/today")}
           >
@@ -97,7 +97,7 @@ export default function BottomNavigation() {
               className={`flex flex-col items-center justify-center min-h-[60px] min-w-[60px] p-2 transition-all duration-150 bg-transparent hover:bg-transparent ${
                 location === "/plans"
                   ? "text-accent-primary"
-                  : "text-gray-400 hover:text-gray-300"
+                  : "text-secondary-theme hover:text-muted-theme"
               }`}
               onClick={() => navigate("/plans")}
             >
@@ -123,7 +123,7 @@ export default function BottomNavigation() {
             className={`flex flex-col items-center justify-center min-h-[60px] min-w-[60px] p-2 transition-all duration-150 bg-transparent hover:bg-transparent ${
               location === "/insights"
                 ? "text-accent-primary"
-                : "text-gray-400 hover:text-gray-300"
+                : "text-secondary-theme hover:text-muted-theme"
             }`}
             onClick={() => navigate("/insights")}
           >
@@ -139,7 +139,7 @@ export default function BottomNavigation() {
             className={`flex flex-col items-center justify-center min-h-[60px] min-w-[60px] p-2 transition-all duration-150 bg-transparent hover:bg-transparent ${
               location === "/rewards"
                 ? "text-accent-primary"
-                : "text-gray-400 hover:text-gray-300"
+                : "text-secondary-theme hover:text-muted-theme"
             }`}
             onClick={() => navigate("/rewards")}
           >
@@ -155,7 +155,7 @@ export default function BottomNavigation() {
             className={`flex flex-col items-center justify-center min-h-[60px] min-w-[60px] p-2 transition-all duration-150 bg-transparent hover:bg-transparent ${
               location === "/profile"
                 ? "text-accent-primary"
-                : "text-gray-400 hover:text-gray-300"
+                : "text-secondary-theme hover:text-muted-theme"
             }`}
             onClick={() => navigate("/profile")}
           >

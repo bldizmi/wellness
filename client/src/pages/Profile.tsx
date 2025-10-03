@@ -270,11 +270,11 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div className="min-h-screen bg-page text-primary-theme">
       {/* Header */}
       <div className="p-4 pb-2">
         <div className="flex items-center gap-3 mb-1">
-          <SettingsIcon className="h-6 w-6 text-gray-400" />
+          <SettingsIcon className="h-6 w-6 text-secondary-theme" />
           <div>
             <h1 className="text-xl font-semibold">Settings</h1>
             <p className="text-sm text-gray-400">Customize your Mind Double experience</p>

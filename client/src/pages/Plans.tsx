@@ -335,13 +335,13 @@ export default function Plans() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <div className="w-full max-w-sm mx-auto bg-gray-950 min-h-screen text-white">
-        
+    <div className="min-h-screen bg-page">
+      <div className="w-full max-w-sm mx-auto bg-page min-h-screen text-primary-theme">
+
         {/* Header Section */}
         <div className="pt-4 px-4 pb-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-white">Plans</h1>
+            <h1 className="text-2xl font-bold text-primary-theme">Plans</h1>
             <Button variant="ghost" size="sm" className="p-2">
               <Menu className="h-5 w-5 text-gray-400" />
             </Button>

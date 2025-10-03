@@ -183,9 +183,9 @@ export default function Insights() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 pb-24 max-w-4xl bg-slate-900 min-h-screen">
+    <div className="container mx-auto px-4 py-6 pb-24 max-w-4xl bg-page min-h-screen">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-2">
+        <h1 className="text-2xl font-bold text-primary-theme mb-2">
           Your Insights
         </h1>
         <p className="text-gray-300">

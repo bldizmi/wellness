@@ -35,7 +35,7 @@ export default function Header() {
 
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-gray-900">
+    <header className="sticky top-0 z-50 w-full bg-header">
       <div className="container flex h-14 items-center">
         <div className="flex flex-1 items-center justify-between">
           {/* Mobile Search - positioned ~20px from edges */}
@@ -46,7 +46,7 @@ export default function Header() {
               className="hover:opacity-80 transition-opacity"
               onClick={handleSearchClick}
             >
-              <Search className="h-6 w-6 text-gray-300" />
+              <Search className="h-6 w-6 text-secondary-theme" />
             </Button>
           </div>
 
@@ -68,7 +68,7 @@ export default function Header() {
               className="hover:opacity-80 transition-opacity"
               onClick={handleSearchClick}
             >
-              <Search className="h-6 w-6 text-gray-300" />
+              <Search className="h-6 w-6 text-secondary-theme" />
             </Button>
           </div>
 
@@ -113,7 +113,7 @@ export default function Header() {
           </nav>
 
           {/* Tablet Welcome Message - positioned after navigation */}
-          <div className="hidden md:flex lg:hidden text-sm text-gray-500 ml-4">
+          <div className="hidden md:flex lg:hidden text-sm text-secondary-theme ml-4">
             Hi, {(profile as any)?.display_name || "there"}!
           </div>
         </div>
