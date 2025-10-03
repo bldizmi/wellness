@@ -592,13 +592,13 @@ export default function Today() {
     return (
       <div
         key={item.id}
-        className="bg-card-theme rounded-xl p-3 cursor-pointer transition-all duration-200 bg-card-hover-theme"
+        className="bg-card rounded-xl p-3 cursor-pointer transition-all duration-200 hover:bg-secondary border border-border"
         onClick={() => setEditingItem(item)}
       >
         <div className="flex items-center justify-between">
           {/* Left side: Content */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-primary-theme font-medium text-sm mb-1">
+            <h3 className="text-card-foreground font-medium text-sm mb-1">
               {item.title}
             </h3>
 
@@ -646,7 +646,7 @@ export default function Today() {
                   setVerifyingItem(item);
                 }}
               >
-                <Camera className="h-4 w-4 text-primary-theme" />
+                <Camera className="h-4 w-4 text-card-foreground" />
               </button>
             ) : (
               <button
@@ -662,9 +662,9 @@ export default function Today() {
                 disabled={isSkipped || isLoading}
               >
                 {isLoading ? (
-                  <Loader2 className="h-4 w-4 text-primary-theme animate-spin" />
+                  <Loader2 className="h-4 w-4 text-card-foreground animate-spin" />
                 ) : (
-                  isCompleted && <Check className="h-4 w-4 text-primary-theme" />
+                  isCompleted && <Check className="h-4 w-4 text-card-foreground" />
                 )}
               </button>
             )}
@@ -760,7 +760,7 @@ export default function Today() {
             <div className="w-6 h-6 bg-accent-primary rounded-full flex items-center justify-center">
               <span className="text-xs">{section.icon}</span>
             </div>
-            <h2 className="text-primary-theme font-medium text-base">
+            <h2 className="text-foreground font-medium text-base">
               {section.label}
             </h2>
           </div>
@@ -787,10 +787,10 @@ export default function Today() {
               </span>
             </div>
             <div>
-              <h2 className="text-primary-theme font-semibold">
+              <h2 className="text-foreground font-semibold">
                 Assigned to {group.assignee}
               </h2>
-              <p className="text-secondary-theme text-sm">
+              <p className="text-muted-foreground text-sm">
                 {group.completedCount}/{group.totalCount} complete •{" "}
                 {group.percentage}%
               </p>
@@ -810,8 +810,8 @@ export default function Today() {
           <div className="mt-4">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-green-400 text-base">✓</span>
-              <span className="text-primary-theme font-medium text-sm">Done</span>
-              <span className="text-secondary-theme text-xs">
+              <span className="text-foreground font-medium text-sm">Done</span>
+              <span className="text-muted-foreground text-xs">
                 {group.completedItems.length} completed
               </span>
             </div>
@@ -1175,7 +1175,7 @@ export default function Today() {
 
   if (showLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-background">
         <div className="max-w-md mx-auto p-4">
           <div className="text-center py-8">Loading your day...</div>
         </div>
@@ -1184,15 +1184,15 @@ export default function Today() {
   }
 
   return (
-    <div className="min-h-screen bg-page">
-      <div className="w-full max-w-sm mx-auto bg-page min-h-screen text-primary-theme">
+    <div className="min-h-screen bg-background">
+      <div className="w-full max-w-sm mx-auto bg-background min-h-screen text-foreground">
         {/* Header with Day Name and Date - Clickable to toggle calendar */}
         <div className="pt-10 px-4 pb-4">
           <div
-            className="flex flex-col items-center justify-center mb-4 cursor-pointer bg-card-hover-theme rounded-lg py-2 px-4 transition-colors duration-200 relative"
+            className="flex flex-col items-center justify-center mb-4 cursor-pointer hover:bg-secondary rounded-lg py-2 px-4 transition-colors duration-200 relative"
             onClick={() => setIsCalendarVisible(!isCalendarVisible)}
           >
-            <h1 className="text-6xl font-serif font-normal text-primary-theme mb-1">
+            <h1 className="text-6xl font-serif font-normal text-foreground mb-1">
               {(() => {
                 // Parse YYYY-MM-DD format in local timezone to avoid UTC conversion issues
                 const [year, month, day] = selectedDate.split("-").map(Number);
@@ -1203,11 +1203,11 @@ export default function Today() {
               })()}
             </h1>
             <ChevronDown
-              className={`h-4 w-4 text-secondary-theme transition-transform duration-200 absolute right-4 top-1/2 -translate-y-1/2 ${
+              className={`h-4 w-4 text-muted-foreground transition-transform duration-200 absolute right-4 top-1/2 -translate-y-1/2 ${
                 isCalendarVisible ? "rotate-180" : ""
               }`}
             />
-            <p className="text-secondary-theme text-base">
+            <p className="text-muted-foreground text-base">
               {(() => {
                 // Parse YYYY-MM-DD format in local timezone to avoid UTC conversion issues
                 const [year, month, day] = selectedDate.split("-").map(Number);
@@ -1245,7 +1245,7 @@ export default function Today() {
 
         {/* Dynamic progress line - tab specific */}
         <div className="px-4 mb-4">
-          <div className="h-0.5 w-full bg-border-primary-theme rounded-full relative">
+          <div className="h-0.5 w-full bg-border rounded-full relative">
             <div
               className={`h-0.5 bg-gradient-to-r ${getTabProgress(activeTab).color} rounded-full absolute left-0 transition-all duration-300 ease-in-out`}
               style={{ width: `${getTabProgress(activeTab).percentage}%` }}
@@ -1269,7 +1269,7 @@ export default function Today() {
                   className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 text-sm font-medium ${
                     isActive
                       ? "bg-accent-primary text-white"
-                      : "bg-card-theme border border-border-primary-theme text-secondary-theme hover:text-primary-theme hover:bg-card-hover-theme"
+                      : "bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                   onClick={() => setActiveTab(tab.id)}
                 >

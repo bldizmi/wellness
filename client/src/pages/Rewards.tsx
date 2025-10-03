@@ -214,7 +214,7 @@ function ProgressRing({
               </span>
             </div>
             <div className="absolute -top-1 -right-1">
-              <Info className="h-3 w-3 text-gray-400 opacity-50" />
+              <Info className="h-3 w-3 text-muted-foreground opacity-50" />
             </div>
           </div>
         </TooltipTrigger>
@@ -500,18 +500,18 @@ function SimpleRewardItem({
 }: SimpleRewardItemProps) {
   const getStatusBadge = () => {
     if (progressData.progress >= 100) {
-      return <Badge className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Earned!</Badge>;
+      return <Badge className="bg-green-500 text-foreground text-xs px-2 py-1 rounded-full">Earned!</Badge>;
     }
     if (reward.status === "pending") {
       // Only show approval text if there are actually approvers selected
       if (approverNames && approverNames.length > 0) {
-        return <span className="text-gray-400 text-sm">Requires approval from {approverNames.join(", ")}</span>;
+        return <span className="text-muted-foreground text-sm">Requires approval from {approverNames.join(", ")}</span>;
       } else if (reward.shared_with && reward.shared_with.length > 0) {
         // Fallback if approver names aren't loaded yet but we know there are approvers
-        return <span className="text-gray-400 text-sm">Requires approval</span>;
+        return <span className="text-muted-foreground text-sm">Requires approval</span>;
       } else {
         // This shouldn't happen if our logic is correct, but just in case
-        return <span className="text-gray-400 text-sm">Pending review</span>;
+        return <span className="text-muted-foreground text-sm">Pending review</span>;
       }
     }
     return null;
@@ -525,16 +525,16 @@ function SimpleRewardItem({
 
   return (
     <div 
-      className="flex items-center justify-between p-4 bg-slate-800 rounded-xl border border-slate-700 cursor-pointer hover:bg-slate-750 transition-colors"
+      className="flex items-center justify-between p-4 bg-card rounded-xl border border-border cursor-pointer hover:bg-slate-750 transition-colors"
       onClick={() => onViewDetails(reward)}
     >
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-3">
           <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-          <Clock className="h-5 w-5 text-gray-400" />
+          <Clock className="h-5 w-5 text-muted-foreground" />
         </div>
         <div>
-          <h3 className="text-white font-medium">{reward.title}</h3>
+          <h3 className="text-foreground font-medium">{reward.title}</h3>
           {getStatusBadge()}
         </div>
       </div>
@@ -682,7 +682,7 @@ function RewardProgressCard({
                 )}
               </CardTitle>
               {reward.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-sm text-gray-600 dark:text-muted-foreground mt-1">
                   {reward.description}
                 </p>
               )}
@@ -693,7 +693,7 @@ function RewardProgressCard({
                 variant="ghost"
                 size="sm"
                 onClick={() => onEdit(reward)}
-                className="h-8 w-8 p-0 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20"
               >
                 <Edit className="h-4 w-4" />
               </Button>
@@ -701,7 +701,7 @@ function RewardProgressCard({
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="h-8 w-8 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -719,7 +719,7 @@ function RewardProgressCard({
                 .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
                 .join(" ")}
               {reward.target_value && (
-                <span className="text-gray-600 dark:text-gray-400">
+                <span className="text-gray-600 dark:text-muted-foreground">
                   {" "}
                   (Target: {reward.target_value})
                 </span>
@@ -811,7 +811,7 @@ function RewardProgressCard({
 
           {/* Reward ID for reference */}
           <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
-            <p className="text-xs text-gray-400 dark:text-gray-600">
+            <p className="text-xs text-muted-foreground dark:text-gray-600">
               Reward ID: {reward.id.substring(0, 5)}
             </p>
           </div>
@@ -1144,13 +1144,13 @@ export default function Rewards() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 pb-24 max-w-4xl bg-page min-h-screen">
+    <div className="container mx-auto px-4 py-6 pb-24 max-w-4xl bg-background min-h-screen">
       <div className="space-y-6">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
             <Trophy className="h-6 w-6 text-purple-500" />
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-foreground">
               Your Rewards
             </h1>
           </div>
@@ -1162,14 +1162,14 @@ export default function Rewards() {
         {/* Metrics Cards */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           {/* Earned Card - Green */}
-          <Card className="text-center p-4 bg-green-500 text-white border-0 rounded-xl">
+          <Card className="text-center p-4 bg-green-500 text-foreground border-0 rounded-xl">
             <CardContent className="p-0">
               <div className="flex flex-col items-center space-y-2">
-                <Trophy className="h-6 w-6 text-white" />
-                <div className="text-3xl font-bold text-white">
+                <Trophy className="h-6 w-6 text-foreground" />
+                <div className="text-3xl font-bold text-foreground">
                   {(userRewards as any)?.rewards?.filter((r: Reward) => r.status === "completed").length || 0}
                 </div>
-                <p className="text-white/90 font-medium text-sm">
+                <p className="text-foreground/90 font-medium text-sm">
                   Earned
                 </p>
               </div>
@@ -1177,14 +1177,14 @@ export default function Rewards() {
           </Card>
 
           {/* Active Card - Purple */}
-          <Card className="text-center p-4 bg-purple-500 text-white border-0 rounded-xl">
+          <Card className="text-center p-4 bg-purple-500 text-foreground border-0 rounded-xl">
             <CardContent className="p-0">
               <div className="flex flex-col items-center space-y-2">
-                <Target className="h-6 w-6 text-white" />
-                <div className="text-3xl font-bold text-white">
+                <Target className="h-6 w-6 text-foreground" />
+                <div className="text-3xl font-bold text-foreground">
                   {(userRewards as any)?.rewards?.filter((r: Reward) => r.status === "approved" || r.status === "active").length || 0}
                 </div>
-                <p className="text-white/90 font-medium text-sm">
+                <p className="text-foreground/90 font-medium text-sm">
                   Active
                 </p>
               </div>
@@ -1192,11 +1192,11 @@ export default function Rewards() {
           </Card>
 
           {/* Ready Card - Orange */}
-          <Card className="text-center p-4 bg-orange-500 text-white border-0 rounded-xl">
+          <Card className="text-center p-4 bg-orange-500 text-foreground border-0 rounded-xl">
             <CardContent className="p-0">
               <div className="flex flex-col items-center space-y-2">
-                <Sparkles className="h-6 w-6 text-white" />
-                <div className="text-3xl font-bold text-white">
+                <Sparkles className="h-6 w-6 text-foreground" />
+                <div className="text-3xl font-bold text-foreground">
                   {(() => {
                     const rewards = (userRewards as any)?.rewards || [];
                     return rewards.filter((r: Reward) => {
@@ -1206,7 +1206,7 @@ export default function Rewards() {
                     }).length;
                   })()}
                 </div>
-                <p className="text-white/90 font-medium text-sm">
+                <p className="text-foreground/90 font-medium text-sm">
                   Ready
                 </p>
               </div>
@@ -1216,7 +1216,7 @@ export default function Rewards() {
 
         {/* Reward Goals Section */}
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-white">Reward Goals</h3>
+          <h3 className="text-lg font-semibold text-foreground">Reward Goals</h3>
           <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
             <DialogTrigger asChild>
               <Button className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600">
@@ -1224,9 +1224,9 @@ export default function Rewards() {
                 Create Reward
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] bg-slate-800 border-slate-700 text-white">
+            <DialogContent className="max-w-2xl max-h-[90vh] bg-card border-border text-foreground">
               <DialogHeader>
-                <DialogTitle className="text-white">
+                <DialogTitle className="text-foreground">
                   {editingReward ? "Edit Reward" : "Create New Reward"}
                 </DialogTitle>
               </DialogHeader>
@@ -1235,14 +1235,14 @@ export default function Rewards() {
                 {/* Metrics Cards at top */}
               <div className="grid grid-cols-3 gap-3 mb-6">
                 {/* Earned Card - Green */}
-                <Card className="text-center p-3 bg-green-500 text-white border-0 rounded-xl">
+                <Card className="text-center p-3 bg-green-500 text-foreground border-0 rounded-xl">
                   <CardContent className="p-0">
                     <div className="flex flex-col items-center space-y-1">
-                      <Trophy className="h-4 w-4 text-white" />
-                      <div className="text-2xl font-bold text-white">
+                      <Trophy className="h-4 w-4 text-foreground" />
+                      <div className="text-2xl font-bold text-foreground">
                         {(userRewards as any)?.rewards?.filter((r: Reward) => r.status === "completed").length || 0}
                       </div>
-                      <p className="text-white/90 font-medium text-xs">
+                      <p className="text-foreground/90 font-medium text-xs">
                         Earned
                       </p>
                     </div>
@@ -1250,14 +1250,14 @@ export default function Rewards() {
                 </Card>
 
                 {/* Active Card - Purple */}
-                <Card className="text-center p-3 bg-purple-500 text-white border-0 rounded-xl">
+                <Card className="text-center p-3 bg-purple-500 text-foreground border-0 rounded-xl">
                   <CardContent className="p-0">
                     <div className="flex flex-col items-center space-y-1">
-                      <Target className="h-4 w-4 text-white" />
-                      <div className="text-2xl font-bold text-white">
+                      <Target className="h-4 w-4 text-foreground" />
+                      <div className="text-2xl font-bold text-foreground">
                         {(userRewards as any)?.rewards?.filter((r: Reward) => r.status === "approved" || r.status === "active").length || 0}
                       </div>
-                      <p className="text-white/90 font-medium text-xs">
+                      <p className="text-foreground/90 font-medium text-xs">
                         Active
                       </p>
                     </div>
@@ -1265,11 +1265,11 @@ export default function Rewards() {
                 </Card>
 
                 {/* Ready Card - Orange */}
-                <Card className="text-center p-3 bg-orange-500 text-white border-0 rounded-xl">
+                <Card className="text-center p-3 bg-orange-500 text-foreground border-0 rounded-xl">
                   <CardContent className="p-0">
                     <div className="flex flex-col items-center space-y-1">
-                      <Sparkles className="h-4 w-4 text-white" />
-                      <div className="text-2xl font-bold text-white">
+                      <Sparkles className="h-4 w-4 text-foreground" />
+                      <div className="text-2xl font-bold text-foreground">
                         {(() => {
                           const rewards = (userRewards as any)?.rewards || [];
                           return rewards.filter((r: Reward) => {
@@ -1279,7 +1279,7 @@ export default function Rewards() {
                           }).length;
                         })()}
                       </div>
-                      <p className="text-white/90 font-medium text-xs">
+                      <p className="text-foreground/90 font-medium text-xs">
                         Ready
                       </p>
                     </div>
@@ -1289,7 +1289,7 @@ export default function Rewards() {
 
                 <div className="flex-1 overflow-y-auto px-1 space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title" className="text-white">Title *</Label>
+                    <Label htmlFor="title" className="text-foreground">Title *</Label>
                   <Input
                     id="title"
                     placeholder="e.g., iPhone 16 Pro, Concert tickets..."
@@ -1297,12 +1297,12 @@ export default function Rewards() {
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, title: e.target.value }))
                     }
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
+                    className="bg-slate-700 border-slate-600 text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description" className="text-white">Description</Label>
+                  <Label htmlFor="description" className="text-foreground">Description</Label>
                   <Textarea
                     id="description"
                     placeholder="What makes this reward special?"
@@ -1313,12 +1313,12 @@ export default function Rewards() {
                         description: e.target.value,
                       }))
                     }
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
+                    className="bg-slate-700 border-slate-600 text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="target_metric" className="text-white">Metric Target *</Label>
+                  <Label htmlFor="target_metric" className="text-foreground">Metric Target *</Label>
                   <Select
                     value={formData.target_metric}
                     onValueChange={(value) =>
@@ -1329,12 +1329,12 @@ export default function Rewards() {
                       }))
                     }
                   >
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectTrigger className="bg-slate-700 border-slate-600 text-foreground">
                       <SelectValue placeholder="Choose a metric to track..." />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-700 border-slate-600">
                       {getMetricOptions().map((option) => (
-                        <SelectItem key={option.value} value={option.value} className="text-white focus:bg-slate-600">
+                        <SelectItem key={option.value} value={option.value} className="text-foreground focus:bg-slate-600">
                           {option.label}
                         </SelectItem>
                       ))}
@@ -1345,7 +1345,7 @@ export default function Rewards() {
                 {/* Target Value Input - Show when metric is selected */}
                 {formData.target_metric && (
                   <div className="space-y-2">
-                    <Label htmlFor="target_value" className="text-white">
+                    <Label htmlFor="target_value" className="text-foreground">
                       Target Value *
                     </Label>
                     <Input
@@ -1357,9 +1357,9 @@ export default function Rewards() {
                       onChange={(e) =>
                         setFormData((prev) => ({ ...prev, target_value: e.target.value }))
                       }
-                      className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
+                      className="bg-slate-700 border-slate-600 text-foreground placeholder:text-muted-foreground"
                     />
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-muted-foreground">
                       Current: {getMetricOptions().find(opt => opt.value === formData.target_metric)?.currentValue || 0}
                       {getMetricOptions().find(opt => opt.value === formData.target_metric)?.unit || ''}
                     </p>
@@ -1367,7 +1367,7 @@ export default function Rewards() {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="duration" className="text-white">Track progress for</Label>
+                  <Label htmlFor="duration" className="text-foreground">Track progress for</Label>
                   <div className="grid grid-cols-2 gap-4">
                     <Input
                       id="duration_value"
@@ -1378,7 +1378,7 @@ export default function Rewards() {
                       onChange={(e) =>
                         updateDuration("duration_value", e.target.value)
                       }
-                      className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
+                      className="bg-slate-700 border-slate-600 text-foreground placeholder:text-muted-foreground"
                     />
                     <Select
                       value={formData.duration_type}
@@ -1386,13 +1386,13 @@ export default function Rewards() {
                         updateDuration("duration_type", value)
                       }
                     >
-                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                      <SelectTrigger className="bg-slate-700 border-slate-600 text-foreground">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-700 border-slate-600">
-                        <SelectItem value="days" className="text-white focus:bg-slate-600">Days</SelectItem>
-                        <SelectItem value="weeks" className="text-white focus:bg-slate-600">Weeks</SelectItem>
-                        <SelectItem value="months" className="text-white focus:bg-slate-600">Months</SelectItem>
+                        <SelectItem value="days" className="text-foreground focus:bg-slate-600">Days</SelectItem>
+                        <SelectItem value="weeks" className="text-foreground focus:bg-slate-600">Weeks</SelectItem>
+                        <SelectItem value="months" className="text-foreground focus:bg-slate-600">Months</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1400,8 +1400,8 @@ export default function Rewards() {
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-white font-medium">Community for Approval</Label>
-                    <p className="text-sm text-gray-400">All rewards require approval from community members</p>
+                    <Label className="text-foreground font-medium">Community for Approval</Label>
+                    <p className="text-sm text-muted-foreground">All rewards require approval from community members</p>
                     <Select
                       value={formData.community_id}
                       onValueChange={(value) => {
@@ -1412,7 +1412,7 @@ export default function Rewards() {
                         }));
                       }}
                     >
-                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                      <SelectTrigger className="bg-slate-700 border-slate-600 text-foreground">
                         <SelectValue placeholder="Choose a community..." />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-700 border-slate-600">
@@ -1421,13 +1421,13 @@ export default function Rewards() {
                             <SelectItem 
                               key={community.id} 
                               value={community.id}
-                              className="text-white focus:bg-slate-600"
+                              className="text-foreground focus:bg-slate-600"
                             >
                               {community.name}
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="" disabled className="text-gray-400">
+                          <SelectItem value="" disabled className="text-muted-foreground">
                             No communities available
                           </SelectItem>
                         )}
@@ -1464,7 +1464,7 @@ export default function Rewards() {
                 </div>
                 
                 {/* Fixed footer with buttons */}
-                <div className="flex gap-2 justify-end pt-4 border-t border-slate-700 mt-4">
+                <div className="flex gap-2 justify-end pt-4 border-t border-border mt-4">
                   <Button 
                     variant="outline" 
                     onClick={handleCloseModal}
@@ -1484,7 +1484,7 @@ export default function Rewards() {
                       formData.shared_with.length === 0 ||
                       !(communities as any)?.communities?.length
                     }
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    className="bg-purple-600 hover:bg-purple-700 text-foreground"
                   >
                     {createRewardMutation.isPending ||
                     updateRewardMutation.isPending
@@ -1503,11 +1503,11 @@ export default function Rewards() {
 
         {/* Tabs */}
         <Tabs value={activeRewardsTab} onValueChange={setActiveRewardsTab}>
-          <TabsList className="grid w-full grid-cols-2 bg-slate-800 border-slate-700">
-            <TabsTrigger value="my-rewards" className="text-gray-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
+          <TabsList className="grid w-full grid-cols-2 bg-card border-border">
+            <TabsTrigger value="my-rewards" className="text-gray-300 data-[state=active]:text-foreground data-[state=active]:bg-slate-700">
               My Rewards ({(userRewards as any)?.rewards?.length || 0})
             </TabsTrigger>
-            <TabsTrigger value="approvals" className="text-gray-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
+            <TabsTrigger value="approvals" className="text-gray-300 data-[state=active]:text-foreground data-[state=active]:bg-slate-700">
               Shared Rewards ({allSharedRewards.length || 0})
             </TabsTrigger>
           </TabsList>
@@ -1517,11 +1517,11 @@ export default function Rewards() {
               <div className="text-center py-8 text-gray-300">Loading your rewards...</div>
             ) : !userRewards || !(userRewards as any).rewards?.length ? (
               <div className="text-center py-12">
-                <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">
+                <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
                   No rewards yet
                 </h3>
-                <p className="text-gray-400 mb-4">
+                <p className="text-muted-foreground mb-4">
                   Create your first reward to start tracking achievements! ✨
                 </p>
               </div>
@@ -1546,11 +1546,11 @@ export default function Rewards() {
               <div className="text-center py-8">Loading shared rewards...</div>
             ) : !allSharedRewards.length ? (
               <div className="text-center py-12">
-                <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                   No shared rewards
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600 dark:text-muted-foreground">
                   When community members share rewards with you, they'll appear
                   here.
                 </p>
@@ -1599,7 +1599,7 @@ export default function Rewards() {
                         </Badge>
                       )}
                     </CardTitle>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600 dark:text-muted-foreground">
                       Requested by {reward.creator_name}
                     </p>
                   </CardHeader>
@@ -1688,7 +1688,7 @@ export default function Rewards() {
                             )
                             .join(" ")}
                           {reward.target_value && (
-                            <span className="text-gray-600 dark:text-gray-400">
+                            <span className="text-gray-600 dark:text-muted-foreground">
                               {" "}
                               (Target: {reward.target_value}%)
                             </span>
@@ -1698,7 +1698,7 @@ export default function Rewards() {
 
                       <div className="flex items-center gap-2 text-sm">
                         <div className="h-4 w-4 rounded-full bg-blue-500 flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">%</span>
+                          <span className="text-foreground text-xs font-bold">%</span>
                         </div>
                         <span>
                           <strong>Target:</strong> {reward.target_value}%
@@ -1775,9 +1775,9 @@ export default function Rewards() {
         {/* Reward Details Modal */}
         {viewingReward && (
           <Dialog open={!!viewingReward} onOpenChange={() => setViewingReward(null)}>
-            <DialogContent className="max-w-md bg-slate-800 border-slate-700 text-white">
+            <DialogContent className="max-w-md bg-card border-border text-foreground">
               <DialogHeader>
-                <DialogTitle className="text-white">{viewingReward.title}</DialogTitle>
+                <DialogTitle className="text-foreground">{viewingReward.title}</DialogTitle>
               </DialogHeader>
               
               <div className="space-y-6 py-4">
@@ -1823,7 +1823,7 @@ export default function Rewards() {
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <Target className="h-5 w-5 text-green-500" />
                     <div>
-                      <span className="text-white font-medium">Goal: </span>
+                      <span className="text-foreground font-medium">Goal: </span>
                       <span className="text-gray-300">
                         {viewingReward.target_metric.split("_").map(word => 
                           word.charAt(0).toUpperCase() + word.slice(1)
@@ -1836,7 +1836,7 @@ export default function Rewards() {
                     <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                     <Calendar className="h-5 w-5 text-purple-500" />
                     <div>
-                      <span className="text-white font-medium">Duration: </span>
+                      <span className="text-foreground font-medium">Duration: </span>
                       <span className="text-gray-300">{viewingReward.duration_value} {viewingReward.duration_type}</span>
                     </div>
                   </div>
@@ -1846,7 +1846,7 @@ export default function Rewards() {
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                       <Calendar className="h-5 w-5 text-blue-500" />
                       <div>
-                        <span className="text-white font-medium">Start: </span>
+                        <span className="text-foreground font-medium">Start: </span>
                         <span className="text-gray-300">{new Date(viewingReward.start_date).toLocaleDateString()}</span>
                       </div>
                     </div>
@@ -1857,7 +1857,7 @@ export default function Rewards() {
                       <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                       <Calendar className="h-5 w-5 text-red-500" />
                       <div>
-                        <span className="text-white font-medium">End: </span>
+                        <span className="text-foreground font-medium">End: </span>
                         <span className="text-gray-300">{new Date(viewingReward.end_date).toLocaleDateString()}</span>
                       </div>
                     </div>
@@ -1868,7 +1868,7 @@ export default function Rewards() {
                 <div className="bg-slate-700 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="h-4 w-4 text-blue-500" />
-                    <span className="text-white font-medium">Progress Tracking</span>
+                    <span className="text-foreground font-medium">Progress Tracking</span>
                     <span className="text-blue-400 text-sm">
                       {calculateProgress(viewingReward, personalInsights).daysLeft} days left
                     </span>

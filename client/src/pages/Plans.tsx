@@ -275,8 +275,8 @@ export default function Plans() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-center py-8 text-white">Loading your plans...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center py-8 text-foreground">Loading your plans...</div>
       </div>
     );
   }
@@ -335,15 +335,15 @@ export default function Plans() {
   };
 
   return (
-    <div className="min-h-screen bg-page">
-      <div className="w-full max-w-sm mx-auto bg-page min-h-screen text-primary-theme">
+    <div className="min-h-screen bg-background">
+      <div className="w-full max-w-sm mx-auto bg-background min-h-screen text-foreground">
 
         {/* Header Section */}
         <div className="pt-4 px-4 pb-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-primary-theme">Plans</h1>
+            <h1 className="text-2xl font-bold text-foreground">Plans</h1>
             <Button variant="ghost" size="sm" className="p-2">
-              <Menu className="h-5 w-5 text-gray-400" />
+              <Menu className="h-5 w-5 text-muted-foreground" />
             </Button>
           </div>
 
@@ -353,66 +353,66 @@ export default function Plans() {
               placeholder="Search your plans..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+              className="bg-card border-border text-foreground placeholder-gray-400"
             />
           </div>
 
           {/* Advanced Filters */}
           <div className="mb-4">
-            <h3 className="text-white font-medium mb-3">Advanced Filters</h3>
+            <h3 className="text-foreground font-medium mb-3">Advanced Filters</h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-gray-400 text-sm mb-1 block">Status</label>
+                <label className="text-muted-foreground text-sm mb-1 block">Status</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                  <SelectTrigger className="bg-card border-border text-foreground">
                     <SelectValue placeholder="All Items" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="open" className="text-white">All Items</SelectItem>
-                    <SelectItem value="completed" className="text-white">Completed</SelectItem>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="open" className="text-foreground">All Items</SelectItem>
+                    <SelectItem value="completed" className="text-foreground">Completed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="text-gray-400 text-sm mb-1 block">Priority</label>
+                <label className="text-muted-foreground text-sm mb-1 block">Priority</label>
                 <Select defaultValue="all">
-                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                  <SelectTrigger className="bg-card border-border text-foreground">
                     <SelectValue placeholder="All" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="all" className="text-white">All</SelectItem>
-                    <SelectItem value="high" className="text-white">High</SelectItem>
-                    <SelectItem value="medium" className="text-white">Medium</SelectItem>
-                    <SelectItem value="low" className="text-white">Low</SelectItem>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="all" className="text-foreground">All</SelectItem>
+                    <SelectItem value="high" className="text-foreground">High</SelectItem>
+                    <SelectItem value="medium" className="text-foreground">Medium</SelectItem>
+                    <SelectItem value="low" className="text-foreground">Low</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="text-gray-400 text-sm mb-1 block">Due Date</label>
+                <label className="text-muted-foreground text-sm mb-1 block">Due Date</label>
                 <Select defaultValue="all">
-                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                  <SelectTrigger className="bg-card border-border text-foreground">
                     <SelectValue placeholder="All Dates" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="all" className="text-white">All Dates</SelectItem>
-                    <SelectItem value="today" className="text-white">Today</SelectItem>
-                    <SelectItem value="week" className="text-white">This Week</SelectItem>
-                    <SelectItem value="month" className="text-white">This Month</SelectItem>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="all" className="text-foreground">All Dates</SelectItem>
+                    <SelectItem value="today" className="text-foreground">Today</SelectItem>
+                    <SelectItem value="week" className="text-foreground">This Week</SelectItem>
+                    <SelectItem value="month" className="text-foreground">This Month</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="text-gray-400 text-sm mb-1 block">Type</label>
+                <label className="text-muted-foreground text-sm mb-1 block">Type</label>
                 <Select value={itemTypeFilter} onValueChange={setItemTypeFilter}>
-                  <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                  <SelectTrigger className="bg-card border-border text-foreground">
                     <SelectValue placeholder="All Types" />
                   </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="all" className="text-white">All Types</SelectItem>
-                    <SelectItem value="task" className="text-white">Tasks</SelectItem>
-                    <SelectItem value="habit" className="text-white">Habits</SelectItem>
-                    <SelectItem value="goal" className="text-white">Goals</SelectItem>
-                    <SelectItem value="project" className="text-white">Projects</SelectItem>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="all" className="text-foreground">All Types</SelectItem>
+                    <SelectItem value="task" className="text-foreground">Tasks</SelectItem>
+                    <SelectItem value="habit" className="text-foreground">Habits</SelectItem>
+                    <SelectItem value="goal" className="text-foreground">Goals</SelectItem>
+                    <SelectItem value="project" className="text-foreground">Projects</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -430,7 +430,7 @@ export default function Plans() {
                     <p className="text-red-300 text-xs">These need immediate attention</p>
                   </div>
                 </div>
-                <div className="bg-red-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
+                <div className="bg-red-600 text-foreground text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
                   {overdueItems.length}
                 </div>
               </div>
@@ -452,8 +452,8 @@ export default function Plans() {
                 size="sm"
                 className={`rounded-full px-3 py-1 text-sm transition-all ${
                   itemTypeFilter === tab.id
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    ? "bg-blue-600 text-foreground hover:bg-blue-700"
+                    : "bg-card text-gray-300 hover:bg-gray-700"
                 }`}
                 onClick={() => setItemTypeFilter(tab.id)}
               >
@@ -468,21 +468,21 @@ export default function Plans() {
           {filteredItems.map((item: any) => (
             <div 
               key={item.id} 
-              className="flex items-center justify-between p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-750 transition-colors"
+              className="flex items-center justify-between p-3 bg-card rounded-lg cursor-pointer hover:bg-gray-750 transition-colors"
               onClick={() => setEditingItem(item)}
             >
               <div className="flex items-center gap-3">
                 {/* Icon based on item type */}
                 <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
-                  {item.item_type === 'habit' && <Repeat className="h-4 w-4 text-gray-400" />}
-                  {item.item_type === 'task' && <Check className="h-4 w-4 text-gray-400" />}
-                  {item.item_type === 'goal' && <Calendar className="h-4 w-4 text-gray-400" />}
-                  {item.item_type === 'project' && <CalendarDays className="h-4 w-4 text-gray-400" />}
+                  {item.item_type === 'habit' && <Repeat className="h-4 w-4 text-muted-foreground" />}
+                  {item.item_type === 'task' && <Check className="h-4 w-4 text-muted-foreground" />}
+                  {item.item_type === 'goal' && <Calendar className="h-4 w-4 text-muted-foreground" />}
+                  {item.item_type === 'project' && <CalendarDays className="h-4 w-4 text-muted-foreground" />}
                 </div>
                 
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="text-white font-medium text-sm">{item.title}</p>
+                    <p className="text-foreground font-medium text-sm">{item.title}</p>
                     {/* Recurrence indicator */}
                     {item.recurrence_type && item.recurrence_type !== 'once' && (
                       <span className="text-blue-400 text-xs flex items-center gap-1">
@@ -492,7 +492,7 @@ export default function Plans() {
                     )}
                   </div>
                   {item.due_date && (
-                    <p className="text-gray-400 text-xs">
+                    <p className="text-muted-foreground text-xs">
                       {(() => {
                         const [year, month, day] = item.due_date.split('-');
                         const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
@@ -534,7 +534,7 @@ export default function Plans() {
                         setVerifyingItem(item);
                       }}
                     >
-                      <Camera className="h-4 w-4 text-white" />
+                      <Camera className="h-4 w-4 text-foreground" />
                     </Button>
                   )
                 )}
@@ -602,7 +602,7 @@ export default function Plans() {
           ))}
 
           {filteredItems.length === 0 && (
-            <div className="text-center py-8 text-gray-400">
+            <div className="text-center py-8 text-muted-foreground">
               {itemTypeFilter === 'all' && <p>No items found.</p>}
               {itemTypeFilter !== 'all' && <p>No {itemTypeFilter} items found.</p>}
             </div>

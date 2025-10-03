@@ -236,22 +236,22 @@ export default function Profile() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-900 text-white">
+      <div className="min-h-screen bg-slate-900 text-foreground">
         <div className="p-4 animate-pulse">
-          <div className="h-6 bg-gray-700 rounded w-20 mb-8"></div>
+          <div className="h-6 bg-muted rounded w-20 mb-8"></div>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <div className="h-12 w-12 bg-gray-700 rounded-full"></div>
+              <div className="h-12 w-12 bg-muted rounded-full"></div>
               <div className="space-y-2">
-                <div className="h-4 bg-gray-700 rounded w-24"></div>
-                <div className="h-3 bg-gray-700 rounded w-32"></div>
+                <div className="h-4 bg-muted rounded w-24"></div>
+                <div className="h-3 bg-muted rounded w-32"></div>
               </div>
             </div>
-            <div className="h-6 bg-gray-700 rounded w-16"></div>
+            <div className="h-6 bg-muted rounded w-16"></div>
           </div>
           <div className="mt-8 space-y-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-12 bg-gray-700 rounded-lg"></div>
+              <div key={i} className="h-12 bg-muted rounded-lg"></div>
             ))}
           </div>
         </div>
@@ -261,7 +261,7 @@ export default function Profile() {
 
   if (isError) {
     return (
-      <div className="min-h-screen bg-slate-900 text-white p-4">
+      <div className="min-h-screen bg-slate-900 text-foreground p-4">
         <div className="text-center text-red-400 mt-20">
           <p>Failed to load profile. Please try again.</p>
         </div>
@@ -270,14 +270,14 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-page text-primary-theme">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
       <div className="p-4 pb-2">
         <div className="flex items-center gap-3 mb-1">
-          <SettingsIcon className="h-6 w-6 text-secondary-theme" />
+          <SettingsIcon className="h-6 w-6 text-muted-foreground" />
           <div>
             <h1 className="text-xl font-semibold">Settings</h1>
-            <p className="text-sm text-gray-400">Customize your Mind Double experience</p>
+            <p className="text-sm text-muted-foreground">Customize your Mind Double experience</p>
           </div>
         </div>
       </div>
@@ -303,12 +303,12 @@ export default function Profile() {
               <div className="font-medium">
                 {profile?.display_name || profile?.username || "User"}
               </div>
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-muted-foreground">
                 {profile?.email || "user@example.com"}
               </div>
             </div>
           </div>
-          <Badge className="bg-green-600 hover:bg-green-600 text-white text-xs">
+          <Badge className="bg-green-600 hover:bg-green-600 text-foreground text-xs">
             Family Plan
           </Badge>
         </div>
@@ -317,20 +317,20 @@ export default function Profile() {
       {/* Vibe Check Section */}
       <div className="px-4 py-3">
         <div 
-          className="flex items-center justify-between p-3 bg-gray-800/30 rounded-lg cursor-pointer hover:bg-gray-800/40 transition-colors"
+          className="flex items-center justify-between p-3 bg-secondary rounded-lg cursor-pointer hover:bg-muted transition-colors"
           onClick={handleVibeCheck}
         >
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-              <Heart className="h-4 w-4 text-white" />
+              <Heart className="h-4 w-4 text-foreground" />
             </div>
             <div>
               <div className="font-medium">Vibe Check</div>
-              <div className="text-sm text-gray-400">How are you feeling today?</div>
+              <div className="text-sm text-muted-foreground">How are you feeling today?</div>
             </div>
           </div>
           <ChevronDown 
-            className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+            className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
               expandedSections.includes("vibecheck") ? "rotate-180" : ""
             }`} 
           />
@@ -338,12 +338,12 @@ export default function Profile() {
         
         {/* Vibe Check Dropdown */}
         {expandedSections.includes("vibecheck") && (
-          <div className="mt-2 p-3 bg-gray-800/20 rounded-lg space-y-2">
+          <div className="mt-2 p-3 bg-card/20 rounded-lg space-y-2">
             <div className="grid grid-cols-3 gap-2">
               {["😊", "😐", "😔", "😴", "😡", "🤔"].map((emoji) => (
                 <button
                   key={emoji}
-                  className="p-3 text-2xl bg-gray-800/40 hover:bg-gray-800/60 rounded-lg transition-colors"
+                  className="p-3 text-2xl bg-card/40 hover:bg-card/60 rounded-lg transition-colors"
                   onClick={() => {
                     console.log("Selected mood:", emoji);
                     toggleSection("vibecheck");
@@ -361,42 +361,42 @@ export default function Profile() {
       <div className="px-4 space-y-6">
         {/* Account Section */}
         <div>
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Account</h3>
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">Account</h3>
           <div className="space-y-1">
             <div
-              className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer"
+              className="flex items-center justify-between p-3 rounded-lg hover:bg-card/30 transition-colors cursor-pointer"
               onClick={openProfileEditModal}
             >
               <div className="flex items-center space-x-3">
-                <User className="h-4 w-4 text-gray-400" />
+                <User className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <div className="font-medium">Profile</div>
-                  <div className="text-sm text-gray-400">Manage your account information</div>
+                  <div className="text-sm text-muted-foreground">Manage your account information</div>
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
             
             <div 
-              className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer"
+              className="flex items-center justify-between p-3 rounded-lg hover:bg-card/30 transition-colors cursor-pointer"
               onClick={handleFamilyCommunityToggle}
             >
               <div className="flex items-center space-x-3">
-                <Users className="h-4 w-4 text-gray-400" />
+                <Users className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Family & Community</span>
                     {pendingInvitations && pendingInvitations.length > 0 && (
-                      <Badge className="bg-orange-600 hover:bg-orange-600 text-white text-xs">
+                      <Badge className="bg-orange-600 hover:bg-orange-600 text-foreground text-xs">
                         {pendingInvitations.length} invite{pendingInvitations.length > 1 ? 's' : ''}
                       </Badge>
                     )}
                   </div>
-                  <div className="text-sm text-gray-400">Manage family connections and community settings</div>
+                  <div className="text-sm text-muted-foreground">Manage family connections and community settings</div>
                 </div>
               </div>
               <ChevronDown 
-                className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
+                className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
                   expandedSections.includes("familycommunity") ? "rotate-180" : ""
                 }`} 
               />
@@ -404,26 +404,26 @@ export default function Profile() {
 
             {/* Family & Community Expanded Content */}
             {expandedSections.includes("familycommunity") && (
-              <div className="mt-2 p-3 bg-gray-800/20 rounded-lg space-y-4">
+              <div className="mt-2 p-3 bg-card/20 rounded-lg space-y-4">
                 {/* Pending Invitations Section */}
                 {pendingInvitations && pendingInvitations.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                    <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                       <Clock className="h-3 w-3" />
                       Pending Invitations ({pendingInvitations.length})
                     </h4>
                     <div className="space-y-2">
                       {pendingInvitations.map((invitation: any) => (
-                        <div key={invitation.id} className="bg-gray-800/40 rounded-lg p-3">
+                        <div key={invitation.id} className="bg-card/40 rounded-lg p-3">
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-white text-sm">{invitation.community_name}</span>
+                                <span className="font-medium text-foreground text-sm">{invitation.community_name}</span>
                                 <Badge variant="outline" className="text-xs">
                                   {invitation.community_type}
                                 </Badge>
                               </div>
-                              <div className="text-xs text-gray-400">
+                              <div className="text-xs text-muted-foreground">
                                 Expires: {new Date(invitation.expires_at).toLocaleDateString()}
                               </div>
                             </div>
@@ -464,22 +464,22 @@ export default function Profile() {
                 {/* Current Communities Section */}
                 {communities && communities.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                    <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                       <Users className="h-3 w-3" />
                       Your Communities ({communities.length})
                     </h4>
                     <div className="space-y-2">
                       {communities.map((community: any) => (
-                        <div key={community.id} className="bg-gray-800/40 rounded-lg p-3">
+                        <div key={community.id} className="bg-card/40 rounded-lg p-3">
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-white text-sm">{community.name}</span>
+                                <span className="font-medium text-foreground text-sm">{community.name}</span>
                                 <Badge variant="outline" className="text-xs">
                                   {community.user_role}
                                 </Badge>
                               </div>
-                              <div className="text-xs text-gray-400">
+                              <div className="text-xs text-muted-foreground">
                                 {community.member_count} member{community.member_count !== 1 ? 's' : ''}
                               </div>
                             </div>
@@ -504,13 +504,13 @@ export default function Profile() {
                 {/* Create Community Section */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                    <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
                       <Plus className="h-3 w-3" />
                       Create New Community
                     </h4>
                   </div>
                   <Button
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm"
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-foreground text-sm"
                     onClick={() => setShowCreateCommunityModal(true)}
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -534,21 +534,21 @@ export default function Profile() {
 
         {/* Preferences Section */}
         <div>
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Preferences</h3>
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">Preferences</h3>
           <div className="space-y-1">
             <div 
-              className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer"
+              className="flex items-center justify-between p-3 rounded-lg hover:bg-card/30 transition-colors cursor-pointer"
               onClick={handleAppearanceToggle}
             >
               <div className="flex items-center space-x-3">
-                <Palette className="h-4 w-4 text-gray-400" />
+                <Palette className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <div className="font-medium">Appearance</div>
-                  <div className="text-sm text-gray-400">Current: {getThemeDisplayName(theme)}</div>
+                  <div className="text-sm text-muted-foreground">Current: {getThemeDisplayName(theme)}</div>
                 </div>
               </div>
               <ChevronDown 
-                className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
+                className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
                   expandedSections.includes("appearance") ? "rotate-180" : ""
                 }`} 
               />
@@ -559,15 +559,15 @@ export default function Profile() {
               <div className="mt-3 ml-6 space-y-4">
                 {/* Mode Selection */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-300 mb-2">Theme Mode</h4>
+                  <h4 className="text-sm font-medium text-foreground mb-2">Theme Mode</h4>
                   <div className="grid grid-cols-3 gap-2">
                     {(['dark', 'light', 'neutral'] as ThemeMode[]).map((mode) => (
                       <button
                         key={mode}
                         className={`p-2 rounded-md text-sm transition-colors border ${
                           theme.mode === mode 
-                            ? "bg-accent-primary text-white border-accent-primary" 
-                            : "text-gray-300 hover:bg-gray-800/40 border-gray-600"
+                            ? "bg-accent-primary text-foreground border-accent-primary" 
+                            : "text-foreground hover:bg-card/40 border-border"
                         }`}
                         onClick={() => selectMode(mode)}
                       >
@@ -579,15 +579,15 @@ export default function Profile() {
 
                 {/* Color Variant Selection */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-300 mb-2">Color Accent</h4>
+                  <h4 className="text-sm font-medium text-foreground mb-2">Color Accent</h4>
                   <div className="grid grid-cols-2 gap-2">
                     {THEME_COLORS[theme.mode].map((color, index) => (
                       <button
                         key={color.id}
                         className={`flex items-center space-x-3 p-3 rounded-lg transition-all ${
                           theme.variant === index 
-                            ? "bg-gray-800/60 border border-accent-primary" 
-                            : "hover:bg-gray-800/40 border border-transparent"
+                            ? "bg-card/60 border border-accent-primary" 
+                            : "hover:bg-card/40 border border-transparent"
                         }`}
                         onClick={() => selectVariant(index as ThemeVariant)}
                       >
@@ -595,7 +595,7 @@ export default function Profile() {
                           className="w-4 h-4 rounded-full flex-shrink-0"
                           style={{ backgroundColor: color.color }}
                         />
-                        <span className="text-sm text-white font-medium">{color.name}</span>
+                        <span className="text-sm text-foreground font-medium">{color.name}</span>
                         {theme.variant === index && (
                           <div className="w-2 h-2 bg-accent-primary rounded-full ml-auto" />
                         )}
@@ -606,44 +606,44 @@ export default function Profile() {
               </div>
             )}
             
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer">
+            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-card/30 transition-colors cursor-pointer">
               <div className="flex items-center space-x-3">
-                <Bell className="h-4 w-4 text-gray-400" />
+                <Bell className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <div className="font-medium">Notifications</div>
-                  <div className="text-sm text-gray-400">Manage notification preferences and settings</div>
+                  <div className="text-sm text-muted-foreground">Manage notification preferences and settings</div>
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
             
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer">
+            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-card/30 transition-colors cursor-pointer">
               <div className="flex items-center space-x-3">
-                <Smartphone className="h-4 w-4 text-gray-400" />
+                <Smartphone className="h-4 w-4 text-muted-foreground" />
                 <div className="flex items-center space-x-2">
                   <span className="font-medium">Mobile App Features</span>
-                  <Badge className="bg-blue-600 hover:bg-blue-600 text-white text-xs">New</Badge>
+                  <Badge className="bg-blue-600 hover:bg-blue-600 text-foreground text-xs">New</Badge>
                 </div>
-                <div className="text-sm text-gray-400">Camera verification, offline mode</div>
+                <div className="text-sm text-muted-foreground">Camera verification, offline mode</div>
               </div>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </div>
         </div>
 
         {/* Privacy & Security Section */}
         <div>
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Privacy & Security</h3>
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">Privacy & Security</h3>
           <div className="space-y-1">
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer">
+            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-card/30 transition-colors cursor-pointer">
               <div className="flex items-center space-x-3">
-                <Shield className="h-4 w-4 text-gray-400" />
+                <Shield className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <div className="font-medium">Privacy Settings</div>
-                  <div className="text-sm text-gray-400">Control your data and privacy preferences</div>
+                  <div className="text-sm text-muted-foreground">Control your data and privacy preferences</div>
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </div>
         </div>
@@ -651,7 +651,7 @@ export default function Profile() {
         {/* Admin Section */}
         {profile?.role === "admin" && (
           <div>
-            <h3 className="text-sm font-medium text-gray-400 mb-3">Administration</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">Administration</h3>
             <div className="space-y-1">
               <div 
                 className="flex items-center justify-between p-3 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition-colors cursor-pointer"
@@ -686,17 +686,17 @@ export default function Profile() {
 
         {/* Support Section */}
         <div>
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Support</h3>
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">Support</h3>
           <div className="space-y-1">
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-800/30 transition-colors cursor-pointer">
+            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-card/30 transition-colors cursor-pointer">
               <div className="flex items-center space-x-3">
-                <HelpCircle className="h-4 w-4 text-gray-400" />
+                <HelpCircle className="h-4 w-4 text-muted-foreground" />
                 <div>
                   <div className="font-medium">Help & Support</div>
-                  <div className="text-sm text-gray-400">Get help and contact support</div>
+                  <div className="text-sm text-muted-foreground">Get help and contact support</div>
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </div>
         </div>
@@ -704,7 +704,7 @@ export default function Profile() {
         {/* Mind Double Version */}
         <div className="text-center py-6">
           <div className="text-lg font-bold">Mind Double</div>
-          <div className="text-sm text-gray-400">Version 1.0.0</div>
+          <div className="text-sm text-muted-foreground">Version 1.0.0</div>
           <div className="text-xs text-gray-500 mt-1">Built with ❤️ for families and teens</div>
         </div>
 
@@ -725,19 +725,19 @@ export default function Profile() {
 
       {/* Create Community Modal */}
       <Dialog open={showCreateCommunityModal} onOpenChange={setShowCreateCommunityModal}>
-        <DialogContent className="bg-slate-800 text-white border-gray-700">
+        <DialogContent className="bg-slate-800 text-foreground border-gray-700">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5 text-purple-400" />
               Create New Community
             </DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-muted-foreground">
               Create a community to collaborate with friends, family, or colleagues
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="community-name" className="text-sm font-medium text-gray-300">
+              <Label htmlFor="community-name" className="text-sm font-medium text-foreground">
                 Community Name
               </Label>
               <Input
@@ -745,27 +745,27 @@ export default function Profile() {
                 value={newCommunityName}
                 onChange={(e) => setNewCommunityName(e.target.value)}
                 placeholder="Enter community name..."
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
+                className="bg-muted border-border text-foreground placeholder-gray-400 mt-1"
                 maxLength={100}
               />
             </div>
             <div>
-              <Label htmlFor="community-type" className="text-sm font-medium text-gray-300">
+              <Label htmlFor="community-type" className="text-sm font-medium text-foreground">
                 Community Type
               </Label>
               <Select value={newCommunityType} onValueChange={setNewCommunityType}>
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white mt-1">
+                <SelectTrigger className="bg-muted border-border text-foreground mt-1">
                   <SelectValue placeholder="Select community type..." />
                 </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="family" className="text-white hover:bg-gray-600">Family</SelectItem>
-                  <SelectItem value="friends" className="text-white hover:bg-gray-600">Friends</SelectItem>
-                  <SelectItem value="work" className="text-white hover:bg-gray-600">Work</SelectItem>
-                  <SelectItem value="study" className="text-white hover:bg-gray-600">Study</SelectItem>
-                  <SelectItem value="hobby" className="text-white hover:bg-gray-600">Hobby</SelectItem>
-                  <SelectItem value="roommates" className="text-white hover:bg-gray-600">Roommates</SelectItem>
-                  <SelectItem value="team" className="text-white hover:bg-gray-600">Team</SelectItem>
-                  <SelectItem value="custom" className="text-white hover:bg-gray-600">Custom</SelectItem>
+                <SelectContent className="bg-muted border-border">
+                  <SelectItem value="family" className="text-foreground hover:bg-gray-600">Family</SelectItem>
+                  <SelectItem value="friends" className="text-foreground hover:bg-gray-600">Friends</SelectItem>
+                  <SelectItem value="work" className="text-foreground hover:bg-gray-600">Work</SelectItem>
+                  <SelectItem value="study" className="text-foreground hover:bg-gray-600">Study</SelectItem>
+                  <SelectItem value="hobby" className="text-foreground hover:bg-gray-600">Hobby</SelectItem>
+                  <SelectItem value="roommates" className="text-foreground hover:bg-gray-600">Roommates</SelectItem>
+                  <SelectItem value="team" className="text-foreground hover:bg-gray-600">Team</SelectItem>
+                  <SelectItem value="custom" className="text-foreground hover:bg-gray-600">Custom</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -792,19 +792,19 @@ export default function Profile() {
 
       {/* Invite Member Modal */}
       <Dialog open={showInviteMemberModal} onOpenChange={setShowInviteMemberModal}>
-        <DialogContent className="bg-slate-800 text-white border-gray-700">
+        <DialogContent className="bg-slate-800 text-foreground border-gray-700">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Mail className="h-5 w-5 text-blue-400" />
               Invite Member to {selectedCommunityForInvite?.name}
             </DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-muted-foreground">
               Send an invitation link to someone's email address
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="invite-email" className="text-sm font-medium text-gray-300">
+              <Label htmlFor="invite-email" className="text-sm font-medium text-foreground">
                 Email Address
               </Label>
               <Input
@@ -813,7 +813,7 @@ export default function Profile() {
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="Enter email address..."
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
+                className="bg-muted border-border text-foreground placeholder-gray-400 mt-1"
               />
             </div>
             <div className="flex gap-3 pt-4">
@@ -839,19 +839,19 @@ export default function Profile() {
 
       {/* Profile Edit Modal */}
       <Dialog open={showProfileEditModal} onOpenChange={setShowProfileEditModal}>
-        <DialogContent className="bg-slate-800 text-white border-gray-700">
+        <DialogContent className="bg-slate-800 text-foreground border-gray-700">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-blue-400" />
               Edit Profile
             </DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-muted-foreground">
               Update your profile information
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="display-name" className="text-sm font-medium text-gray-300">
+              <Label htmlFor="display-name" className="text-sm font-medium text-foreground">
                 Display Name
               </Label>
               <Input
@@ -860,11 +860,11 @@ export default function Profile() {
                 value={editDisplayName}
                 onChange={(e) => setEditDisplayName(e.target.value)}
                 placeholder="Enter your display name..."
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
+                className="bg-muted border-border text-foreground placeholder-gray-400 mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="email" className="text-sm font-medium text-gray-300">
+              <Label htmlFor="email" className="text-sm font-medium text-foreground">
                 Email
               </Label>
               <Input
@@ -872,12 +872,12 @@ export default function Profile() {
                 type="email"
                 value={profile?.email || ""}
                 disabled
-                className="bg-gray-700/50 border-gray-600 text-gray-400 mt-1 cursor-not-allowed"
+                className="bg-muted/50 border-border text-muted-foreground mt-1 cursor-not-allowed"
               />
               <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
             </div>
             <div>
-              <Label htmlFor="avatar-url" className="text-sm font-medium text-gray-300">
+              <Label htmlFor="avatar-url" className="text-sm font-medium text-foreground">
                 Avatar URL (optional)
               </Label>
               <Input
@@ -886,7 +886,7 @@ export default function Profile() {
                 value={editAvatarUrl}
                 onChange={(e) => setEditAvatarUrl(e.target.value)}
                 placeholder="https://example.com/avatar.jpg"
-                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 mt-1"
+                className="bg-muted border-border text-foreground placeholder-gray-400 mt-1"
               />
             </div>
             <div className="pt-2">

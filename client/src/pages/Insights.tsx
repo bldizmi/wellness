@@ -167,7 +167,7 @@ export default function Insights() {
 
   if (personalLoading && activeTab === 'personal') {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-900">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -183,23 +183,23 @@ export default function Insights() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 pb-24 max-w-4xl bg-page min-h-screen">
+    <div className="container mx-auto px-4 py-6 pb-24 max-w-4xl bg-background min-h-screen">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-primary-theme mb-2">
+        <h1 className="text-2xl font-bold text-foreground mb-2">
           Your Insights
         </h1>
-        <p className="text-gray-300">
+        <p className="text-muted-foreground">
           Track progress and achievements
         </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6 bg-slate-800 border-slate-700">
-          <TabsTrigger value="personal" className="flex items-center gap-2 text-gray-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
+        <TabsList className="grid w-full grid-cols-2 mb-6 bg-card border-border">
+          <TabsTrigger value="personal" className="flex items-center gap-2 text-muted-foreground data-[state=active]:text-foreground data-[state=active]:bg-slate-700">
             <Target className="h-4 w-4" />
             Personal
           </TabsTrigger>
-          <TabsTrigger value="community" className="flex items-center gap-2 text-gray-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
+          <TabsTrigger value="community" className="flex items-center gap-2 text-muted-foreground data-[state=active]:text-foreground data-[state=active]:bg-slate-700">
             <Users className="h-4 w-4" />
             Community
           </TabsTrigger>
@@ -211,14 +211,14 @@ export default function Insights() {
               {/* Hero Section - Performance Overview */}
               <div className="grid grid-cols-2 gap-3">
                 {/* Day Streak - Orange */}
-                <Card className="text-center p-6 bg-orange-500 text-white border-0 rounded-xl">
+                <Card className="text-center p-6 bg-orange-500 text-foreground border-0 rounded-xl">
                   <CardContent className="p-0">
                     <div className="flex flex-col items-center space-y-3">
-                      <Flame className="h-8 w-8 text-white" />
-                      <div className="text-4xl font-bold text-white">
+                      <Flame className="h-8 w-8 text-foreground" />
+                      <div className="text-4xl font-bold text-foreground">
                         {streakData?.streak?.current_streak || 0}
                       </div>
-                      <p className="text-white/90 font-medium">
+                      <p className="text-foreground/90 font-medium">
                         Day Streak
                       </p>
                     </div>
@@ -226,18 +226,18 @@ export default function Insights() {
                 </Card>
 
                 {/* Trust Score - Green */}
-                <Card className="text-center p-6 bg-green-500 text-white border-0 rounded-xl">
+                <Card className="text-center p-6 bg-green-500 text-foreground border-0 rounded-xl">
                   <CardContent className="p-0">
                     <div className="flex flex-col items-center space-y-3">
-                      <CheckCircle className="h-8 w-8 text-white" />
-                      <div className="text-4xl font-bold text-white">
+                      <CheckCircle className="h-8 w-8 text-foreground" />
+                      <div className="text-4xl font-bold text-foreground">
                         {personalInsights.completionRate.thisWeek}%
                       </div>
                       <div className="text-center">
-                        <p className="text-white/90 font-medium">
+                        <p className="text-foreground/90 font-medium">
                           Trust Score
                         </p>
-                        <p className="text-sm text-white/75">
+                        <p className="text-sm text-foreground/75">
                           This Month
                         </p>
                       </div>
@@ -246,18 +246,18 @@ export default function Insights() {
                 </Card>
 
                 {/* Badges - Purple */}
-                <Card className="text-center p-6 bg-purple-500 text-white border-0 rounded-xl">
+                <Card className="text-center p-6 bg-purple-500 text-foreground border-0 rounded-xl">
                   <CardContent className="p-0">
                     <div className="flex flex-col items-center space-y-3">
-                      <Trophy className="h-8 w-8 text-white" />
-                      <div className="text-4xl font-bold text-white">
+                      <Trophy className="h-8 w-8 text-foreground" />
+                      <div className="text-4xl font-bold text-foreground">
                         {personalInsights.doubleCheckStats.itemsVerifiedThisWeek}
                       </div>
                       <div className="text-center">
-                        <p className="text-white/90 font-medium">
+                        <p className="text-foreground/90 font-medium">
                           Verified
                         </p>
-                        <p className="text-sm text-white/75">
+                        <p className="text-sm text-foreground/75">
                           this week
                         </p>
                       </div>
@@ -266,18 +266,18 @@ export default function Insights() {
                 </Card>
 
                 {/* Completion Rate - Blue */}
-                <Card className="text-center p-6 bg-blue-500 text-white border-0 rounded-xl">
+                <Card className="text-center p-6 bg-blue-500 text-foreground border-0 rounded-xl">
                   <CardContent className="p-0">
                     <div className="flex flex-col items-center space-y-3">
-                      <TrendingUp className="h-8 w-8 text-white" />
-                      <div className="text-4xl font-bold text-white">
+                      <TrendingUp className="h-8 w-8 text-foreground" />
+                      <div className="text-4xl font-bold text-foreground">
                         {personalInsights.completionRate.thisWeek}%
                       </div>
                       <div className="text-center">
-                        <p className="text-white/90 font-medium">
+                        <p className="text-foreground/90 font-medium">
                           This Week
                         </p>
-                        <p className="text-sm text-white/75">
+                        <p className="text-sm text-foreground/75">
                           {Math.round(personalInsights.completionRate.thisWeek / 20)} of 5 completed
                         </p>
                       </div>
@@ -287,10 +287,10 @@ export default function Insights() {
               </div>
 
               {/* Weekly Activity Chart */}
-              <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+              <div className="bg-card border border-border rounded-xl p-6">
                 <div className="mb-4">
-                  <h3 className="flex items-center gap-2 text-white font-semibold text-lg">
-                    <TrendingUp className="h-5 w-5 text-white" />
+                  <h3 className="flex items-center gap-2 text-foreground font-semibold text-lg">
+                    <TrendingUp className="h-5 w-5 text-foreground" />
                     Weekly Activity
                   </h3>
                 </div>
@@ -330,7 +330,7 @@ export default function Insights() {
                           ></div>
                           
                           {/* Tooltip */}
-                          <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-slate-700 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                          <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-slate-700 text-foreground text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                             <div>{day.day}</div>
                             <div>{day.completed}/{day.total}</div>
                             <div>{day.percentage}%</div>
@@ -353,12 +353,12 @@ export default function Insights() {
                   {weeklyActivity?.weeklyActivity ? 
                     weeklyActivity.weeklyActivity.map((day: any) => (
                       <div key={day.date} className="w-8 text-center">
-                        <p className="text-xs text-gray-300 font-medium">{day.day.slice(0, 1)}</p>
+                        <p className="text-xs text-muted-foreground font-medium">{day.day.slice(0, 1)}</p>
                       </div>
                     )) : 
                     ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
                       <div key={index} className="w-8 text-center">
-                        <p className="text-xs text-gray-300 font-medium">{day}</p>
+                        <p className="text-xs text-muted-foreground font-medium">{day}</p>
                       </div>
                     ))
                   }
@@ -369,21 +369,21 @@ export default function Insights() {
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                      <span className="text-sm text-gray-300">Completed</span>
+                      <span className="text-sm text-muted-foreground">Completed</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-green-500 rounded"></div>
-                      <span className="text-sm text-gray-300">Today</span>
+                      <span className="text-sm text-muted-foreground">Today</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-slate-600 rounded"></div>
-                      <span className="text-sm text-gray-300">No Activity</span>
+                      <span className="text-sm text-muted-foreground">No Activity</span>
                     </div>
                   </div>
                   
                   {weeklyActivity?.summary && (
                     <div className="text-right">
-                      <div className="text-sm text-white font-medium">
+                      <div className="text-sm text-foreground font-medium">
                         {weeklyActivity.summary.totalCompleted}/{weeklyActivity.summary.totalInstances}
                       </div>
                       <div className="text-xs text-gray-400">
@@ -400,7 +400,7 @@ export default function Insights() {
 
         <TabsContent value="community" className="space-y-4">
           {communityLoading ? (
-            <div className="flex items-center justify-center py-12 bg-slate-900">
+            <div className="flex items-center justify-center py-12 bg-background">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           ) : communityInsights ? (
@@ -409,16 +409,16 @@ export default function Insights() {
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-3">
                   <Users className="h-5 w-5 text-blue-500" />
-                  <h3 className="text-white font-medium">Select Community</h3>
+                  <h3 className="text-foreground font-medium">Select Community</h3>
                 </div>
                 <Select value={selectedCommunityId} onValueChange={setSelectedCommunityId}>
-                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                  <SelectTrigger className="bg-card border-border text-foreground">
                     <SelectValue placeholder="All Communities" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="all" className="text-white focus:bg-slate-700">All Communities</SelectItem>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="all" className="text-foreground focus:bg-slate-700">All Communities</SelectItem>
                     {userCommunities?.communities?.map((community: Community) => (
-                      <SelectItem key={community.id} value={community.id} className="text-white focus:bg-slate-700">
+                      <SelectItem key={community.id} value={community.id} className="text-foreground focus:bg-slate-700">
                         {community.name}
                       </SelectItem>
                     ))}
@@ -429,18 +429,18 @@ export default function Insights() {
               {/* Members and Rank Cards */}
               <div className="grid grid-cols-2 gap-3 mb-6">
                 {/* Members Card - Purple */}
-                <Card className="text-center p-6 bg-purple-500 text-white border-0 rounded-xl">
+                <Card className="text-center p-6 bg-purple-500 text-foreground border-0 rounded-xl">
                   <CardContent className="p-0">
                     <div className="flex flex-col items-center space-y-3">
-                      <Users className="h-8 w-8 text-white" />
-                      <div className="text-4xl font-bold text-white">
+                      <Users className="h-8 w-8 text-foreground" />
+                      <div className="text-4xl font-bold text-foreground">
                         {communityInsights.memberCount}
                       </div>
                       <div className="text-center">
-                        <p className="text-white/90 font-medium">
+                        <p className="text-foreground/90 font-medium">
                           Members
                         </p>
-                        <p className="text-sm text-white/75">
+                        <p className="text-sm text-foreground/75">
                           Across {userCommunities?.communities?.length || 1} communities
                         </p>
                       </div>
@@ -449,18 +449,18 @@ export default function Insights() {
                 </Card>
 
                 {/* Your Rank Card - Green */}
-                <Card className="text-center p-6 bg-green-500 text-white border-0 rounded-xl">
+                <Card className="text-center p-6 bg-green-500 text-foreground border-0 rounded-xl">
                   <CardContent className="p-0">
                     <div className="flex flex-col items-center space-y-3">
-                      <Trophy className="h-8 w-8 text-white" />
-                      <div className="text-4xl font-bold text-white">
+                      <Trophy className="h-8 w-8 text-foreground" />
+                      <div className="text-4xl font-bold text-foreground">
                         {communityInsights.topVerifiers?.findIndex(v => v.name.includes('You')) + 1 || 2}
                       </div>
                       <div className="text-center">
-                        <p className="text-white/90 font-medium">
+                        <p className="text-foreground/90 font-medium">
                           Your Rank
                         </p>
-                        <p className="text-sm text-white/75">
+                        <p className="text-sm text-foreground/75">
                           Out of {communityInsights.topVerifiers?.length || Math.min(5, communityInsights.memberCount)}
                         </p>
                       </div>
@@ -470,10 +470,10 @@ export default function Insights() {
               </div>
 
               {/* Leaderboard Section */}
-              <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+              <div className="bg-card border border-border rounded-xl p-6">
                 <div className="flex items-center gap-2 mb-6">
                   <Trophy className="h-5 w-5 text-yellow-500" />
-                  <h3 className="text-white font-semibold text-lg">Leaderboard</h3>
+                  <h3 className="text-foreground font-semibold text-lg">Leaderboard</h3>
                   <span className="text-gray-400 text-sm">This Week</span>
                 </div>
 
@@ -501,13 +501,13 @@ export default function Insights() {
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`h-10 w-10 ${avatarColors[index % avatarColors.length]} rounded-full flex items-center justify-center text-white font-bold`}>
+                          <div className={`h-10 w-10 ${avatarColors[index % avatarColors.length]} rounded-full flex items-center justify-center text-foreground font-bold`}>
                             {index < 4 ? verifier.name.charAt(0).toUpperCase() : index + 1}
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-400">{rankIcons[index % rankIcons.length]}</span>
                             <div>
-                              <p className="font-medium text-white">
+                              <p className="font-medium text-foreground">
                                 {verifier.name}
                                 {isCurrentUser && <span className="text-gray-400 text-sm ml-1">You</span>}
                               </p>
