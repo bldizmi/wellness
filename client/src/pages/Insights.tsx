@@ -469,6 +469,118 @@ export default function Insights() {
                 </Card>
               </div>
 
+              {/* Community Stats Grid */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                {/* Time Saved - Blue */}
+                <Card className="text-center p-6 bg-blue-500 text-foreground border-0 rounded-xl">
+                  <CardContent className="p-0">
+                    <div className="flex flex-col items-center space-y-3">
+                      <Clock className="h-8 w-8 text-foreground" />
+                      <div className="text-4xl font-bold text-foreground">
+                        {Math.round(communityInsights.totalTimeSaved)}
+                      </div>
+                      <div className="text-center">
+                        <p className="text-foreground/90 font-medium">
+                          Minutes Saved
+                        </p>
+                        <p className="text-sm text-foreground/75">
+                          Total Time
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Total Verifications - Orange */}
+                <Card className="text-center p-6 bg-orange-500 text-foreground border-0 rounded-xl">
+                  <CardContent className="p-0">
+                    <div className="flex flex-col items-center space-y-3">
+                      <CheckCircle className="h-8 w-8 text-foreground" />
+                      <div className="text-4xl font-bold text-foreground">
+                        {communityInsights.communityStats.totalVerifications}
+                      </div>
+                      <div className="text-center">
+                        <p className="text-foreground/90 font-medium">
+                          Verifications
+                        </p>
+                        <p className="text-sm text-foreground/75">
+                          Community Total
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Total Items - Purple */}
+                <Card className="text-center p-6 bg-purple-500 text-foreground border-0 rounded-xl">
+                  <CardContent className="p-0">
+                    <div className="flex flex-col items-center space-y-3">
+                      <Target className="h-8 w-8 text-foreground" />
+                      <div className="text-4xl font-bold text-foreground">
+                        {communityInsights.communityStats.totalItems}
+                      </div>
+                      <div className="text-center">
+                        <p className="text-foreground/90 font-medium">
+                          Total Items
+                        </p>
+                        <p className="text-sm text-foreground/75">
+                          Created
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Avg Completion Rate - Green */}
+                <Card className="text-center p-6 bg-green-500 text-foreground border-0 rounded-xl">
+                  <CardContent className="p-0">
+                    <div className="flex flex-col items-center space-y-3">
+                      <TrendingUp className="h-8 w-8 text-foreground" />
+                      <div className="text-4xl font-bold text-foreground">
+                        {communityInsights.communityStats.avgCompletionRate}%
+                      </div>
+                      <div className="text-center">
+                        <p className="text-foreground/90 font-medium">
+                          Avg Completion
+                        </p>
+                        <p className="text-sm text-foreground/75">
+                          Community Rate
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Popular Items Section */}
+              {communityInsights.popularItems && communityInsights.popularItems.length > 0 && (
+                <div className="bg-card border border-border rounded-xl p-6 mb-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Star className="h-5 w-5 text-blue-500" />
+                    <h3 className="text-foreground font-semibold text-lg">Popular Items</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {communityInsights.popularItems.slice(0, 3).map((item, index) => (
+                      <div key={item.type} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center text-foreground font-bold text-sm">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground">{item.type}</p>
+                            <p className="text-sm text-gray-400">{item.avgPhotos.toFixed(1)} avg photos</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-foreground">{item.count}</p>
+                          <p className="text-xs text-gray-400">items</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Leaderboard Section */}
               <div className="bg-card border border-border rounded-xl p-6">
                 <div className="flex items-center gap-2 mb-6">
@@ -482,19 +594,19 @@ export default function Insights() {
                     const isCurrentUser = verifier.name.toLowerCase().includes('you');
                     const avatarColors = ['bg-yellow-500', 'bg-gray-400', 'bg-orange-500', 'bg-slate-600', 'bg-blue-500'];
                     const rankIcons = ['🏆', '♥', '🏅', '🏃', '⭐'];
-                    
+
                     // Calculate points based on trust score and verifications (since points aren't in API)
                     const points = (verifier.trustScore * 10) + (verifier.verificationsCount * 50);
-                    
+
                     // Generate realistic rank changes based on performance
-                    const rankChange = index === 0 ? '+5' : 
-                                     index === 1 ? '+2' : 
+                    const rankChange = index === 0 ? '+5' :
+                                     index === 1 ? '+2' :
                                      index === 2 ? '-1' : '—';
-                    const changeColor = rankChange.startsWith('+') ? 'text-green-400' : 
+                    const changeColor = rankChange.startsWith('+') ? 'text-green-400' :
                                        rankChange.startsWith('-') ? 'text-red-400' : 'text-gray-500';
 
                     return (
-                      <div 
+                      <div
                         key={verifier.name}
                         className={`flex items-center justify-between p-3 rounded-lg ${
                           isCurrentUser ? 'bg-blue-600/20 border border-blue-500/30' : 'bg-slate-700/50'
