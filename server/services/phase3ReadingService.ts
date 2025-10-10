@@ -516,11 +516,8 @@ export async function getSharedItemsNew(userId: string, targetDate: string) {
     ) iva ON true
     WHERE ri.occurrence_date = ${targetDate}
       AND (rt.is_active = true OR rt.is_active IS NULL)
-      AND (
-        (rt.created_by = ${userId} AND ri.assigned_to != ${userId})
-        OR (ri.assigned_to = ${userId} AND rt.created_by != ${userId})
-        OR (ri.shared_with IS NOT NULL AND ${userId} = ANY(ri.shared_with))
-      )
+      AND rt.created_by = ${userId}
+      AND ri.assigned_to != ${userId}
   `;
 
   const sharedResult = await db.execute(sharedInstancesQuery);
