@@ -72,6 +72,9 @@ export default function Profile() {
       const response = await apiRequest("/api/community/invitations/pending");
       return response.invitations || [];
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   // Fetch user communities
@@ -81,6 +84,9 @@ export default function Profile() {
       const response = await apiRequest("/api/community");
       return response.communities || [];
     },
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   // Mutation for responding to invitations
@@ -124,6 +130,8 @@ export default function Profile() {
       });
     },
     onSuccess: () => {
+      // Invalidate pending invitations for the recipient
+      queryClient.invalidateQueries({ queryKey: ["/api/community/invitations/pending"] });
       setShowInviteMemberModal(false);
       setInviteEmail("");
       setSelectedCommunityForInvite(null);
@@ -166,11 +174,19 @@ export default function Profile() {
   };
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => 
-      prev.includes(section) 
+    const isCurrentlyExpanded = expandedSections.includes(section);
+
+    setExpandedSections(prev =>
+      prev.includes(section)
         ? prev.filter(s => s !== section)
         : [...prev, section]
     );
+
+    // Refetch data when expanding Family & Community section
+    if (section === "familycommunity" && !isCurrentlyExpanded) {
+      queryClient.invalidateQueries({ queryKey: ["/api/community"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/community/invitations/pending"] });
+    }
   };
 
   const handleVibeCheck = () => {
