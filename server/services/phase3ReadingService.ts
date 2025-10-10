@@ -433,8 +433,13 @@ export async function getSharedItemsNew(userId: string, targetDate: string) {
     ? "dev_recurring_templates"
     : "recurring_templates";
 
+  // Get verification attempts table name
+  const verificationsTable = isDevelopment
+    ? "dev_item_verification_attempts"
+    : "item_verification_attempts";
+
   const sharedInstancesQuery = sql`
-    SELECT 
+    SELECT
       ri.id,
       ri.template_id,
       ri.occurrence_date,
@@ -464,17 +469,25 @@ export async function getSharedItemsNew(userId: string, targetDate: string) {
       rt.created_by,
       rt.is_recurring,
       rt.recurrence_type,
-      CASE 
-        WHEN ri.status = 'complete' THEN true 
-        ELSE false 
+      iva.image_urls,
+      CASE
+        WHEN ri.status = 'complete' THEN true
+        ELSE false
       END as completed,
-      CASE 
-        WHEN ri.status = 'skipped' THEN true 
-        ELSE false 
+      CASE
+        WHEN ri.status = 'skipped' THEN true
+        ELSE false
       END as skipped
     FROM ${sql.raw(instancesTable)} ri
-    LEFT JOIN ${sql.raw(templatesTable)} rt 
+    LEFT JOIN ${sql.raw(templatesTable)} rt
       ON ri.template_id = rt.id
+    LEFT JOIN LATERAL (
+      SELECT image_urls
+      FROM ${sql.raw(verificationsTable)}
+      WHERE item_id = ri.id
+      ORDER BY created_at DESC
+      LIMIT 1
+    ) iva ON true
     WHERE ri.occurrence_date = ${targetDate}
       AND (rt.is_active = true OR rt.is_active IS NULL)
       AND (
@@ -492,15 +505,32 @@ export async function getSharedItemsNew(userId: string, targetDate: string) {
   );
 
   // Map instances to include is_completed_for_date field for frontend compatibility
-  const mapSharedInstance = (instance: any) => ({
-    ...instance,
-    // CRITICAL: Frontend expects is_completed_for_date, not just status
-    // FIX: Database stores 'complete' not 'completed'!
-    is_completed_for_date:
-      instance.status === "complete" || instance.status === "completed",
-    // Also ensure recurrence_type is set for proper detection
-    recurrence_type: instance.recurrence_type || "daily", // Default for all recurring items from this table
-  });
+  const mapSharedInstance = (instance: any) => {
+    // Parse image_urls from JSON string to array
+    let imageUrlsArray = [];
+    if (instance.image_urls) {
+      try {
+        imageUrlsArray = typeof instance.image_urls === 'string'
+          ? JSON.parse(instance.image_urls)
+          : instance.image_urls;
+      } catch (e) {
+        console.error('Failed to parse image_urls:', e);
+        imageUrlsArray = [];
+      }
+    }
+
+    return {
+      ...instance,
+      // CRITICAL: Frontend expects is_completed_for_date, not just status
+      // FIX: Database stores 'complete' not 'completed'!
+      is_completed_for_date:
+        instance.status === "complete" || instance.status === "completed",
+      // Also ensure recurrence_type is set for proper detection
+      recurrence_type: instance.recurrence_type || "daily", // Default for all recurring items from this table
+      // Parse image_urls JSON string to array for frontend
+      image_urls: imageUrlsArray,
+    };
+  };
 
   // Group by item type (exclude habits from shared as per existing logic)
   const groupedSharedItems = {
