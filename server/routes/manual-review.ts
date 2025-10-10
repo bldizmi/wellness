@@ -55,26 +55,38 @@ router.get("/pending", authMiddleware, async (req, res) => {
 
       // STEP 1: Fetch from NEW architecture (recurring_instances)
       try {
-        const newArchitecturePendingItems = await db
-          .select({
-            id: recurring_instances.id,
-            title: recurring_templates.title,
-            item_type: recurring_templates.item_type,
-            created_by: recurring_templates.created_by,
-            assigned_to: recurring_instances.assigned_to,
-            community_id: recurring_templates.community_id,
-            image_urls: recurring_instances.image_urls,
-            ai_feedback: recurring_instances.ai_feedback,
-            manual_review_requested_at: recurring_instances.updated_at,
-            manual_review_reason: recurring_instances.notes,
-            architecture: sql`'new'`.as("architecture"),
-          })
-          .from(recurring_instances)
-          .leftJoin(
-            recurring_templates,
-            eq(recurring_instances.template_id, recurring_templates.id),
-          )
-          .where(eq(recurring_instances.status, "pending_review"));
+        const isDevelopment = process.env.NODE_ENV === "development";
+        const verificationsTable = isDevelopment
+          ? "dev_item_verification_attempts"
+          : "item_verification_attempts";
+
+        const newArchitecturePendingItemsRaw = await db.execute(sql`
+          SELECT
+            ri.id,
+            rt.title,
+            rt.item_type,
+            rt.created_by,
+            ri.assigned_to,
+            rt.community_id,
+            iva.image_urls,
+            ri.ai_feedback,
+            ri.updated_at as manual_review_requested_at,
+            ri.notes as manual_review_reason,
+            'new' as architecture
+          FROM ${isDevelopment ? sql.raw('dev_recurring_instances') : sql.raw('recurring_instances')} ri
+          LEFT JOIN ${isDevelopment ? sql.raw('dev_recurring_templates') : sql.raw('recurring_templates')} rt
+            ON ri.template_id = rt.id
+          LEFT JOIN LATERAL (
+            SELECT image_urls
+            FROM ${sql.raw(verificationsTable)}
+            WHERE item_id = ri.id
+            ORDER BY created_at DESC
+            LIMIT 1
+          ) iva ON true
+          WHERE ri.status = 'pending_review'
+        `);
+
+        const newArchitecturePendingItems = newArchitecturePendingItemsRaw.rows;
 
         reviewableItems.push(...newArchitecturePendingItems);
 
@@ -146,31 +158,39 @@ router.get("/pending", authMiddleware, async (req, res) => {
       if (communityIds.length > 0) {
         // STEP 1: Fetch from NEW architecture (recurring_instances) - community items only
         try {
-          const newArchitectureSharedItems = await db
-            .select({
-              id: recurring_instances.id,
-              title: recurring_templates.title,
-              item_type: recurring_templates.item_type,
-              created_by: recurring_templates.created_by,
-              assigned_to: recurring_instances.assigned_to,
-              community_id: recurring_templates.community_id,
-              image_urls: recurring_instances.image_urls,
-              ai_feedback: recurring_instances.ai_feedback,
-              manual_review_requested_at: recurring_instances.updated_at,
-              manual_review_reason: recurring_instances.notes,
-              architecture: sql`'new'`.as("architecture"),
-            })
-            .from(recurring_instances)
-            .leftJoin(
-              recurring_templates,
-              eq(recurring_instances.template_id, recurring_templates.id),
-            )
-            .where(
-              and(
-                eq(recurring_instances.status, "pending_review"),
-                inArray(recurring_templates.community_id, communityIds),
-              ),
-            );
+          const isDevelopment = process.env.NODE_ENV === "development";
+          const verificationsTable = isDevelopment
+            ? "dev_item_verification_attempts"
+            : "item_verification_attempts";
+
+          const newArchitectureSharedItemsRaw = await db.execute(sql`
+            SELECT
+              ri.id,
+              rt.title,
+              rt.item_type,
+              rt.created_by,
+              ri.assigned_to,
+              rt.community_id,
+              iva.image_urls,
+              ri.ai_feedback,
+              ri.updated_at as manual_review_requested_at,
+              ri.notes as manual_review_reason,
+              'new' as architecture
+            FROM ${isDevelopment ? sql.raw('dev_recurring_instances') : sql.raw('recurring_instances')} ri
+            LEFT JOIN ${isDevelopment ? sql.raw('dev_recurring_templates') : sql.raw('recurring_templates')} rt
+              ON ri.template_id = rt.id
+            LEFT JOIN LATERAL (
+              SELECT image_urls
+              FROM ${sql.raw(verificationsTable)}
+              WHERE item_id = ri.id
+              ORDER BY created_at DESC
+              LIMIT 1
+            ) iva ON true
+            WHERE ri.status = 'pending_review'
+              AND rt.community_id = ANY(${communityIds})
+          `);
+
+          const newArchitectureSharedItems = newArchitectureSharedItemsRaw.rows;
 
           reviewableItems.push(...newArchitectureSharedItems);
 
