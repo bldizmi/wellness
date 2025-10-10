@@ -217,9 +217,12 @@ export async function getPersonalProgressItemsNew(
   const templatesTable = isDevelopment
     ? "dev_recurring_templates"
     : "recurring_templates";
+  const verificationsTable = isDevelopment
+    ? "dev_item_verification_attempts"
+    : "item_verification_attempts";
 
   const instancesQuery = sql`
-    SELECT 
+    SELECT
       ri.id,
       ri.template_id,
       ri.occurrence_date,
@@ -248,17 +251,25 @@ export async function getPersonalProgressItemsNew(
       rt.time_of_day,
       rt.is_recurring,
       rt.recurrence_type,
-      CASE 
-        WHEN ri.status = 'complete' THEN true 
-        ELSE false 
+      iva.image_urls,
+      CASE
+        WHEN ri.status = 'complete' THEN true
+        ELSE false
       END as completed,
-      CASE 
-        WHEN ri.status = 'skipped' THEN true 
-        ELSE false 
+      CASE
+        WHEN ri.status = 'skipped' THEN true
+        ELSE false
       END as skipped
     FROM ${sql.raw(instancesTable)} ri
-    INNER JOIN ${sql.raw(templatesTable)} rt 
+    INNER JOIN ${sql.raw(templatesTable)} rt
       ON ri.template_id = rt.id
+    LEFT JOIN LATERAL (
+      SELECT image_urls
+      FROM ${sql.raw(verificationsTable)}
+      WHERE item_id = ri.id
+      ORDER BY created_at DESC
+      LIMIT 1
+    ) iva ON true
     WHERE ri.occurrence_date = ${targetDate}
       AND ri.assigned_to = ${userId}
       AND rt.is_active = true
@@ -279,6 +290,19 @@ export async function getPersonalProgressItemsNew(
 
   // Map instances to include is_completed_for_date field for frontend compatibility
   const mapInstance = (instance: any) => {
+    // Parse image_urls from JSON string to array
+    let imageUrlsArray = [];
+    if (instance.image_urls) {
+      try {
+        imageUrlsArray = typeof instance.image_urls === 'string'
+          ? JSON.parse(instance.image_urls)
+          : instance.image_urls;
+      } catch (e) {
+        console.error('Failed to parse image_urls:', e);
+        imageUrlsArray = [];
+      }
+    }
+
     const mappedInstance = {
       ...instance,
       // CRITICAL: Frontend expects is_completed_for_date, not just status
@@ -287,11 +311,13 @@ export async function getPersonalProgressItemsNew(
         instance.status === "complete" || instance.status === "completed",
       // Also ensure recurrence_type is set for proper detection
       recurrence_type: instance.recurrence_type || "daily", // Default for all recurring items from this table
+      // Parse image_urls JSON string to array for frontend
+      image_urls: imageUrlsArray,
     };
-    
+
     // DEBUG: Check time_of_day field after mapping
     console.log(`🕒 TIME_OF_DAY DEBUG: After mapping "${instance.title}": time_of_day="${mappedInstance.time_of_day}" (type: ${typeof mappedInstance.time_of_day})`);
-    
+
     return mappedInstance;
   };
 
