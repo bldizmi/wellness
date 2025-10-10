@@ -943,7 +943,7 @@ router.post(
         item_id: id,
         user_id: user_id,
         //image_url: primaryImageUrl, // Primary image for backward compatibility
-        image_urls: imagesUrl, // Store all images as JSON array
+        image_urls: JSON.stringify(imagesUrl), // Store all images as JSON string
         photo_count: savedFiles.length,
         ai_verification_result: verificationResult.ai_verification_result,
         ai_feedback: verificationResult.ai_feedback,
