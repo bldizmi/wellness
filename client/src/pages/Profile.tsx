@@ -75,7 +75,8 @@ export default function Profile() {
       const response = await apiRequest("/api/community/invitations/pending");
       return response.invitations || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: 'always', // Always refetch when component mounts
   });
 
   // Fetch user communities
@@ -85,7 +86,8 @@ export default function Profile() {
       const response = await apiRequest("/api/community");
       return response.communities || [];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: 'always', // Always refetch when component mounts
   });
 
   // Mutation for responding to invitations
