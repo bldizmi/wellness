@@ -1266,9 +1266,9 @@ export default function Today() {
               return (
                 <button
                   key={tab.id}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 text-sm font-medium ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 text-sm font-semibold ${
                     isActive
-                      ? "bg-accent-primary text-white"
+                      ? "bg-accent-primary text-foreground"
                       : "bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                   onClick={() => setActiveTab(tab.id)}
