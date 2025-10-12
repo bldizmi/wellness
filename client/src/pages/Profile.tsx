@@ -69,7 +69,7 @@ export default function Profile() {
   });
 
   // Fetch pending invitations
-  const { data: pendingInvitations = [] } = useQuery({
+  const { data: pendingInvitations = [], isLoading: isLoadingInvitations } = useQuery({
     queryKey: ["/api/community/invitations/pending"],
     queryFn: async () => {
       const response = await apiRequest("/api/community/invitations/pending");
@@ -79,7 +79,7 @@ export default function Profile() {
   });
 
   // Fetch user communities
-  const { data: communities = [] } = useQuery({
+  const { data: communities = [], isLoading: isLoadingCommunities } = useQuery({
     queryKey: ["/api/community"],
     queryFn: async () => {
       const response = await apiRequest("/api/community");
@@ -886,8 +886,16 @@ export default function Profile() {
           {/* Scrollable Content */}
           <div className="overflow-y-auto flex-1 p-6 bg-background">
             <div className="max-w-2xl mx-auto space-y-6">
+              {/* Loading State */}
+              {(isLoadingInvitations || isLoadingCommunities) && (
+                <div className="text-center py-12">
+                  <div className="animate-spin h-8 w-8 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Loading your communities...</p>
+                </div>
+              )}
+
               {/* Pending Invitations Section */}
-              {pendingInvitations.length > 0 && (
+              {!isLoadingInvitations && !isLoadingCommunities && pendingInvitations.length > 0 && (
                 <div className="bg-card/30 rounded-xl p-5 border border-border">
                   <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                     <Clock className="h-5 w-5 text-orange-500" />
@@ -944,7 +952,7 @@ export default function Profile() {
               )}
 
               {/* Current Communities Section */}
-              {communities.length > 0 && (
+              {!isLoadingInvitations && !isLoadingCommunities && communities.length > 0 && (
                 <div className="bg-card/30 rounded-xl p-5 border border-border">
                   <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                     <Users className="h-5 w-5 text-blue-500" />
@@ -986,6 +994,7 @@ export default function Profile() {
               )}
 
               {/* Create Community Section */}
+              {!isLoadingInvitations && !isLoadingCommunities && (
               <div className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-xl p-5 border border-purple-500/20">
                 <div className="flex items-center gap-2 mb-3">
                   <Plus className="h-5 w-5 text-purple-500" />
@@ -1005,9 +1014,10 @@ export default function Profile() {
                   Create Community
                 </Button>
               </div>
+              )}
 
               {/* Empty State */}
-              {pendingInvitations.length === 0 && communities.length === 0 && (
+              {!isLoadingInvitations && !isLoadingCommunities && pendingInvitations.length === 0 && communities.length === 0 && (
                 <div className="text-center py-12">
                   <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
                   <h3 className="text-lg font-medium text-foreground mb-2">No Communities Yet</h3>
