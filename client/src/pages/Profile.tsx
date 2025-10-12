@@ -8,11 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  ChevronRight, 
-  Settings as SettingsIcon, 
-  Heart, 
-  ChevronDown, 
+import {
+  ChevronRight,
+  Settings as SettingsIcon,
+  Heart,
+  ChevronDown,
   User,
   Users,
   Eye,
@@ -33,6 +33,7 @@ import {
 import { useLocation } from "wouter";
 import { useTheme, ThemeMode, ThemeVariant, THEME_COLORS, getThemeDisplayName } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Profile() {
   const [, navigate] = useLocation();
@@ -40,6 +41,7 @@ export default function Profile() {
   const { theme, updateMode, updateVariant } = useTheme();
   const { logout } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Modal states
   const [showCreateCommunityModal, setShowCreateCommunityModal] = useState(false);
@@ -87,15 +89,37 @@ export default function Profile() {
 
   // Mutation for responding to invitations
   const respondToInvitationMutation = useMutation({
-    mutationFn: async ({ invitationId, action }: { invitationId: string; action: "accept" | "decline" }) => {
+    mutationFn: async ({ invitationId, action, communityName }: { invitationId: string; action: "accept" | "decline"; communityName?: string }) => {
       return await apiRequest(`/api/community/invitations/${invitationId}/${action}`, {
         method: "POST",
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       // Refresh both invitations and communities data
       queryClient.invalidateQueries({ queryKey: ["/api/community/invitations/pending"] });
       queryClient.invalidateQueries({ queryKey: ["/api/community"] });
+
+      // Show success toast
+      if (variables.action === "accept") {
+        toast({
+          title: "Invitation Accepted",
+          description: variables.communityName
+            ? `You've joined ${variables.communityName}!`
+            : "You've joined the community!",
+        });
+      } else {
+        toast({
+          title: "Invitation Declined",
+          description: "The invitation has been declined.",
+        });
+      }
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to respond to invitation. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -108,11 +132,24 @@ export default function Profile() {
         headers: { "Content-Type": "application/json" },
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/community"] });
       setShowCreateCommunityModal(false);
       setNewCommunityName("");
       setNewCommunityType("");
+
+      // Show success toast
+      toast({
+        title: "Community Created",
+        description: `${variables.name} has been created successfully!`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create community. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -125,12 +162,25 @@ export default function Profile() {
         headers: { "Content-Type": "application/json" },
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       // Invalidate pending invitations for the recipient
       queryClient.invalidateQueries({ queryKey: ["/api/community/invitations/pending"] });
       setShowInviteMemberModal(false);
       setInviteEmail("");
       setSelectedCommunityForInvite(null);
+
+      // Show success toast
+      toast({
+        title: "Invitation Sent",
+        description: `Invitation sent to ${variables.email}!`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to send invitation. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -146,6 +196,19 @@ export default function Profile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
       setShowProfileEditModal(false);
+
+      // Show success toast
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -435,9 +498,10 @@ export default function Profile() {
                               <Button
                                 size="sm"
                                 className="h-7 px-2 bg-green-600 hover:bg-green-700 text-xs"
-                                onClick={() => respondToInvitationMutation.mutate({ 
-                                  invitationId: invitation.id, 
-                                  action: "accept" 
+                                onClick={() => respondToInvitationMutation.mutate({
+                                  invitationId: invitation.id,
+                                  action: "accept",
+                                  communityName: invitation.community_name
                                 })}
                                 disabled={respondToInvitationMutation.isPending}
                               >
@@ -448,9 +512,10 @@ export default function Profile() {
                                 size="sm"
                                 variant="outline"
                                 className="h-7 px-2 text-xs"
-                                onClick={() => respondToInvitationMutation.mutate({ 
-                                  invitationId: invitation.id, 
-                                  action: "decline" 
+                                onClick={() => respondToInvitationMutation.mutate({
+                                  invitationId: invitation.id,
+                                  action: "decline",
+                                  communityName: invitation.community_name
                                 })}
                                 disabled={respondToInvitationMutation.isPending}
                               >
