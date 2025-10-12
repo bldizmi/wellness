@@ -598,7 +598,7 @@ export default function Today() {
         <div className="flex items-center justify-between">
           {/* Left side: Content */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-card-foreground font-medium text-sm mb-1">
+            <h3 className="text-card-foreground font-semibold text-sm mb-1">
               {item.title}
             </h3>
 
@@ -760,7 +760,7 @@ export default function Today() {
             <div className="w-6 h-6 bg-accent-primary rounded-full flex items-center justify-center">
               <span className="text-xs">{section.icon}</span>
             </div>
-            <h2 className="text-foreground font-medium text-base">
+            <h2 className="text-foreground font-semibold text-base">
               {section.label}
             </h2>
           </div>
@@ -1274,7 +1274,7 @@ export default function Today() {
                   onClick={() => setActiveTab(tab.id)}
                 >
                   <span className="text-sm">{tab.icon}</span>
-                  <span>{tab.label}</span>
+                  <span className="font-semibold">{tab.label}</span>
                   {status.totalCount > 0 && status.incompleteCount > 0 && (
                     <span className="bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[16px] h-4 flex items-center justify-center font-bold leading-none">
                       {status.incompleteCount}

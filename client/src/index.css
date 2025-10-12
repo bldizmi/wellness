@@ -59,13 +59,13 @@
     --background: 0 0% 100%;
     --foreground: 20 14.3% 4.1%;
     --muted: 60 4.8% 95.9%;
-    --muted-foreground: 25 5.3% 35%;
+    --muted-foreground: 25 5.3% 25%;
     --popover: 0 0% 100%;
     --popover-foreground: 20 14.3% 4.1%;
     --card: 0 0% 100%;
     --card-foreground: 20 14.3% 4.1%;
-    --border: 20 5.9% 90%;
-    --input: 20 5.9% 90%;
+    --border: 20 5.9% 80%;
+    --input: 20 5.9% 80%;
     --primary: 207 90% 54%;
     --primary-foreground: 211 100% 99%;
     --secondary: 60 4.8% 95.9%;
@@ -109,10 +109,24 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
-  
+
   /* Theme transition animations */
   * {
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Light mode font weight improvements for better readability */
+  .light h1,
+  .light h2,
+  .light h3,
+  .light h4,
+  .light h5,
+  .light h6 {
+    font-weight: 600; /* semibold */
+  }
+
+  .light .font-medium {
+    font-weight: 600; /* upgrade medium to semibold in light mode */
   }
 }
 
