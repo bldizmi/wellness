@@ -56,6 +56,7 @@ export default function Profile() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [editDisplayName, setEditDisplayName] = useState("");
   const [editAvatarUrl, setEditAvatarUrl] = useState("");
+  const [editTimezone, setEditTimezone] = useState("");
 
   const {
     data: profile,
@@ -274,23 +275,45 @@ export default function Profile() {
   };
 
   const openProfileEditModal = () => {
+    if (!profile || isLoading) {
+      toast({
+        title: "Loading Profile",
+        description: "Please wait while we load your profile...",
+      });
+      return;
+    }
     setEditDisplayName(profile?.display_name || "");
     setEditAvatarUrl(profile?.avatar_url || "");
+    setEditTimezone(profile?.timezone || "America/Los_Angeles");
     setShowProfileEditModal(true);
   };
 
   const handlePasswordReset = async () => {
-    if (!profile?.email) return;
+    if (!profile?.email) {
+      toast({
+        title: "Error",
+        description: "No email address found",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       // Use Firebase Auth to send password reset email
       const { sendPasswordResetEmail, getAuth } = await import("firebase/auth");
       const auth = getAuth();
       await sendPasswordResetEmail(auth, profile.email);
-      alert("Password reset email sent! Check your inbox.");
+      toast({
+        title: "Password Reset Email Sent",
+        description: "Check your inbox for password reset instructions.",
+      });
     } catch (error) {
       console.error("Password reset error:", error);
-      alert("Failed to send password reset email. Please try again.");
+      toast({
+        title: "Failed to Send Email",
+        description: "Please try again or contact support.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -801,6 +824,21 @@ export default function Profile() {
                 className="bg-muted border-border text-foreground placeholder-gray-400 mt-1"
               />
             </div>
+
+            <div>
+              <Label htmlFor="username" className="text-sm font-medium text-foreground">
+                Username
+              </Label>
+              <Input
+                id="username"
+                type="text"
+                value={profile?.username || ""}
+                disabled
+                className="bg-muted/50 border-border text-muted-foreground mt-1 cursor-not-allowed"
+              />
+              <p className="text-xs text-gray-500 mt-1">Username cannot be changed</p>
+            </div>
+
             <div>
               <Label htmlFor="email" className="text-sm font-medium text-foreground">
                 Email
@@ -814,6 +852,28 @@ export default function Profile() {
               />
               <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-foreground">Role</Label>
+                <div className="mt-1">
+                  <Badge className="bg-blue-600 hover:bg-blue-600 text-foreground capitalize">
+                    {profile?.role || "member"}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-foreground">Member Since</Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {profile?.created_at
+                    ? new Date(profile.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        year: 'numeric'
+                      })
+                    : 'N/A'}
+                </p>
+              </div>
+            </div>
             <div>
               <Label htmlFor="avatar-url" className="text-sm font-medium text-foreground">
                 Avatar URL (optional)
@@ -826,6 +886,30 @@ export default function Profile() {
                 placeholder="https://example.com/avatar.jpg"
                 className="bg-muted border-border text-foreground placeholder-gray-400 mt-1"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="timezone" className="text-sm font-medium text-foreground">
+                Timezone
+              </Label>
+              <Select value={editTimezone} onValueChange={setEditTimezone}>
+                <SelectTrigger className="bg-muted border-border text-foreground mt-1">
+                  <SelectValue placeholder="Select timezone..." />
+                </SelectTrigger>
+                <SelectContent className="bg-muted border-border max-h-60">
+                  <SelectItem value="America/New_York" className="text-foreground hover:bg-gray-600">Eastern Time (ET)</SelectItem>
+                  <SelectItem value="America/Chicago" className="text-foreground hover:bg-gray-600">Central Time (CT)</SelectItem>
+                  <SelectItem value="America/Denver" className="text-foreground hover:bg-gray-600">Mountain Time (MT)</SelectItem>
+                  <SelectItem value="America/Los_Angeles" className="text-foreground hover:bg-gray-600">Pacific Time (PT)</SelectItem>
+                  <SelectItem value="America/Anchorage" className="text-foreground hover:bg-gray-600">Alaska Time (AKT)</SelectItem>
+                  <SelectItem value="Pacific/Honolulu" className="text-foreground hover:bg-gray-600">Hawaii Time (HT)</SelectItem>
+                  <SelectItem value="Europe/London" className="text-foreground hover:bg-gray-600">London (GMT/BST)</SelectItem>
+                  <SelectItem value="Europe/Paris" className="text-foreground hover:bg-gray-600">Paris (CET/CEST)</SelectItem>
+                  <SelectItem value="Asia/Tokyo" className="text-foreground hover:bg-gray-600">Tokyo (JST)</SelectItem>
+                  <SelectItem value="Asia/Shanghai" className="text-foreground hover:bg-gray-600">Shanghai (CST)</SelectItem>
+                  <SelectItem value="Australia/Sydney" className="text-foreground hover:bg-gray-600">Sydney (AEDT/AEST)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="pt-2">
               <Button
@@ -851,10 +935,35 @@ export default function Profile() {
               </Button>
               <Button
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
-                onClick={() => updateProfileMutation.mutate({
-                  display_name: editDisplayName.trim(),
-                  avatar_url: editAvatarUrl.trim()
-                })}
+                onClick={async () => {
+                  // Update profile
+                  await updateProfileMutation.mutateAsync({
+                    display_name: editDisplayName.trim(),
+                    avatar_url: editAvatarUrl.trim()
+                  });
+
+                  // Update timezone separately if changed
+                  if (editTimezone && editTimezone !== profile?.timezone) {
+                    try {
+                      await apiRequest("/api/profile/timezone", {
+                        method: "PUT",
+                        body: JSON.stringify({ timezone: editTimezone }),
+                        headers: { "Content-Type": "application/json" },
+                      });
+                      toast({
+                        title: "Timezone Updated",
+                        description: `Timezone changed to ${editTimezone}`,
+                      });
+                    } catch (error) {
+                      console.error("Timezone update error:", error);
+                      toast({
+                        title: "Timezone Update Failed",
+                        description: "Profile saved but timezone update failed.",
+                        variant: "destructive",
+                      });
+                    }
+                  }
+                }}
                 disabled={!editDisplayName.trim() || updateProfileMutation.isPending}
               >
                 {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
