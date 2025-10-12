@@ -172,19 +172,11 @@ export default function Profile() {
   };
 
   const toggleSection = (section: string) => {
-    const isCurrentlyExpanded = expandedSections.includes(section);
-
     setExpandedSections(prev =>
       prev.includes(section)
         ? prev.filter(s => s !== section)
         : [...prev, section]
     );
-
-    // Refetch data when expanding Family & Community section
-    if (section === "familycommunity" && !isCurrentlyExpanded) {
-      queryClient.invalidateQueries({ queryKey: ["/api/community"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/community/invitations/pending"] });
-    }
   };
 
   const handleVibeCheck = () => {
