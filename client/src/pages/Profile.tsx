@@ -73,8 +73,7 @@ export default function Profile() {
       return response.invitations || [];
     },
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds - reasonable cache time
   });
 
   // Fetch user communities
@@ -85,8 +84,7 @@ export default function Profile() {
       return response.communities || [];
     },
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    staleTime: 0,
+    staleTime: 30000, // 30 seconds - reasonable cache time
   });
 
   // Mutation for responding to invitations
