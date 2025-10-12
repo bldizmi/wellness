@@ -48,6 +48,7 @@ export default function Profile() {
   const [showInviteMemberModal, setShowInviteMemberModal] = useState(false);
   const [selectedCommunityForInvite, setSelectedCommunityForInvite] = useState<any>(null);
   const [showProfileEditModal, setShowProfileEditModal] = useState(false);
+  const [showFamilyCommunityDialog, setShowFamilyCommunityDialog] = useState(false);
 
   // Form states
   const [newCommunityName, setNewCommunityName] = useState("");
@@ -249,7 +250,7 @@ export default function Profile() {
   };
 
   const handleFamilyCommunityToggle = () => {
-    toggleSection("familycommunity");
+    setShowFamilyCommunityDialog(true);
   };
 
   const handleCreateCommunity = () => {
@@ -444,7 +445,7 @@ export default function Profile() {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
             
-            <div 
+            <div
               className="flex items-center justify-between p-3 rounded-lg hover:bg-card/30 transition-colors cursor-pointer"
               onClick={handleFamilyCommunityToggle}
             >
@@ -462,141 +463,8 @@ export default function Profile() {
                   <div className="text-sm text-muted-foreground">Manage family connections and community settings</div>
                 </div>
               </div>
-              <ChevronDown 
-                className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
-                  expandedSections.includes("familycommunity") ? "rotate-180" : ""
-                }`} 
-              />
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
-
-            {/* Family & Community Expanded Content */}
-            {expandedSections.includes("familycommunity") && (
-              <div className="mt-2 p-3 bg-card/20 rounded-lg space-y-4">
-                {/* Pending Invitations Section */}
-                {pendingInvitations.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-                      <Clock className="h-3 w-3" />
-                      Pending Invitations ({pendingInvitations.length})
-                    </h4>
-                    <div className="space-y-2">
-                      {pendingInvitations.map((invitation: any) => (
-                        <div key={invitation.id} className="bg-card/40 rounded-lg p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-foreground text-sm">{invitation.community_name}</span>
-                                <Badge variant="outline" className="text-xs">
-                                  {invitation.community_type}
-                                </Badge>
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                Expires: {new Date(invitation.expires_at).toLocaleDateString()}
-                              </div>
-                            </div>
-                            <div className="flex gap-2 ml-3">
-                              <Button
-                                size="sm"
-                                className="h-7 px-2 bg-green-600 hover:bg-green-700 text-xs"
-                                onClick={() => respondToInvitationMutation.mutate({
-                                  invitationId: invitation.id,
-                                  action: "accept",
-                                  communityName: invitation.community_name
-                                })}
-                                disabled={respondToInvitationMutation.isPending}
-                              >
-                                <Check className="h-3 w-3 mr-1" />
-                                Accept
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 px-2 text-xs"
-                                onClick={() => respondToInvitationMutation.mutate({
-                                  invitationId: invitation.id,
-                                  action: "decline",
-                                  communityName: invitation.community_name
-                                })}
-                                disabled={respondToInvitationMutation.isPending}
-                              >
-                                <X className="h-3 w-3 mr-1" />
-                                Decline
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Current Communities Section */}
-                {communities.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-                      <Users className="h-3 w-3" />
-                      Your Communities ({communities.length})
-                    </h4>
-                    <div className="space-y-2">
-                      {communities.map((community: any) => (
-                        <div key={community.id} className="bg-card/40 rounded-lg p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium text-foreground text-sm">{community.name}</span>
-                                <Badge variant="outline" className="text-xs">
-                                  {community.user_role}
-                                </Badge>
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {community.member_count} member{community.member_count !== 1 ? 's' : ''}
-                              </div>
-                            </div>
-                            {(community.user_role === "owner" || community.user_role === "admin") && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 px-2 text-xs ml-2"
-                                onClick={() => openInviteModal(community)}
-                              >
-                                <Mail className="h-3 w-3 mr-1" />
-                                Invite
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Create Community Section */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
-                      <Plus className="h-3 w-3" />
-                      Create New Community
-                    </h4>
-                  </div>
-                  <Button
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-foreground text-sm"
-                    onClick={() => setShowCreateCommunityModal(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Community
-                  </Button>
-                </div>
-
-                {/* Empty state message only when no communities and no invitations */}
-                {pendingInvitations.length === 0 && communities.length === 0 && (
-                  <div className="text-center py-2">
-                    <div className="text-xs text-gray-500">
-                      Start by creating your first community
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
@@ -989,6 +857,168 @@ export default function Profile() {
               >
                 {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
               </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Family & Community Full-Screen Dialog */}
+      <Dialog open={showFamilyCommunityDialog} onOpenChange={setShowFamilyCommunityDialog}>
+        <DialogContent className="max-w-full h-full sm:max-w-3xl sm:h-[90vh] p-0 gap-0">
+          {/* Custom Header */}
+          <div className="border-b border-border p-4 flex items-center justify-between bg-background sticky top-0 z-10">
+            <div className="flex items-center gap-3">
+              <Users className="h-6 w-6 text-purple-500" />
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Family & Community</h2>
+                <p className="text-sm text-muted-foreground">Manage your communities and invitations</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Scrollable Content */}
+          <div className="overflow-y-auto flex-1 p-6 bg-background">
+            <div className="max-w-2xl mx-auto space-y-6">
+              {/* Pending Invitations Section */}
+              {pendingInvitations.length > 0 && (
+                <div className="bg-card/30 rounded-xl p-5 border border-border">
+                  <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-orange-500" />
+                    Pending Invitations ({pendingInvitations.length})
+                  </h3>
+                  <div className="space-y-3">
+                    {pendingInvitations.map((invitation: any) => (
+                      <div key={invitation.id} className="bg-card rounded-lg p-4 border border-border">
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <span className="font-medium text-foreground">{invitation.community_name}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {invitation.community_type}
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              Expires: {new Date(invitation.expires_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-foreground"
+                              onClick={() => respondToInvitationMutation.mutate({
+                                invitationId: invitation.id,
+                                action: "accept",
+                                communityName: invitation.community_name
+                              })}
+                              disabled={respondToInvitationMutation.isPending}
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => respondToInvitationMutation.mutate({
+                                invitationId: invitation.id,
+                                action: "decline",
+                                communityName: invitation.community_name
+                              })}
+                              disabled={respondToInvitationMutation.isPending}
+                            >
+                              <X className="h-4 w-4 mr-1" />
+                              Decline
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Current Communities Section */}
+              {communities.length > 0 && (
+                <div className="bg-card/30 rounded-xl p-5 border border-border">
+                  <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-blue-500" />
+                    Your Communities ({communities.length})
+                  </h3>
+                  <div className="space-y-3">
+                    {communities.map((community: any) => (
+                      <div key={community.id} className="bg-card rounded-lg p-4 border border-border">
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <span className="font-medium text-foreground">{community.name}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {community.user_role}
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {community.member_count} member{community.member_count !== 1 ? 's' : ''}
+                            </div>
+                          </div>
+                          {(community.user_role === "owner" || community.user_role === "admin") && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                openInviteModal(community);
+                                setShowFamilyCommunityDialog(false);
+                              }}
+                            >
+                              <Mail className="h-4 w-4 mr-1" />
+                              Invite Member
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Create Community Section */}
+              <div className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-xl p-5 border border-purple-500/20">
+                <div className="flex items-center gap-2 mb-3">
+                  <Plus className="h-5 w-5 text-purple-500" />
+                  <h3 className="text-lg font-semibold text-foreground">Create New Community</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Start a new community to collaborate with friends, family, or colleagues
+                </p>
+                <Button
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-foreground"
+                  onClick={() => {
+                    setShowCreateCommunityModal(true);
+                    setShowFamilyCommunityDialog(false);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Community
+                </Button>
+              </div>
+
+              {/* Empty State */}
+              {pendingInvitations.length === 0 && communities.length === 0 && (
+                <div className="text-center py-12">
+                  <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">No Communities Yet</h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Create your first community to start collaborating with others
+                  </p>
+                  <Button
+                    className="bg-purple-600 hover:bg-purple-700 text-foreground"
+                    onClick={() => {
+                      setShowCreateCommunityModal(true);
+                      setShowFamilyCommunityDialog(false);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Community
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </DialogContent>
