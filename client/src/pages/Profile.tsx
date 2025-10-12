@@ -874,6 +874,13 @@ export default function Profile() {
                 <p className="text-sm text-muted-foreground">Manage your communities and invitations</p>
               </div>
             </div>
+            <button
+              onClick={() => setShowFamilyCommunityDialog(false)}
+              className="rounded-md p-2 hover:bg-muted transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5 text-muted-foreground" />
+            </button>
           </div>
 
           {/* Scrollable Content */}
