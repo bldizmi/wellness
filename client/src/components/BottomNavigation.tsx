@@ -85,10 +85,10 @@ export default function BottomNavigation() {
             onClick={() => navigate("/today")}
           >
             <Home
-              className="h-6 w-6 mb-1"
+              className={`h-6 w-6 mb-1 ${location === "/today" ? "stroke-[2.5]" : ""}`}
               strokeWidth={2}
             />
-            <span className="text-xs font-medium">Home</span>
+            <span className={`text-xs ${location === "/today" ? "font-bold" : "font-medium"}`}>Home</span>
           </button>
 
           {/* Plans Button */}
@@ -102,10 +102,10 @@ export default function BottomNavigation() {
               onClick={() => navigate("/plans")}
             >
               <Calendar
-                className="h-6 w-6 mb-1"
+                className={`h-6 w-6 mb-1 ${location === "/plans" ? "stroke-[2.5]" : ""}`}
                 strokeWidth={2}
               />
-              <span className="text-xs font-medium">Plans</span>
+              <span className={`text-xs ${location === "/plans" ? "font-bold" : "font-medium"}`}>Plans</span>
             </button>
             {overdueCount > 0 && (
               <Badge
@@ -128,10 +128,10 @@ export default function BottomNavigation() {
             onClick={() => navigate("/insights")}
           >
             <BarChart3
-              className="h-6 w-6 mb-1"
+              className={`h-6 w-6 mb-1 ${location === "/insights" ? "stroke-[2.5]" : ""}`}
               strokeWidth={2}
             />
-            <span className="text-xs font-medium">Insights</span>
+            <span className={`text-xs ${location === "/insights" ? "font-bold" : "font-medium"}`}>Insights</span>
           </button>
 
           {/* Rewards Button */}
@@ -144,10 +144,10 @@ export default function BottomNavigation() {
             onClick={() => navigate("/rewards")}
           >
             <Trophy
-              className="h-6 w-6 mb-1"
+              className={`h-6 w-6 mb-1 ${location === "/rewards" ? "stroke-[2.5]" : ""}`}
               strokeWidth={2}
             />
-            <span className="text-xs font-medium">Rewards</span>
+            <span className={`text-xs ${location === "/rewards" ? "font-bold" : "font-medium"}`}>Rewards</span>
           </button>
 
           {/* Settings/Profile Button */}
@@ -160,10 +160,10 @@ export default function BottomNavigation() {
             onClick={() => navigate("/profile")}
           >
             <Settings
-              className="h-6 w-6 mb-1"
+              className={`h-6 w-6 mb-1 ${location === "/profile" ? "stroke-[2.5]" : ""}`}
               strokeWidth={2}
             />
-            <span className="text-xs font-medium">Settings</span>
+            <span className={`text-xs ${location === "/profile" ? "font-bold" : "font-medium"}`}>Settings</span>
           </button>
         </div>
 
