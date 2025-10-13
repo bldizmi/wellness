@@ -255,16 +255,16 @@ export function WeekCalendarStrip({
   };
 
   return (
-    <div className="bg-gray-950 py-3">
+    <div className="bg-card border-y border-border py-3">
       {/* Calendar strip with navigation - matching the reference image exactly */}
       <div className="flex items-center justify-between px-4">
         {/* Previous week button */}
         <button
           onClick={goToPreviousWeek}
-          className="p-1 hover:bg-gray-800 rounded transition-colors"
+          className="p-1 hover:bg-muted rounded transition-colors"
           aria-label="Previous week"
         >
-          <ChevronLeft className="h-4 w-4 text-gray-400" />
+          <ChevronLeft className="h-4 w-4 text-muted-foreground" />
         </button>
 
         {/* Days horizontal strip */}
@@ -283,23 +283,23 @@ export function WeekCalendarStrip({
                 className="flex flex-col items-center transition-all duration-200 cursor-pointer"
               >
                 {/* Day letter */}
-                <div className="text-xs font-normal text-gray-400 mb-0.5">
+                <div className="text-xs font-normal text-muted-foreground mb-0.5">
                   {day.dayLabel}
                 </div>
 
                 {/* Date number with selection indicator - exactly matching reference */}
                 <div className="relative">
                   {isSelected ? (
-                    /* Selected date - blue circle with white text */
+                    /* Selected date - accent circle with white text */
                     <div className="bg-accent-primary rounded-full w-8 h-8 flex items-center justify-center">
                       <span className="text-white font-medium text-sm">
                         {day.displayNumber}
                       </span>
                     </div>
                   ) : (
-                    /* Unselected dates - light gray circle with gray text */
-                    <div className="bg-gray-700 rounded-full w-8 h-8 flex items-center justify-center">
-                      <span className="text-gray-400 font-normal text-sm">
+                    /* Unselected dates - muted circle with muted text */
+                    <div className="bg-muted rounded-full w-8 h-8 flex items-center justify-center">
+                      <span className="text-muted-foreground font-normal text-sm">
                         {day.displayNumber}
                       </span>
                     </div>
@@ -313,10 +313,10 @@ export function WeekCalendarStrip({
         {/* Next week button */}
         <button
           onClick={goToNextWeek}
-          className="p-1 hover:bg-gray-800 rounded transition-colors"
+          className="p-1 hover:bg-muted rounded transition-colors"
           aria-label="Next week"
         >
-          <ChevronRight className="h-4 w-4 text-gray-400" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
       </div>
     </div>
