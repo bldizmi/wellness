@@ -79,7 +79,7 @@ export default function BottomNavigation() {
           <button
             className={`flex flex-col items-center justify-center min-h-[60px] min-w-[60px] p-2 transition-all duration-150 bg-transparent hover:bg-transparent ${
               location === "/today"
-                ? "text-accent-primary"
+                ? "text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
             onClick={() => navigate("/today")}
@@ -96,7 +96,7 @@ export default function BottomNavigation() {
             <button
               className={`flex flex-col items-center justify-center min-h-[60px] min-w-[60px] p-2 transition-all duration-150 bg-transparent hover:bg-transparent ${
                 location === "/plans"
-                  ? "text-accent-primary"
+                  ? "text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => navigate("/plans")}
@@ -122,7 +122,7 @@ export default function BottomNavigation() {
           <button
             className={`flex flex-col items-center justify-center min-h-[60px] min-w-[60px] p-2 transition-all duration-150 bg-transparent hover:bg-transparent ${
               location === "/insights"
-                ? "text-accent-primary"
+                ? "text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
             onClick={() => navigate("/insights")}
@@ -138,7 +138,7 @@ export default function BottomNavigation() {
           <button
             className={`flex flex-col items-center justify-center min-h-[60px] min-w-[60px] p-2 transition-all duration-150 bg-transparent hover:bg-transparent ${
               location === "/rewards"
-                ? "text-accent-primary"
+                ? "text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
             onClick={() => navigate("/rewards")}
@@ -154,7 +154,7 @@ export default function BottomNavigation() {
           <button
             className={`flex flex-col items-center justify-center min-h-[60px] min-w-[60px] p-2 transition-all duration-150 bg-transparent hover:bg-transparent ${
               location === "/profile"
-                ? "text-accent-primary"
+                ? "text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
             onClick={() => navigate("/profile")}
