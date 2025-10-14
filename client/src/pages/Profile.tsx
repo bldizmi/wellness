@@ -300,8 +300,8 @@ export default function Profile() {
 
     try {
       // Use Firebase Auth to send password reset email
-      const { sendPasswordResetEmail, getAuth } = await import("firebase/auth");
-      const auth = getAuth();
+      const { sendPasswordResetEmail } = await import("firebase/auth");
+      const { auth } = await import("@/lib/firebase");
       await sendPasswordResetEmail(auth, profile.email);
       toast({
         title: "Password Reset Email Sent",
