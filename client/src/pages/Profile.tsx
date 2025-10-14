@@ -800,7 +800,7 @@ export default function Profile() {
 
       {/* Profile Edit Modal */}
       <Dialog open={showProfileEditModal} onOpenChange={setShowProfileEditModal}>
-        <DialogContent className="bg-slate-800 text-foreground border-gray-700">
+        <DialogContent className="bg-card text-foreground border-border">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-blue-400" />
@@ -836,7 +836,7 @@ export default function Profile() {
                 disabled
                 className="bg-muted/50 border-border text-muted-foreground mt-1 cursor-not-allowed"
               />
-              <p className="text-xs text-gray-500 mt-1">Username cannot be changed</p>
+              <p className="text-xs text-muted-foreground mt-1">Username cannot be changed</p>
             </div>
 
             <div>
@@ -850,14 +850,14 @@ export default function Profile() {
                 disabled
                 className="bg-muted/50 border-border text-muted-foreground mt-1 cursor-not-allowed"
               />
-              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+              <p className="text-xs text-muted-foreground mt-1">Email cannot be changed</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-sm font-medium text-foreground">Role</Label>
                 <div className="mt-1">
-                  <Badge className="bg-blue-600 hover:bg-blue-600 text-foreground capitalize">
+                  <Badge className="bg-primary hover:bg-primary text-primary-foreground capitalize">
                     {profile?.role || "member"}
                   </Badge>
                 </div>
@@ -896,18 +896,18 @@ export default function Profile() {
                 <SelectTrigger className="bg-muted border-border text-foreground mt-1">
                   <SelectValue placeholder="Select timezone..." />
                 </SelectTrigger>
-                <SelectContent className="bg-muted border-border max-h-60">
-                  <SelectItem value="America/New_York" className="text-foreground hover:bg-gray-600">Eastern Time (ET)</SelectItem>
-                  <SelectItem value="America/Chicago" className="text-foreground hover:bg-gray-600">Central Time (CT)</SelectItem>
-                  <SelectItem value="America/Denver" className="text-foreground hover:bg-gray-600">Mountain Time (MT)</SelectItem>
-                  <SelectItem value="America/Los_Angeles" className="text-foreground hover:bg-gray-600">Pacific Time (PT)</SelectItem>
-                  <SelectItem value="America/Anchorage" className="text-foreground hover:bg-gray-600">Alaska Time (AKT)</SelectItem>
-                  <SelectItem value="Pacific/Honolulu" className="text-foreground hover:bg-gray-600">Hawaii Time (HT)</SelectItem>
-                  <SelectItem value="Europe/London" className="text-foreground hover:bg-gray-600">London (GMT/BST)</SelectItem>
-                  <SelectItem value="Europe/Paris" className="text-foreground hover:bg-gray-600">Paris (CET/CEST)</SelectItem>
-                  <SelectItem value="Asia/Tokyo" className="text-foreground hover:bg-gray-600">Tokyo (JST)</SelectItem>
-                  <SelectItem value="Asia/Shanghai" className="text-foreground hover:bg-gray-600">Shanghai (CST)</SelectItem>
-                  <SelectItem value="Australia/Sydney" className="text-foreground hover:bg-gray-600">Sydney (AEDT/AEST)</SelectItem>
+                <SelectContent className="bg-popover border-border max-h-60">
+                  <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
+                  <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
+                  <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
+                  <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
+                  <SelectItem value="America/Anchorage">Alaska Time (AKT)</SelectItem>
+                  <SelectItem value="Pacific/Honolulu">Hawaii Time (HT)</SelectItem>
+                  <SelectItem value="Europe/London">London (GMT/BST)</SelectItem>
+                  <SelectItem value="Europe/Paris">Paris (CET/CEST)</SelectItem>
+                  <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
+                  <SelectItem value="Asia/Shanghai">Shanghai (CST)</SelectItem>
+                  <SelectItem value="Australia/Sydney">Sydney (AEDT/AEST)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -920,7 +920,7 @@ export default function Profile() {
                 <Shield className="h-4 w-4 mr-2" />
                 Reset Password
               </Button>
-              <p className="text-xs text-gray-500 mt-1 text-center">
+              <p className="text-xs text-muted-foreground mt-1 text-center">
                 A password reset link will be sent to your email
               </p>
             </div>
@@ -934,7 +934,7 @@ export default function Profile() {
                 Cancel
               </Button>
               <Button
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                className="flex-1 bg-primary hover:bg-primary/90"
                 onClick={async () => {
                   // Update profile
                   await updateProfileMutation.mutateAsync({
