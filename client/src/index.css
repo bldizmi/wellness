@@ -76,6 +76,10 @@
     --destructive-foreground: 60 9.1% 97.8%;
     --ring: 20 14.3% 4.1%;
     --radius: 0.5rem;
+
+    /* Darker accent colors for better visibility in light mode */
+    --accent-primary: #5F3D85;
+    --accent-hover: #4A2D6B;
   }
 
   .neutral {
