@@ -27,11 +27,11 @@ export const THEME_COLORS = {
     { name: 'Clay Pink', color: '#C79F9F', id: 'clay-pink' },
   ],
   light: [
-    { name: 'Lavender', color: '#EEE6FD', id: 'lavender' },
-    { name: 'Lilac', color: '#D4B8FF', id: 'lilac' },
-    { name: 'Sky Blue', color: '#C4E1FF', id: 'sky-blue' },
-    { name: 'Mint', color: '#E6F6EB', id: 'mint' },
-    { name: 'Peach', color: '#FFE3D3', id: 'peach' },
+    { name: 'Lavender', color: '#9B7EBD', id: 'lavender' },
+    { name: 'Lilac', color: '#A77BCA', id: 'lilac' },
+    { name: 'Sky Blue', color: '#5B9BD5', id: 'sky-blue' },
+    { name: 'Mint', color: '#5FA777', id: 'mint' },
+    { name: 'Peach', color: '#E8A87C', id: 'peach' },
   ],
   neutral: [
     { name: 'Warm Sand', color: '#F5EFE6', id: 'warm-sand' },
