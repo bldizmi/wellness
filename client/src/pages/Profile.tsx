@@ -590,7 +590,8 @@ export default function Profile() {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
-            
+
+            {/* Mobile App Features - Commented out since no functionality yet
             <div className="flex items-center justify-between p-3 rounded-lg hover:bg-card/30 transition-colors cursor-pointer">
               <div className="flex items-center space-x-3">
                 <Smartphone className="h-4 w-4 text-muted-foreground" />
@@ -602,6 +603,7 @@ export default function Profile() {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
+            */}
           </div>
         </div>
 
@@ -659,7 +661,7 @@ export default function Profile() {
         )}
 
         {/* Support Section */}
-        <div>
+        {/* <div>
           <h3 className="text-sm font-medium text-muted-foreground mb-3">Support</h3>
           <div className="space-y-1">
             <div className="flex items-center justify-between p-3 rounded-lg hover:bg-card/30 transition-colors cursor-pointer">
@@ -673,7 +675,7 @@ export default function Profile() {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Mind Double Version */}
         <div className="text-center py-6">
