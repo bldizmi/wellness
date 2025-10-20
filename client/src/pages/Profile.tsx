@@ -28,7 +28,9 @@ import {
   UserPlus,
   Plus,
   Mail,
-  Settings
+  Settings,
+  UserMinus,
+  Trash2
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTheme, ThemeMode, ThemeVariant, THEME_COLORS, getThemeDisplayName } from "@/contexts/ThemeContext";
@@ -49,6 +51,8 @@ export default function Profile() {
   const [selectedCommunityForInvite, setSelectedCommunityForInvite] = useState<any>(null);
   const [showProfileEditModal, setShowProfileEditModal] = useState(false);
   const [showFamilyCommunityDialog, setShowFamilyCommunityDialog] = useState(false);
+  const [showLeaveCommunityDialog, setShowLeaveCommunityDialog] = useState(false);
+  const [selectedCommunityToLeave, setSelectedCommunityToLeave] = useState<any>(null);
 
   // Form states
   const [newCommunityName, setNewCommunityName] = useState("");
@@ -216,6 +220,40 @@ export default function Profile() {
     },
   });
 
+  // Mutation for leaving a community
+  const leaveCommunityMutation = useMutation({
+    mutationFn: async ({ communityId, isOwner }: { communityId: string; isOwner: boolean }) => {
+      return await apiRequest(`/api/community/${communityId}/leave`, {
+        method: "POST",
+        body: JSON.stringify({
+          confirm_leave: !isOwner,
+          confirm_delete: isOwner,
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/community"] });
+      setShowLeaveCommunityDialog(false);
+      setSelectedCommunityToLeave(null);
+
+      // Show success toast
+      toast({
+        title: variables.isOwner ? "Community Deleted" : "Left Community",
+        description: variables.isOwner
+          ? "The community has been deleted successfully."
+          : "You have left the community successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to leave community. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -272,6 +310,20 @@ export default function Profile() {
   const openInviteModal = (community: any) => {
     setSelectedCommunityForInvite(community);
     setShowInviteMemberModal(true);
+  };
+
+  const openLeaveCommunityDialog = (community: any) => {
+    setSelectedCommunityToLeave(community);
+    setShowLeaveCommunityDialog(true);
+  };
+
+  const handleLeaveCommunity = () => {
+    if (!selectedCommunityToLeave) return;
+    const isOwner = selectedCommunityToLeave.user_role === "owner";
+    leaveCommunityMutation.mutate({
+      communityId: selectedCommunityToLeave.id,
+      isOwner,
+    });
   };
 
   const openProfileEditModal = () => {
@@ -1099,19 +1151,45 @@ export default function Profile() {
                               {community.member_count} member{community.member_count !== 1 ? 's' : ''}
                             </div>
                           </div>
-                          {(community.user_role === "owner" || community.user_role === "admin") && (
+                          <div className="flex gap-2">
+                            {(community.user_role === "owner" || community.user_role === "admin") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  openInviteModal(community);
+                                  setShowFamilyCommunityDialog(false);
+                                }}
+                              >
+                                <Mail className="h-4 w-4 mr-1" />
+                                Invite Member
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="outline"
+                              className={community.user_role === "owner"
+                                ? "border-red-500 text-red-500 hover:bg-red-500/10"
+                                : "border-orange-500 text-orange-500 hover:bg-orange-500/10"
+                              }
                               onClick={() => {
-                                openInviteModal(community);
+                                openLeaveCommunityDialog(community);
                                 setShowFamilyCommunityDialog(false);
                               }}
                             >
-                              <Mail className="h-4 w-4 mr-1" />
-                              Invite Member
+                              {community.user_role === "owner" ? (
+                                <>
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Delete
+                                </>
+                              ) : (
+                                <>
+                                  <UserMinus className="h-4 w-4 mr-1" />
+                                  Leave
+                                </>
+                              )}
                             </Button>
-                          )}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1162,6 +1240,82 @@ export default function Profile() {
                   </Button>
                 </div>
               )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Leave Community Confirmation Dialog */}
+      <Dialog open={showLeaveCommunityDialog} onOpenChange={setShowLeaveCommunityDialog}>
+        <DialogContent className="bg-card text-foreground border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedCommunityToLeave?.user_role === "owner" ? (
+                <>
+                  <Trash2 className="h-5 w-5 text-red-500" />
+                  Delete Community
+                </>
+              ) : (
+                <>
+                  <UserMinus className="h-5 w-5 text-orange-500" />
+                  Leave Community
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              {selectedCommunityToLeave?.user_role === "owner" ? (
+                <>
+                  You are the owner of <strong>{selectedCommunityToLeave?.name}</strong>.
+                  Deleting this community will remove it for all members and cannot be undone.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to leave <strong>{selectedCommunityToLeave?.name}</strong>?
+                  You will need to be re-invited to join again.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            {selectedCommunityToLeave?.user_role === "owner" && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                <p className="text-sm text-red-400">
+                  ⚠️ Warning: This action cannot be undone. All community data will be permanently removed.
+                </p>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowLeaveCommunityDialog(false)}
+                disabled={leaveCommunityMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                className={`flex-1 ${
+                  selectedCommunityToLeave?.user_role === "owner"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-orange-600 hover:bg-orange-700"
+                }`}
+                onClick={handleLeaveCommunity}
+                disabled={leaveCommunityMutation.isPending}
+              >
+                {leaveCommunityMutation.isPending ? (
+                  "Processing..."
+                ) : selectedCommunityToLeave?.user_role === "owner" ? (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Community
+                  </>
+                ) : (
+                  <>
+                    <UserMinus className="h-4 w-4 mr-2" />
+                    Leave Community
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </DialogContent>
