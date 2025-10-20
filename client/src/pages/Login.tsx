@@ -97,13 +97,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4">
-      <Card className="w-full max-w-md bg-gray-800 border-gray-600">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <Card className="w-full max-w-md bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-2xl text-center text-white">
+          <CardTitle className="text-2xl text-center text-foreground">
             {isSignUp ? "Create Account" : "Sign In"}
           </CardTitle>
-          <CardDescription className="text-center text-gray-400">
+          <CardDescription className="text-center text-muted-foreground">
             {isSignUp
               ? "Create your MindDouble account to get started"
               : "Welcome back to MindDouble"}
@@ -112,7 +112,7 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-white">Email</Label>
+              <Label htmlFor="email" className="text-foreground">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -120,12 +120,12 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="border-gray-600 bg-gray-800 text-white placeholder:text-gray-400 focus:border-accent-primary"
+                className="border-border bg-muted text-foreground placeholder:text-muted-foreground focus:border-accent-primary"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-white">Password</Label>
+              <Label htmlFor="password" className="text-foreground">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -135,11 +135,11 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="border-gray-600 bg-gray-800 text-white placeholder:text-gray-400 focus:border-accent-primary pr-10"
+                  className="border-border bg-muted text-foreground placeholder:text-muted-foreground focus:border-accent-primary pr-10"
                 />
                 <button
                   type="button"
-                  className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-200"
+                  className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -154,7 +154,7 @@ export default function Login() {
             {/* New Confirm Password Field (Only shown during sign-up) */}
             {isSignUp && (
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-white">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -164,11 +164,11 @@ export default function Login() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="border-gray-600 bg-gray-800 text-white placeholder:text-gray-400 focus:border-accent-primary pr-10"
+                    className="border-border bg-muted text-foreground placeholder:text-muted-foreground focus:border-accent-primary pr-10"
                   />
                   <button
                     type="button"
-                    className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-200"
+                    className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? (
@@ -192,6 +192,20 @@ export default function Login() {
             </Button>
           </form>
 
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setConfirmPassword("");
+              }}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {isSignUp
+                ? "Already have an account? Sign in"
+                : "Don't have an account? Sign up"}
+            </button>
+          </div>
         </CardContent>
       </Card>
     </div>
