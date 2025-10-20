@@ -187,7 +187,7 @@ export function CreateOrEditItemModal({
         time_of_day: "anytime",
         verify_required: false,
         why_it_matters: "",
-        recurrence_type: "daily",
+        recurrence_type: "once",
         by_day: [],
         by_monthday: undefined,
         by_month: "",
@@ -231,7 +231,7 @@ export function CreateOrEditItemModal({
   const handleFrequencyToggle = (recurring: boolean) => {
     setIsRecurring(recurring);
     if (!recurring) {
-      updateField("recurrence_type", "none");
+      updateField("recurrence_type", "once");
     } else {
       updateField("recurrence_type", "daily");
     }
@@ -713,14 +713,14 @@ export function CreateOrEditItemModal({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-[600px] max-h-[90vh] flex flex-col p-0 bg-gray-900 border-gray-700"
+        className="sm:max-w-[600px] max-h-[90vh] flex flex-col p-0 bg-background border-border"
         aria-describedby="modal-description"
       >
         <div className="p-6 space-y-6 flex-1 overflow-y-auto">
           {/* Header */}
           <div>
             <h2
-              className="text-2xl font-bold text-white"
+              className="text-2xl font-bold text-foreground"
               id="modal-title"
             >
               {isEditing ? "Edit Item" : "Create New Item"}
@@ -758,7 +758,7 @@ export function CreateOrEditItemModal({
           {/* Unified Tab Structure for both creation and editing */}
           <Tabs defaultValue="details" className="w-full">
             <TabsList
-              className={`grid w-full bg-gray-800 ${isEditing && formData.verify_required ? "grid-cols-2" : "grid-cols-1"}`}
+              className={`grid w-full bg-muted ${isEditing && formData.verify_required ? "grid-cols-2" : "grid-cols-1"}`}
             >
               <TabsTrigger value="details">Details</TabsTrigger>
               {isEditing && formData.verify_required && (
@@ -774,7 +774,7 @@ export function CreateOrEditItemModal({
 
             <TabsContent value="details" className="space-y-6 mt-6">
               {/* Frequency Toggle */}
-              <div className="flex gap-2 bg-gray-800 rounded-xl p-1">
+              <div className="flex gap-2 bg-muted rounded-xl p-1">
                 <Button
                   type="button"
                   variant="ghost"
@@ -783,7 +783,7 @@ export function CreateOrEditItemModal({
                   className={`flex-1 rounded-lg transition-all font-medium ${
                     !isRecurring
                       ? "bg-accent-primary text-white shadow-md hover:bg-accent-hover"
-                      : "text-gray-400 hover:text-gray-200 hover:bg-gray-700"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/10"
                   }`}
                 >
                   One-time
@@ -796,7 +796,7 @@ export function CreateOrEditItemModal({
                   className={`flex-1 rounded-lg transition-all font-medium ${
                     isRecurring
                       ? "bg-accent-primary text-white shadow-md hover:bg-accent-hover"
-                      : "text-gray-400 hover:text-gray-200 hover:bg-gray-700"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/10"
                   }`}
                 >
                   Recurring
@@ -824,7 +824,7 @@ export function CreateOrEditItemModal({
                         className={`rounded-full ${
                           formData.recurrence_type === option.value
                             ? "bg-accent-primary hover:bg-accent-hover text-white"
-                            : "border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                            : "border-border text-foreground hover:bg-accent/10"
                         }`}
                       >
                         {option.label}
@@ -835,7 +835,7 @@ export function CreateOrEditItemModal({
                   {/* Weekly Options */}
                   {formData.recurrence_type === "weekly" && (
                     <div className="space-y-2">
-                      <Label className="text-sm text-gray-300">
+                      <Label className="text-sm text-foreground">
                         Select days:
                       </Label>
                       <div className="flex gap-2 flex-wrap">
@@ -853,7 +853,7 @@ export function CreateOrEditItemModal({
                             className={`rounded-full px-3 ${
                               formData.by_day?.includes(day.value)
                                 ? "bg-accent-primary hover:bg-accent-hover text-white"
-                                : "border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                                : "border-border text-foreground hover:bg-accent/10"
                             }`}
                           >
                             {day.label}
@@ -866,12 +866,12 @@ export function CreateOrEditItemModal({
                   {/* Monthly Options */}
                   {formData.recurrence_type === "monthly" && (
                     <div className="space-y-3">
-                      <Label className="text-sm text-gray-300">
+                      <Label className="text-sm text-foreground">
                         Repeat on:
                       </Label>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <Label className="text-xs text-gray-400">
+                          <Label className="text-xs text-muted-foreground">
                             Day of month
                           </Label>
                           <Input
@@ -886,11 +886,11 @@ export function CreateOrEditItemModal({
                               )
                             }
                             placeholder="15"
-                            className="rounded-lg bg-gray-50 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500"
+                            className="rounded-lg bg-background border-2 border-border focus:border-accent-primary text-foreground placeholder:text-muted-foreground"
                           />
                         </div>
                         <div>
-                          <Label className="text-xs text-gray-400">
+                          <Label className="text-xs text-muted-foreground">
                             Week number
                           </Label>
                           <Input
@@ -905,13 +905,13 @@ export function CreateOrEditItemModal({
                               )
                             }
                             placeholder="3"
-                            className="rounded-lg bg-gray-800 border-2 border-gray-600 focus:border-accent-primary text-white placeholder:text-gray-400"
+                            className="rounded-lg bg-background border-2 border-border focus:border-accent-primary text-foreground placeholder:text-muted-foreground"
                           />
                         </div>
                       </div>
                       {formData.by_week && (
                         <div className="space-y-2">
-                          <Label className="text-xs text-gray-400">
+                          <Label className="text-xs text-muted-foreground">
                             Day of week
                           </Label>
                           <div className="flex gap-2 flex-wrap">
@@ -929,7 +929,7 @@ export function CreateOrEditItemModal({
                                 className={`rounded-full px-3 ${
                                   formData.by_day?.includes(day.value)
                                     ? "bg-accent-primary hover:bg-accent-hover text-white"
-                                    : "border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                                    : "border-border text-foreground hover:bg-accent/10"
                                 }`}
                               >
                                 {day.label}
@@ -944,7 +944,7 @@ export function CreateOrEditItemModal({
                   {/* Yearly Options */}
                   {formData.recurrence_type === "yearly" && (
                     <div className="space-y-3">
-                      <Label className="text-sm text-gray-300">
+                      <Label className="text-sm text-foreground">
                         Repeat in:
                       </Label>
                       <Select
@@ -953,8 +953,8 @@ export function CreateOrEditItemModal({
                           updateField("by_month", value)
                         }
                       >
-                        <SelectTrigger className="rounded-lg bg-gray-800 border-2 border-gray-600 focus:border-accent-primary text-white">
-                          <SelectValue placeholder="Select month" className="placeholder:text-gray-400" />
+                        <SelectTrigger className="rounded-lg bg-background border-2 border-border focus:border-accent-primary text-foreground">
+                          <SelectValue placeholder="Select month" className="placeholder:text-muted-foreground" />
                         </SelectTrigger>
                         <SelectContent>
                           {months.map((month) => (
@@ -967,7 +967,7 @@ export function CreateOrEditItemModal({
 
                       {formData.by_month && (
                         <div>
-                          <Label className="text-xs text-gray-400">
+                          <Label className="text-xs text-muted-foreground">
                             Day of month
                           </Label>
                           <Input
@@ -982,7 +982,7 @@ export function CreateOrEditItemModal({
                               )
                             }
                             placeholder="15"
-                            className="rounded-lg bg-gray-800 border-2 border-gray-600 focus:border-accent-primary text-white placeholder:text-gray-400"
+                            className="rounded-lg bg-background border-2 border-border focus:border-accent-primary text-foreground placeholder:text-muted-foreground"
                           />
                         </div>
                       )}
@@ -998,7 +998,7 @@ export function CreateOrEditItemModal({
                       }
                       placeholder="Describe your custom recurrence pattern..."
                       rows={2}
-                      className="rounded-xl border-2 border-gray-600 focus:border-accent-primary bg-gray-800 text-white placeholder:text-gray-400"
+                      className="rounded-xl border-2 border-border focus:border-accent-primary bg-background text-foreground placeholder:text-muted-foreground"
                     />
                   )}
                 </div>
@@ -1009,7 +1009,7 @@ export function CreateOrEditItemModal({
                 value={formData.title}
                 onChange={(e) => updateField("title", e.target.value)}
                 placeholder="What would you like to accomplish?"
-                className="text-lg py-3 rounded-xl border-2 border-gray-600 focus:border-accent-primary bg-gray-800 font-medium placeholder:text-gray-400 text-white"
+                className="text-lg py-3 rounded-xl border-2 border-border focus:border-accent-primary bg-background font-medium placeholder:text-muted-foreground text-foreground"
               />
 
               {/* Type Selection */}
@@ -1028,7 +1028,7 @@ export function CreateOrEditItemModal({
                     className={`rounded-full ${
                       formData.item_type === option.value
                         ? "bg-accent-primary hover:bg-accent-hover text-white"
-                        : "border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                        : "border-border text-foreground hover:bg-accent/10"
                     }`}
                   >
                     {option.label}
@@ -1039,7 +1039,7 @@ export function CreateOrEditItemModal({
               {/* Optional Fields in Grid */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm text-gray-300 mb-2 block">
+                  <Label className="text-sm text-foreground mb-2 block">
                     {isRecurring ? "Start Date" : "Due Date"}
                   </Label>
                   <Input
@@ -1049,23 +1049,23 @@ export function CreateOrEditItemModal({
                     disabled={formData.item_type === "habit"}
                     className={`rounded-lg border-2 focus:border-accent-primary ${
                       formData.item_type === "habit"
-                        ? "bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed"
-                        : "bg-gray-800 border-gray-600 text-white"
+                        ? "bg-muted border-border text-muted-foreground cursor-not-allowed"
+                        : "bg-background border-border text-foreground"
                     }`}
                   />
                   {formData.item_type === "habit" && (
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       For habits, this date sets when the habit pattern begins
                     </p>
                   )}
                   {isRecurring && formData.item_type !== "habit" && (
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       This is when the recurring pattern will start
                     </p>
                   )}
                 </div>
                 <div>
-                  <Label className="text-sm text-gray-300 mb-2 block">
+                  <Label className="text-sm text-foreground mb-2 block">
                     Time (min)
                   </Label>
                   <Input
@@ -1081,13 +1081,13 @@ export function CreateOrEditItemModal({
                       }
                     }}
                     placeholder="30"
-                    className="rounded-lg bg-gray-800 border-2 border-gray-600 focus:border-accent-primary text-white placeholder:text-gray-400"
+                    className="rounded-lg bg-background border-2 border-border focus:border-accent-primary text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
 
                 {/* Time of Day Selection */}
                 <div>
-                  <Label className="text-sm text-gray-300 mb-2 block">
+                  <Label className="text-sm text-foreground mb-2 block">
                     Time of Day
                   </Label>
                   <div className="flex gap-2">
@@ -1105,7 +1105,7 @@ export function CreateOrEditItemModal({
                         className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm ${
                           formData.time_of_day === option.value
                             ? "bg-accent-primary hover:bg-accent-hover text-white"
-                            : "border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                            : "border-border text-foreground hover:bg-accent/10"
                         }`}
                       >
                         <span>{option.icon}</span>
@@ -1117,10 +1117,10 @@ export function CreateOrEditItemModal({
               </div>
 
               {/* Photo Verification Toggle */}
-              <div className="flex items-center justify-between p-3 bg-gray-800 rounded-xl">
+              <div className="flex items-center justify-between p-3 bg-muted rounded-xl">
                 <div className="flex items-center gap-3">
-                  <Camera className="h-5 w-5 text-gray-400" />
-                  <span className="text-sm font-medium text-white">Verify with photo</span>
+                  <Camera className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">Verify with photo</span>
                 </div>
                 <Checkbox
                   checked={formData.verify_required || false}
@@ -1134,15 +1134,15 @@ export function CreateOrEditItemModal({
               {/* Share With Section */}
               <div className="space-y-3">
                 <div className="flex items-center gap-3 mb-2">
-                  <Users className="h-5 w-5 text-gray-400" />
-                  <Label className="text-sm font-medium text-white">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                  <Label className="text-sm font-medium text-foreground">
                     Share with community members
                   </Label>
                 </div>
 
                 {communityMembers.length === 0 ? (
-                  <div className="p-4 rounded-xl border-2 border-gray-700 bg-gray-800">
-                    <p className="text-sm text-gray-400 text-center">
+                  <div className="p-4 rounded-xl border-2 border-border bg-muted">
+                    <p className="text-sm text-muted-foreground text-center">
                       To share items, create or join a community from your
                       profile.
                     </p>
@@ -1156,9 +1156,9 @@ export function CreateOrEditItemModal({
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full justify-between rounded-xl border-2 border-gray-600 bg-gray-800 hover:bg-gray-700 text-white"
+                          className="w-full justify-between rounded-xl border-2 border-border bg-background hover:bg-accent/10 text-foreground"
                         >
-                          <span className="text-gray-300">
+                          <span className="text-foreground">
                             {selectedMembers.length === 0
                               ? "Share with..."
                               : `${selectedMembers.length} member${selectedMembers.length === 1 ? "" : "s"} selected`}
@@ -1167,8 +1167,8 @@ export function CreateOrEditItemModal({
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-80 p-0" align="start">
-                        <div className="p-3 border-b border-gray-600">
-                          <h4 className="font-medium text-sm text-white">
+                        <div className="p-3 border-b border-border">
+                          <h4 className="font-medium text-sm text-foreground">
                             Select community members
                           </h4>
                         </div>
@@ -1177,7 +1177,7 @@ export function CreateOrEditItemModal({
                             communityMembers.map((member: any) => (
                               <div
                                 key={member.user_id}
-                                className="flex items-center gap-3 p-3 hover:bg-gray-700 cursor-pointer"
+                                className="flex items-center gap-3 p-3 hover:bg-accent/10 cursor-pointer"
                                 onClick={() =>
                                   toggleMemberSelection(member.user_id)
                                 }
@@ -1189,17 +1189,17 @@ export function CreateOrEditItemModal({
                                   onChange={() => {}} // Handled by onClick above
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-white truncate">
+                                  <p className="text-sm font-medium text-foreground truncate">
                                     {member.display_name || "Unknown"}
                                   </p>
-                                  <p className="text-xs text-gray-400 truncate">
+                                  <p className="text-xs text-muted-foreground truncate">
                                     {member.community_name || "Community"}
                                   </p>
                                 </div>
                               </div>
                             ))
                           ) : (
-                            <div className="p-3 text-sm text-gray-400 text-center">
+                            <div className="p-3 text-sm text-muted-foreground text-center">
                               No community members found
                             </div>
                           )}
@@ -1236,8 +1236,8 @@ export function CreateOrEditItemModal({
                         </div>
 
                         {/* Assignment Section */}
-                        <div className="p-3 bg-blue-900/20 rounded-xl">
-                          <Label className="text-sm font-medium text-blue-100 mb-2 block">
+                        <div className="p-3 bg-accent/10 rounded-xl">
+                          <Label className="text-sm font-medium text-foreground mb-2 block">
                             Assigned to
                           </Label>
                           <Select
@@ -1253,7 +1253,7 @@ export function CreateOrEditItemModal({
                               )
                             }
                           >
-                            <SelectTrigger className="bg-gray-800 border-blue-700 text-white">
+                            <SelectTrigger className="bg-background border-border text-foreground">
                               <SelectValue placeholder="Select assignee">
                                 {(() => {
                                   if (
@@ -1295,22 +1295,22 @@ export function CreateOrEditItemModal({
                               })}
                             </SelectContent>
                           </Select>
-                          <div className="mt-2 text-xs text-blue-300">
+                          <div className="mt-2 text-xs text-muted-foreground">
                             {formData.assigned_to === user?.uid && (
-                              <p className="text-xs text-gray-400">
+                              <p className="text-xs text-muted-foreground">
                                 Only you can mark this as complete
                               </p>
                             )}
                             {formData.assigned_to &&
                               formData.assigned_to !== user?.uid && (
-                                <p className="text-xs text-gray-400">
+                                <p className="text-xs text-muted-foreground">
                                   Only the assigned person can mark this as
                                   complete
                                 </p>
                               )}
                             {!formData.assigned_to &&
                               selectedMembers.length > 0 && (
-                                <p className="text-xs text-gray-400">
+                                <p className="text-xs text-muted-foreground">
                                   Anyone who can see this item can mark it as
                                   complete
                                 </p>
@@ -1329,7 +1329,7 @@ export function CreateOrEditItemModal({
                 onChange={(e) => updateField("why_it_matters", e.target.value)}
                 placeholder="Why does this matter to you? (optional)"
                 rows={2}
-                className="rounded-xl border-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 bg-gray-50 dark:bg-gray-800"
+                className="rounded-xl border-2 border-border focus:border-accent-primary bg-background text-foreground placeholder:text-muted-foreground"
               />
             </TabsContent>
 
@@ -1347,7 +1347,7 @@ export function CreateOrEditItemModal({
         </div>
 
         {/* Sticky Footer */}
-        <div className="bg-green-900/20 border-t border-green-700 p-4 flex-shrink-0">
+        <div className="bg-muted/50 border-t border-border p-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             {/* Display ID for all items - show after creation */}
             <div className="flex items-center">
@@ -1380,16 +1380,16 @@ export function CreateOrEditItemModal({
                       Delete
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="sm:max-w-[500px] bg-gray-900 border-gray-700">
+                  <AlertDialogContent className="sm:max-w-[500px] bg-background border-border">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="flex items-center gap-2 text-white">
+                      <AlertDialogTitle className="flex items-center gap-2 text-foreground">
                         <Trash2 className="h-5 w-5 text-red-400" />
-                        {isItemRecurring 
-                          ? "Delete Recurring Item" 
+                        {isItemRecurring
+                          ? "Delete Recurring Item"
                           : "Delete Item"
                         }
                       </AlertDialogTitle>
-                      <AlertDialogDescription className="text-gray-300">
+                      <AlertDialogDescription className="text-foreground">
                         {isItemRecurring ? (
                           <div className="space-y-4">
                             <p>
@@ -1400,30 +1400,30 @@ export function CreateOrEditItemModal({
                               onValueChange={(value) => setDeletionStrategy(value as "all" | "future")}
                               className="space-y-3"
                             >
-                              <div className="flex items-start space-x-2 p-3 rounded-lg border border-gray-700 hover:border-gray-600">
+                              <div className="flex items-start space-x-2 p-3 rounded-lg border border-border hover:border-accent">
                                 <RadioGroupItem value="future" id="future" className="mt-1" />
                                 <div className="grid gap-1.5 leading-none">
-                                  <Label 
-                                    htmlFor="future" 
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white cursor-pointer"
+                                  <Label
+                                    htmlFor="future"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground cursor-pointer"
                                   >
                                     Stop Future Occurrences Only
                                   </Label>
-                                  <p className="text-xs text-gray-400">
+                                  <p className="text-xs text-muted-foreground">
                                     Keeps past completions and data intact. Preserves historical data for reporting and insights.
                                   </p>
                                 </div>
                               </div>
-                              <div className="flex items-start space-x-2 p-3 rounded-lg border border-gray-700 hover:border-gray-600">
+                              <div className="flex items-start space-x-2 p-3 rounded-lg border border-border hover:border-accent">
                                 <RadioGroupItem value="all" id="all" className="mt-1" />
                                 <div className="grid gap-1.5 leading-none">
-                                  <Label 
-                                    htmlFor="all" 
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-white cursor-pointer"
+                                  <Label
+                                    htmlFor="all"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground cursor-pointer"
                                   >
                                     Delete All History
                                   </Label>
-                                  <p className="text-xs text-gray-400">
+                                  <p className="text-xs text-muted-foreground">
                                     Removes all past completions, data, and photos. Will impact reporting, insights, and rewards. Cannot be undone.
                                   </p>
                                 </div>
@@ -1438,7 +1438,7 @@ export function CreateOrEditItemModal({
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700">Cancel</AlertDialogCancel>
+                      <AlertDialogCancel className="bg-background border-border text-foreground hover:bg-accent/10">Cancel</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={confirmDelete}
                         disabled={deleteMutation.isPending}
