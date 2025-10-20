@@ -211,14 +211,14 @@ router.get("/", async (req, res) => {
       )
       .orderBy(desc(community_members.joined_at));
 
-    // Fetch member data for each community
+    // Fetch member data and pending invitations for each community
     const communitiesWithMembers = await Promise.all(
       userCommunities.map(async (community) => {
         const tablePrefix =
           process.env.NODE_ENV === "development" ? "dev_" : "";
 
         const memberQuery = `
-          SELECT 
+          SELECT
             cm.id,
             cm.user_id,
             cm.role,
@@ -228,16 +228,39 @@ router.get("/", async (req, res) => {
             u.email
           FROM ${tablePrefix}community_members cm
           INNER JOIN ${tablePrefix}users u ON cm.user_id = u.firebase_uid
-          WHERE cm.community_id = $1 
+          WHERE cm.community_id = $1
             AND cm.removed_at IS NULL
           ORDER BY cm.joined_at DESC
         `;
 
         const memberResult = await pool.query(memberQuery, [community.id]);
 
+        // Only fetch pending invitations for owner/admin
+        let pendingInvitations = [];
+        if (community.user_role === "owner" || community.user_role === "admin") {
+          const invitationQuery = `
+            SELECT
+              ci.id,
+              ci.invitee_email,
+              ci.status,
+              ci.expires_at,
+              ci.created_at,
+              u.display_name as inviter_name,
+              u.email as inviter_email
+            FROM ${tablePrefix}community_invitations ci
+            LEFT JOIN ${tablePrefix}users u ON ci.inviter_id = u.firebase_uid
+            WHERE ci.community_id = $1 AND ci.status = 'pending'
+            ORDER BY ci.created_at DESC
+          `;
+
+          const invitationResult = await pool.query(invitationQuery, [community.id]);
+          pendingInvitations = invitationResult.rows;
+        }
+
         return {
           ...community,
           members: memberResult.rows,
+          pending_invitations: pendingInvitations,
         };
       }),
     );

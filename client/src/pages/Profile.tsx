@@ -53,6 +53,7 @@ export default function Profile() {
   const [showFamilyCommunityDialog, setShowFamilyCommunityDialog] = useState(false);
   const [showLeaveCommunityDialog, setShowLeaveCommunityDialog] = useState(false);
   const [selectedCommunityToLeave, setSelectedCommunityToLeave] = useState<any>(null);
+  const [expandedCommunities, setExpandedCommunities] = useState<string[]>([]);
 
   // Form states
   const [newCommunityName, setNewCommunityName] = useState("");
@@ -254,6 +255,52 @@ export default function Profile() {
     },
   });
 
+  // Mutation for removing a member from community
+  const removeMemberMutation = useMutation({
+    mutationFn: async ({ communityId, memberId }: { communityId: string; memberId: string }) => {
+      return await apiRequest(`/api/community/${communityId}/members/${memberId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/community"] });
+      toast({
+        title: "Member Removed",
+        description: "The member has been removed from the community.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to remove member. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation for canceling a pending invitation
+  const cancelInvitationMutation = useMutation({
+    mutationFn: async (invitationId: string) => {
+      return await apiRequest(`/api/community/invitations/${invitationId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/community"] });
+      toast({
+        title: "Invitation Canceled",
+        description: "The invitation has been canceled.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to cancel invitation. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -324,6 +371,14 @@ export default function Profile() {
       communityId: selectedCommunityToLeave.id,
       isOwner,
     });
+  };
+
+  const toggleCommunityExpansion = (communityId: string) => {
+    setExpandedCommunities(prev =>
+      prev.includes(communityId)
+        ? prev.filter(id => id !== communityId)
+        : [...prev, communityId]
+    );
   };
 
   const openProfileEditModal = () => {
@@ -1142,62 +1197,154 @@ export default function Profile() {
                     Your Communities ({communities.length})
                   </h3>
                   <div className="space-y-3">
-                    {communities.map((community: any) => (
-                      <div key={community.id} className="bg-card rounded-lg p-4 border border-border">
-                        <div className="flex items-center justify-between flex-wrap gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <span className="font-medium text-foreground">{community.name}</span>
-                              <Badge variant="outline" className="text-xs">
-                                {community.user_role}
-                              </Badge>
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {community.member_count} member{community.member_count !== 1 ? 's' : ''}
+                    {communities.map((community: any) => {
+                      const isExpanded = expandedCommunities.includes(community.id);
+                      const canManage = community.user_role === "owner" || community.user_role === "admin";
+
+                      return (
+                        <div key={community.id} className="bg-card rounded-lg border border-border overflow-hidden">
+                          {/* Community Header */}
+                          <div
+                            className="p-4 cursor-pointer hover:bg-card/80 transition-colors"
+                            onClick={() => toggleCommunityExpansion(community.id)}
+                          >
+                            <div className="flex items-center justify-between flex-wrap gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                  <span className="font-medium text-foreground">{community.name}</span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {community.user_role}
+                                  </Badge>
+                                  <ChevronDown
+                                    className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+                                      isExpanded ? "rotate-180" : ""
+                                    }`}
+                                  />
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {community.member_count} member{community.member_count !== 1 ? 's' : ''}
+                                </div>
+                              </div>
+                              <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                                {canManage && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      openInviteModal(community);
+                                      setShowFamilyCommunityDialog(false);
+                                    }}
+                                  >
+                                    <Mail className="h-4 w-4 mr-1" />
+                                    Invite
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className={community.user_role === "owner"
+                                    ? "border-red-500 text-red-500 hover:bg-red-500/10"
+                                    : "border-orange-500 text-orange-500 hover:bg-orange-500/10"
+                                  }
+                                  onClick={() => {
+                                    openLeaveCommunityDialog(community);
+                                    setShowFamilyCommunityDialog(false);
+                                  }}
+                                >
+                                  {community.user_role === "owner" ? (
+                                    <>
+                                      <Trash2 className="h-4 w-4 mr-1" />
+                                      Delete
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserMinus className="h-4 w-4 mr-1" />
+                                      Leave
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            {(community.user_role === "owner" || community.user_role === "admin") && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  openInviteModal(community);
-                                  setShowFamilyCommunityDialog(false);
-                                }}
-                              >
-                                <Mail className="h-4 w-4 mr-1" />
-                                Invite Member
-                              </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className={community.user_role === "owner"
-                                ? "border-red-500 text-red-500 hover:bg-red-500/10"
-                                : "border-orange-500 text-orange-500 hover:bg-orange-500/10"
-                              }
-                              onClick={() => {
-                                openLeaveCommunityDialog(community);
-                                setShowFamilyCommunityDialog(false);
-                              }}
-                            >
-                              {community.user_role === "owner" ? (
-                                <>
-                                  <Trash2 className="h-4 w-4 mr-1" />
-                                  Delete
-                                </>
-                              ) : (
-                                <>
-                                  <UserMinus className="h-4 w-4 mr-1" />
-                                  Leave
-                                </>
+
+                          {/* Expanded Content */}
+                          {isExpanded && (
+                            <div className="border-t border-border bg-card/50 p-4 space-y-4">
+                              {/* Members Section */}
+                              {community.members && community.members.length > 0 && (
+                                <div>
+                                  <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                                    <Users className="h-4 w-4 text-blue-500" />
+                                    Members ({community.members.length})
+                                  </h4>
+                                  <div className="space-y-2">
+                                    {community.members.map((member: any) => (
+                                      <div key={member.user_id} className="flex items-center justify-between p-2 bg-card rounded-md">
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-sm font-medium text-foreground truncate">
+                                            {member.display_name || member.email}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground">
+                                            {member.role} • Joined {new Date(member.joined_at).toLocaleDateString()}
+                                          </div>
+                                        </div>
+                                        {canManage && member.role !== "owner" && member.user_id !== profile?.firebase_uid && (
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                                            onClick={() => removeMemberMutation.mutate({
+                                              communityId: community.id,
+                                              memberId: member.id
+                                            })}
+                                            disabled={removeMemberMutation.isPending}
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </Button>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
                               )}
-                            </Button>
-                          </div>
+
+                              {/* Pending Invitations Section - Only for owner/admin */}
+                              {canManage && community.pending_invitations && community.pending_invitations.length > 0 && (
+                                <div>
+                                  <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-orange-500" />
+                                    Pending Invitations ({community.pending_invitations.length})
+                                  </h4>
+                                  <div className="space-y-2">
+                                    {community.pending_invitations.map((invitation: any) => (
+                                      <div key={invitation.id} className="flex items-center justify-between p-2 bg-card rounded-md">
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-sm font-medium text-foreground truncate">
+                                            {invitation.invitee_email}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground">
+                                            Expires {new Date(invitation.expires_at).toLocaleDateString()}
+                                          </div>
+                                        </div>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                                          onClick={() => cancelInvitationMutation.mutate(invitation.id)}
+                                          disabled={cancelInvitationMutation.isPending}
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
