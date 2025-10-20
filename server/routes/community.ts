@@ -474,17 +474,20 @@ router.get("/invitations/pending", async (req, res) => {
     // Get pending invitations using direct SQL
     const invitationsResult = await pool.query(
       `
-      SELECT 
+      SELECT
         ci.id,
         ci.community_id,
         ci.inviter_id as invited_by,
         ci.created_at,
         ci.expires_at,
         c.name as community_name,
-        c.type as community_type
+        c.type as community_type,
+        u.display_name as inviter_name,
+        u.email as inviter_email
       FROM ${tablePrefix}community_invitations ci
       JOIN ${tablePrefix}communities c ON ci.community_id = c.id
-      WHERE ci.invitee_email = $1 
+      LEFT JOIN ${tablePrefix}users u ON ci.inviter_id = u.firebase_uid
+      WHERE ci.invitee_email = $1
         AND ci.status = 'pending'
         AND c.deleted_at IS NULL
       ORDER BY ci.created_at DESC

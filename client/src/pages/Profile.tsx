@@ -1090,6 +1090,11 @@ export default function Profile() {
                                 {invitation.community_type}
                               </Badge>
                             </div>
+                            {invitation.inviter_name && (
+                              <div className="text-sm text-muted-foreground mb-1">
+                                Invited by: <span className="text-foreground font-medium">{invitation.inviter_name}</span>
+                              </div>
+                            )}
                             <div className="text-sm text-muted-foreground">
                               Expires: {new Date(invitation.expires_at).toLocaleDateString()}
                             </div>
