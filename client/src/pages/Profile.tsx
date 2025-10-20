@@ -289,7 +289,10 @@ export default function Profile() {
   };
 
   const handlePasswordReset = async () => {
+    console.log("🔐 Password reset initiated");
+
     if (!profile?.email) {
+      console.error("❌ No email address found in profile");
       toast({
         title: "Error",
         description: "No email address found",
@@ -298,17 +301,27 @@ export default function Profile() {
       return;
     }
 
+    console.log("📧 Sending password reset email to:", profile.email);
+
     try {
       // Use Firebase Auth to send password reset email
       const { sendPasswordResetEmail } = await import("firebase/auth");
       const { auth } = await import("@/lib/firebase");
+      console.log("🔧 Firebase auth instance loaded");
+      console.log("🔧 Firebase Project ID:", auth.config.apiKey ? "Configured" : "Missing");
+      console.log("🔧 Auth Domain:", auth.config.authDomain);
+
       await sendPasswordResetEmail(auth, profile.email);
+      console.log("✅ Password reset email sent successfully to:", profile.email);
+      console.log("📬 Email will be sent from Firebase with template configured in Firebase Console");
+
       toast({
         title: "Password Reset Email Sent",
         description: "Check your inbox for password reset instructions.",
       });
     } catch (error) {
-      console.error("Password reset error:", error);
+      console.error("❌ Password reset error:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
       toast({
         title: "Failed to Send Email",
         description: "Please try again or contact support.",

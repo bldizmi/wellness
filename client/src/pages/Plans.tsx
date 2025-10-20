@@ -450,10 +450,10 @@ export default function Plans() {
                 key={tab.id}
                 variant={itemTypeFilter === tab.id ? "default" : "ghost"}
                 size="sm"
-                className={`rounded-full px-3 py-1 text-sm transition-all ${
+                className={`rounded-full px-3 py-1 text-sm font-semibold transition-all ${
                   itemTypeFilter === tab.id
                     ? "bg-blue-600 text-foreground hover:bg-blue-700"
-                    : "bg-card text-gray-300 hover:bg-gray-700"
+                    : "bg-card text-foreground hover:bg-gray-700"
                 }`}
                 onClick={() => setItemTypeFilter(tab.id)}
               >
