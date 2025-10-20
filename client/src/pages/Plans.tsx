@@ -484,10 +484,15 @@ export default function Plans() {
                   <div className="flex items-center gap-2">
                     <p className="text-foreground font-medium text-sm">{item.title}</p>
                     {/* Recurrence indicator */}
-                    {item.recurrence_type && item.recurrence_type !== 'once' && (
+                    {item.recurrence_type && item.recurrence_type !== 'once' ? (
                       <span className="text-blue-400 text-xs flex items-center gap-1">
                         <Repeat className="h-3 w-3" />
                         {item.recurrence_type.charAt(0).toUpperCase() + item.recurrence_type.slice(1)}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        Once
                       </span>
                     )}
                   </div>
