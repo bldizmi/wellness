@@ -65,7 +65,7 @@ export function CreateOrEditItemModal({
     time_of_day: "anytime" as "morning" | "afternoon" | "anytime",
     verify_required: false,
     why_it_matters: "",
-    recurrence_type: "daily" as const,
+    recurrence_type: "once" as const,
     by_day: [] as string[],
     by_monthday: undefined as number | undefined,
     by_month: "",
