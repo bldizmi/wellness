@@ -21,14 +21,19 @@ export async function generateNextDisplayId(): Promise<string> {
     const legacyTableName = isDevelopment ? 'dev_items' : 'items';
     
     // Get the highest display_id from both new and legacy systems
+    // CRITICAL FIX: Parse and sort numerically, not alphabetically
+    // Extract number from "#1234A" format and sort by that number
     const result = await db.execute(sql`
-      SELECT display_id 
+      SELECT display_id
       FROM (
         SELECT display_id FROM ${sql.identifier(newTableName)} WHERE display_id IS NOT NULL
         UNION ALL
         SELECT display_id FROM ${sql.identifier(legacyTableName)} WHERE display_id IS NOT NULL
       ) combined
-      ORDER BY display_id DESC 
+      WHERE display_id ~ '^#[0-9]+[A-Z]$'
+      ORDER BY
+        CAST(SUBSTRING(display_id FROM 2 FOR LENGTH(display_id) - 2) AS INTEGER) DESC,
+        RIGHT(display_id, 1) DESC
       LIMIT 1
     `);
 

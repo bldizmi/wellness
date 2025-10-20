@@ -309,8 +309,8 @@ export async function getPersonalProgressItemsNew(
       // FIX: Database stores 'complete' not 'completed'!
       is_completed_for_date:
         instance.status === "complete" || instance.status === "completed",
-      // Also ensure recurrence_type is set for proper detection
-      recurrence_type: instance.recurrence_type || "daily", // Default for all recurring items from this table
+      // CRITICAL FIX: For one-time items (is_recurring = false), use "once", not "daily"
+      recurrence_type: instance.is_recurring === false ? "once" : (instance.recurrence_type || "daily"),
       // Parse image_urls JSON string to array for frontend
       image_urls: imageUrlsArray,
     };
@@ -548,8 +548,8 @@ export async function getSharedItemsNew(userId: string, targetDate: string) {
       // FIX: Database stores 'complete' not 'completed'!
       is_completed_for_date:
         instance.status === "complete" || instance.status === "completed",
-      // Also ensure recurrence_type is set for proper detection
-      recurrence_type: instance.recurrence_type || "daily", // Default for all recurring items from this table
+      // CRITICAL FIX: For one-time items (is_recurring = false), use "once", not "daily"
+      recurrence_type: instance.is_recurring === false ? "once" : (instance.recurrence_type || "daily"),
       // Parse image_urls JSON string to array for frontend
       image_urls: imageUrlsArray,
     };
@@ -683,8 +683,8 @@ export async function getWeekProgressNew(userId: string, weekDates: string[]) {
         // CRITICAL: Frontend expects is_completed_for_date, not just status
         // FIX: Database stores 'complete' not 'completed'!
         is_completed_for_date: isCompleted,
-        // Also ensure recurrence_type is set for proper detection
-        recurrence_type: "daily", // Default for all recurring items from this table
+        // CRITICAL FIX: For one-time items (is_recurring = false), use "once", not "daily"
+        recurrence_type: instance.is_recurring === false ? "once" : (instance.recurrence_type || "daily"),
       };
     };
 
