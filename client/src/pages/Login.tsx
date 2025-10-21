@@ -201,9 +201,9 @@ export default function Login() {
               }}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              {isSignUp
+              {/* {isSignUp
                 ? "Already have an account? Sign in"
-                : "Don't have an account? Sign up"}
+                : "Don't have an account? Sign up"} */}
             </button>
           </div>
         </CardContent>
