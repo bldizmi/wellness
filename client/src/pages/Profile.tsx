@@ -1221,8 +1221,19 @@ export default function Profile() {
                                     }`}
                                   />
                                 </div>
-                                <div className="text-sm text-muted-foreground">
-                                  {community.member_count} member{community.member_count !== 1 ? 's' : ''}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                    <Users className="h-3.5 w-3.5" />
+                                    <span>{community.member_count} member{community.member_count !== 1 ? 's' : ''}</span>
+                                  </div>
+                                  {canManage && community.pending_invitations && community.pending_invitations.length > 0 && (
+                                    <div className="flex items-center gap-1 text-sm">
+                                      <Clock className="h-3.5 w-3.5 text-orange-500" />
+                                      <span className="text-orange-500 font-medium">
+                                        {community.pending_invitations.length} pending
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                               <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
