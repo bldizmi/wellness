@@ -808,10 +808,10 @@ export default function Profile() {
 
       {/* Create Community Modal */}
       <Dialog open={showCreateCommunityModal} onOpenChange={setShowCreateCommunityModal}>
-        <DialogContent className="bg-slate-800 text-foreground border-gray-700">
+        <DialogContent className="bg-card text-foreground border-border">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 text-purple-400" />
+              <Plus className="h-5 w-5 text-accent-primary" />
               Create New Community
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
@@ -828,7 +828,7 @@ export default function Profile() {
                 value={newCommunityName}
                 onChange={(e) => setNewCommunityName(e.target.value)}
                 placeholder="Enter community name..."
-                className="bg-muted border-border text-foreground placeholder-gray-400 mt-1"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground mt-1"
                 maxLength={100}
               />
             </div>
@@ -840,15 +840,15 @@ export default function Profile() {
                 <SelectTrigger className="bg-muted border-border text-foreground mt-1">
                   <SelectValue placeholder="Select community type..." />
                 </SelectTrigger>
-                <SelectContent className="bg-muted border-border">
-                  <SelectItem value="family" className="text-foreground hover:bg-gray-600">Family</SelectItem>
-                  <SelectItem value="friends" className="text-foreground hover:bg-gray-600">Friends</SelectItem>
-                  <SelectItem value="work" className="text-foreground hover:bg-gray-600">Work</SelectItem>
-                  <SelectItem value="study" className="text-foreground hover:bg-gray-600">Study</SelectItem>
-                  <SelectItem value="hobby" className="text-foreground hover:bg-gray-600">Hobby</SelectItem>
-                  <SelectItem value="roommates" className="text-foreground hover:bg-gray-600">Roommates</SelectItem>
-                  <SelectItem value="team" className="text-foreground hover:bg-gray-600">Team</SelectItem>
-                  <SelectItem value="custom" className="text-foreground hover:bg-gray-600">Custom</SelectItem>
+                <SelectContent className="bg-popover border-border">
+                  <SelectItem value="family" className="text-foreground hover:bg-accent">Family</SelectItem>
+                  <SelectItem value="friends" className="text-foreground hover:bg-accent">Friends</SelectItem>
+                  <SelectItem value="work" className="text-foreground hover:bg-accent">Work</SelectItem>
+                  <SelectItem value="study" className="text-foreground hover:bg-accent">Study</SelectItem>
+                  <SelectItem value="hobby" className="text-foreground hover:bg-accent">Hobby</SelectItem>
+                  <SelectItem value="roommates" className="text-foreground hover:bg-accent">Roommates</SelectItem>
+                  <SelectItem value="team" className="text-foreground hover:bg-accent">Team</SelectItem>
+                  <SelectItem value="custom" className="text-foreground hover:bg-accent">Custom</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -862,7 +862,7 @@ export default function Profile() {
                 Cancel
               </Button>
               <Button
-                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                className="flex-1 bg-accent-primary hover:bg-accent-hover"
                 onClick={handleCreateCommunity}
                 disabled={!newCommunityName.trim() || !newCommunityType || createCommunityMutation.isPending}
               >
@@ -875,10 +875,10 @@ export default function Profile() {
 
       {/* Invite Member Modal */}
       <Dialog open={showInviteMemberModal} onOpenChange={setShowInviteMemberModal}>
-        <DialogContent className="bg-slate-800 text-foreground border-gray-700">
+        <DialogContent className="bg-card text-foreground border-border">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-blue-400" />
+              <Mail className="h-5 w-5 text-accent-primary" />
               Invite Member to {selectedCommunityForInvite?.name}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
@@ -896,7 +896,7 @@ export default function Profile() {
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="Enter email address..."
-                className="bg-muted border-border text-foreground placeholder-gray-400 mt-1"
+                className="bg-muted border-border text-foreground placeholder:text-muted-foreground mt-1"
               />
             </div>
             <div className="flex gap-3 pt-4">
@@ -909,7 +909,7 @@ export default function Profile() {
                 Cancel
               </Button>
               <Button
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                className="flex-1 bg-accent-primary hover:bg-accent-hover"
                 onClick={handleInviteMember}
                 disabled={!inviteEmail.trim() || inviteMemberMutation.isPending}
               >
