@@ -325,6 +325,7 @@ export const user_profiles = pgTable(`${TABLE_PREFIX}user_profiles`, {
   user_id: text("user_id").primaryKey(), // Firebase UID
   display_name: text("display_name").notNull(),
   avatar_url: text("avatar_url"),
+  phone_number: text("phone_number"), // Optional mobile number for SMS notifications
   life_stage: jsonb("life_stage"), // array of strings: ["student", "parent", "entrepreneur"]
   values: jsonb("values"), // JSONB array: ["growth", "rest"]
   overall_goals: jsonb("overall_goals"), // JSONB array: ["build a business", "get healthy"]
@@ -544,6 +545,7 @@ export const userProfileSchema = z.object({
   user_id: z.string(),
   display_name: z.string().optional(),
   avatar_url: z.string().nullable(),
+  phone_number: z.string().nullable(),
   life_stage: z.array(z.string()).optional(),
   values: z.array(z.string()).nullable(),
   overall_goals: z.array(z.string()).nullable(),

@@ -60,7 +60,7 @@ export default function Profile() {
   const [newCommunityType, setNewCommunityType] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [editDisplayName, setEditDisplayName] = useState("");
-  const [editAvatarUrl, setEditAvatarUrl] = useState("");
+  const [editPhoneNumber, setEditPhoneNumber] = useState("");
   const [editTimezone, setEditTimezone] = useState("");
 
   const {
@@ -195,10 +195,10 @@ export default function Profile() {
 
   // Mutation for updating profile
   const updateProfileMutation = useMutation({
-    mutationFn: async ({ display_name, avatar_url }: { display_name: string; avatar_url: string }) => {
+    mutationFn: async ({ display_name, phone_number }: { display_name: string; phone_number: string }) => {
       return await apiRequest("/api/profile", {
         method: "PATCH",
-        body: JSON.stringify({ display_name, avatar_url }),
+        body: JSON.stringify({ display_name, phone_number }),
         headers: { "Content-Type": "application/json" },
       });
     },
@@ -390,7 +390,7 @@ export default function Profile() {
       return;
     }
     setEditDisplayName(profile?.display_name || "");
-    setEditAvatarUrl(profile?.avatar_url || "");
+    setEditPhoneNumber(profile?.phone_number || "");
     setEditTimezone(profile?.timezone || "America/Los_Angeles");
     setShowProfileEditModal(true);
   };
@@ -997,15 +997,15 @@ export default function Profile() {
               </div>
             </div>
             <div>
-              <Label htmlFor="avatar-url" className="text-sm font-medium text-foreground">
-                Avatar URL (optional)
+              <Label htmlFor="phone-number" className="text-sm font-medium text-foreground">
+                Mobile Number (optional)
               </Label>
               <Input
-                id="avatar-url"
-                type="url"
-                value={editAvatarUrl}
-                onChange={(e) => setEditAvatarUrl(e.target.value)}
-                placeholder="https://example.com/avatar.jpg"
+                id="phone-number"
+                type="tel"
+                value={editPhoneNumber}
+                onChange={(e) => setEditPhoneNumber(e.target.value)}
+                placeholder="(555) 123-4567"
                 className="bg-muted border-border text-foreground placeholder-gray-400 mt-1"
               />
             </div>
@@ -1061,7 +1061,7 @@ export default function Profile() {
                   // Update profile
                   await updateProfileMutation.mutateAsync({
                     display_name: editDisplayName.trim(),
-                    avatar_url: editAvatarUrl.trim()
+                    phone_number: editPhoneNumber.trim()
                   });
 
                   // Update timezone separately if changed
