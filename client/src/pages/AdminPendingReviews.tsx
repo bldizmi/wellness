@@ -261,23 +261,34 @@ export default function AdminPendingReviews() {
                       </DialogHeader>
 
                       <div className="space-y-4">
-                        {item.image_urls?.length > 0 && (
-                          <div>
-                            <h4 className="font-medium mb-2">
-                              Uploaded Photos:
-                            </h4>
-                            <div className="flex flex-wrap gap-2">
-                              {item.image_urls.map((url, index) => (
-                                <img
-                                  key={index}
-                                  src={url}
-                                  alt={`Verification photo ${index + 1}`}
-                                  className="max-w-full h-40 rounded-lg border object-cover"
-                                />
-                              ))}
+                        {(() => {
+                          // Parse image_urls if it's a JSON string
+                          let imageUrls = item.image_urls;
+                          if (typeof imageUrls === 'string') {
+                            try {
+                              imageUrls = JSON.parse(imageUrls);
+                            } catch (e) {
+                              imageUrls = [];
+                            }
+                          }
+                          return imageUrls?.length > 0 && (
+                            <div>
+                              <h4 className="font-medium mb-2">
+                                Uploaded Photos:
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {imageUrls.map((url: string, index: number) => (
+                                  <img
+                                    key={index}
+                                    src={url}
+                                    alt={`Verification photo ${index + 1}`}
+                                    className="max-w-full h-40 rounded-lg border object-cover"
+                                  />
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          );
+                        })()}
 
                         {item.ai_feedback && (
                           <div>
