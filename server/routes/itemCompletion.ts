@@ -479,6 +479,94 @@ router.post("/:id/complete", async (req, res) => {
       );
     }
 
+    // SHARED ITEM CACHE INVALIDATION: Invalidate cache for all users who can see this item
+    try {
+      console.log(`🔄 SHARED CACHE: Checking if item ${itemId} is shared with other users`);
+
+      // Fetch item details to get created_by and shared_with
+      let itemDetails = null;
+
+      // Check new architecture first
+      try {
+        const instanceQuery = await db.execute(sql`
+          SELECT ri.shared_with, rt.created_by
+          FROM ${sql.raw(instancesTable)} ri
+          LEFT JOIN ${sql.raw(isDevelopment ? "dev_recurring_templates" : "recurring_templates")} rt
+            ON ri.template_id = rt.id
+          WHERE ri.id = ${itemId}
+          LIMIT 1
+        `);
+        if (instanceQuery.rows && instanceQuery.rows.length > 0) {
+          itemDetails = instanceQuery.rows[0];
+        }
+      } catch (error) {
+        console.log(`🔍 Item ${itemId} not in new architecture, checking legacy`);
+      }
+
+      // If not found in new architecture, check legacy items table
+      if (!itemDetails) {
+        const [legacyItem] = await db
+          .select({
+            created_by: items.created_by,
+            shared_with: items.shared_with
+          })
+          .from(items)
+          .where(eq(items.id, itemId));
+
+        if (legacyItem) {
+          itemDetails = legacyItem;
+        }
+      }
+
+      // Invalidate cache for all users who can see this item
+      if (itemDetails) {
+        const usersToInvalidate = new Set<string>();
+
+        // Add creator
+        if (itemDetails.created_by) {
+          usersToInvalidate.add(itemDetails.created_by);
+        }
+
+        // Add all users in shared_with array
+        if (itemDetails.shared_with) {
+          let sharedWith = itemDetails.shared_with;
+          // Parse JSON string if needed
+          if (typeof sharedWith === 'string') {
+            try {
+              sharedWith = JSON.parse(sharedWith);
+            } catch (e) {
+              console.error('Failed to parse shared_with:', e);
+            }
+          }
+
+          if (Array.isArray(sharedWith)) {
+            sharedWith.forEach(userId => usersToInvalidate.add(userId));
+          }
+        }
+
+        // Add the user who completed it
+        usersToInvalidate.add(user_id);
+
+        console.log(`🗑️ SHARED CACHE: Invalidating cache for ${usersToInvalidate.size} users:`, Array.from(usersToInvalidate));
+
+        // Invalidate cache for all users
+        for (const userId of usersToInvalidate) {
+          const personalCacheKey = "personal-progress-v2-" + finalCompletionDate;
+          const sharedCacheKey = "shared-items-v2-" + finalCompletionDate;
+
+          cacheService.invalidate(userId, personalCacheKey);
+          cacheService.invalidate(userId, sharedCacheKey);
+
+          // Also invalidate week cache
+          invalidateWeekCache(userId, finalCompletionDate);
+
+          console.log(`🗑️ INVALIDATED CACHE: for user ${userId}`);
+        }
+      }
+    } catch (cacheError) {
+      console.error(`⚠️ SHARED CACHE ERROR: Failed to invalidate shared user caches:`, cacheError);
+    }
+
     // PHASE 1: Check if user is enabled for targeted cache invalidation
     if (TARGETED_CACHE_INVALIDATION_USERS.has(user_id)) {
       console.log(`🎯 PHASE 1: Using targeted cache invalidation for user ${user_id}`);
