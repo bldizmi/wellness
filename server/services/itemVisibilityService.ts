@@ -125,14 +125,10 @@ export async function getSharedItems(userId: string) {
 /**
  * Check if user has access to a specific item (HYBRID: checks both legacy and new architecture)
  * FAANG-Level Implementation: Zero breaking changes, graceful fallback
- * @param userId - The user ID to check access for
- * @param itemId - The item ID to check access to
- * @param checkCompletionPermission - If true, also verifies user can complete the item (must be assigned_to or item has no assignee)
  */
 export async function userHasItemAccess(
   userId: string,
   itemId: string,
-  checkCompletionPermission: boolean = false,
 ): Promise<boolean> {
   console.log(
     `🔍 HYBRID ACCESS: Checking access for user ${userId} to item ${itemId}`,
@@ -165,16 +161,6 @@ export async function userHasItemAccess(
       console.log(
         `✅ HYBRID ACCESS: Found item ${itemId} in legacy architecture`,
       );
-
-      // If checking completion permission, verify user is assigned or item has no assignee
-      if (checkCompletionPermission) {
-        const canComplete = !legacyItem.assigned_to || legacyItem.assigned_to === userId;
-        console.log(
-          `🔒 COMPLETION CHECK: User ${userId} can complete item ${itemId}: ${canComplete} (assigned_to: ${legacyItem.assigned_to})`,
-        );
-        return canComplete;
-      }
-
       return true;
     }
 
@@ -251,16 +237,6 @@ export async function userHasItemAccess(
         );
 
         if (hasOwnerAccess || hasAssignedAccess || hasSharedAccess) {
-          // If checking completion permission, verify user is assigned or item has no assignee
-          if (checkCompletionPermission) {
-            const canComplete = !item.assigned_to || item.assigned_to === userId;
-            console.log(
-              `🔒 COMPLETION CHECK: User ${userId} can complete item ${itemId}: ${canComplete} (assigned_to: ${item.assigned_to})`,
-            );
-            if (!canComplete) {
-              return false;
-            }
-          }
           newArchItem = item;
         }
       } else {
@@ -314,16 +290,6 @@ export async function userHasItemAccess(
       console.log(
         `🔄 HYBRID ACCESS: Fallback to legacy only for item ${itemId}: ${hasAccess}`,
       );
-
-      // If checking completion permission, verify user is assigned or item has no assignee
-      if (hasAccess && checkCompletionPermission) {
-        const canComplete = !candidateItem.assigned_to || candidateItem.assigned_to === userId;
-        console.log(
-          `🔒 COMPLETION CHECK (fallback): User ${userId} can complete item ${itemId}: ${canComplete} (assigned_to: ${candidateItem.assigned_to})`,
-        );
-        return canComplete;
-      }
-
       return hasAccess;
     } catch (fallbackError) {
       console.error(

@@ -273,10 +273,10 @@ router.post("/:id/complete", async (req, res) => {
     console.log(`🎯 PHASE 1 ENTRY: POST /api/item/${itemId}/complete for user ${user_id}`);
     console.log(`🎯 PHASE 1 DATE: finalCompletionDate = ${finalCompletionDate}`);
 
-    // Check if user has access to this item AND can complete it
-    const hasAccess = await userHasItemAccess(user_id, itemId, true);
+    // Check if user has access to this item
+    const hasAccess = await userHasItemAccess(user_id, itemId);
     if (!hasAccess) {
-      return res.status(403).json({ error: "You do not have permission to complete this item. Only the assigned user can mark it as complete." });
+      return res.status(404).json({ error: "Item not found or unauthorized" });
     }
 
     // HYBRID COMPLETION CHECK: Check both new architecture and legacy systems
@@ -586,10 +586,10 @@ router.delete("/:id/completions/:date", async (req, res) => {
         .json({ error: "Invalid date format. Use YYYY-MM-DD" });
     }
 
-    // Check if user has access to this item AND can uncomplete it
-    const hasAccess = await userHasItemAccess(user_id, itemId, true);
+    // Check if user has access to this item
+    const hasAccess = await userHasItemAccess(user_id, itemId);
     if (!hasAccess) {
-      return res.status(403).json({ error: "You do not have permission to uncomplete this item. Only the assigned user can modify completion status." });
+      return res.status(404).json({ error: "Item not found or unauthorized" });
     }
 
     // HYBRID UNCOMPLETE: Support both legacy items and new recurring_instances architecture

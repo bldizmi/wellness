@@ -93,9 +93,7 @@ export default function Today() {
   const { user, userData } = useAuth();
   const [editingItem, setEditingItem] = useState<ItemData | null>(null);
   const [verifyingItem, setVerifyingItem] = useState<ItemData | null>(null);
-  const [viewingPhotosItem, setViewingPhotosItem] = useState<ItemData | null>(
-    null,
-  );
+  const [viewingPhotosItem, setViewingPhotosItem] = useState<ItemData | null>(null);
   const [sharingItem, setSharingItem] = useState<ItemData | null>(null);
   const [selectedCommunity, setSelectedCommunity] = useState<string>("");
   const [shareVisibility, setShareVisibility] = useState<string>("community");
@@ -124,9 +122,7 @@ export default function Today() {
     if (userData?.timezone) {
       const newToday = getUserToday(userData.timezone);
       if (newToday !== selectedDate) {
-        console.log(
-          `🌍 TIMEZONE: Updating selected date from ${selectedDate} to ${newToday} for timezone ${userData.timezone}`,
-        );
+        console.log(`🌍 TIMEZONE: Updating selected date from ${selectedDate} to ${newToday} for timezone ${userData.timezone}`);
         setSelectedDate(newToday);
       }
     }
@@ -501,14 +497,11 @@ export default function Today() {
     if (tabId === "habits" || tabId === "focus") {
       const habitsStatus = getFilterStatus("habits");
       const focusStatus = getFilterStatus("focus");
-
-      const totalCompleted =
-        habitsStatus.totalCount -
-        habitsStatus.incompleteCount +
-        (focusStatus.totalCount - focusStatus.incompleteCount);
+      
+      const totalCompleted = (habitsStatus.totalCount - habitsStatus.incompleteCount) + 
+                            (focusStatus.totalCount - focusStatus.incompleteCount);
       const totalItems = habitsStatus.totalCount + focusStatus.totalCount;
-      const combinedPercentage =
-        totalItems > 0 ? (totalCompleted / totalItems) * 100 : 0;
+      const combinedPercentage = totalItems > 0 ? (totalCompleted / totalItems) * 100 : 0;
 
       // Use gradient that blends both tab colors for combined progress
       const combinedColor = "from-blue-500 via-purple-500 to-purple-600";
@@ -536,8 +529,7 @@ export default function Today() {
       completed: completedCount,
       total: status.totalCount,
       percentage: progressPercentage,
-      color:
-        colors[tabId as keyof typeof colors] || "from-blue-500 to-blue-600",
+      color: colors[tabId as keyof typeof colors] || "from-blue-500 to-blue-600",
     };
   };
 
@@ -626,20 +618,18 @@ export default function Today() {
               })()}
 
               {/* Photo verification indicator - only show if photos have been uploaded */}
-              {item.verify_required &&
-                item.image_urls &&
-                item.image_urls.length > 0 && (
-                  <div
-                    className="flex items-center gap-1 cursor-pointer hover:text-blue-300"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setViewingPhotosItem(item);
-                    }}
-                  >
-                    <span className="text-blue-400">📸</span>
-                    <span className="text-blue-400">View photos</span>
-                  </div>
-                )}
+              {item.verify_required && item.image_urls && item.image_urls.length > 0 && (
+                <div
+                  className="flex items-center gap-1 cursor-pointer hover:text-blue-300"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setViewingPhotosItem(item);
+                  }}
+                >
+                  <span className="text-blue-400">📸</span>
+                  <span className="text-blue-400">View photos</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -674,9 +664,7 @@ export default function Today() {
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 text-card-foreground animate-spin" />
                 ) : (
-                  isCompleted && (
-                    <Check className="h-4 w-4 text-card-foreground" />
-                  )
+                  isCompleted && <Check className="h-4 w-4 text-card-foreground" />
                 )}
               </button>
             )}
@@ -813,9 +801,7 @@ export default function Today() {
         {/* Incomplete items */}
         {group.incompleteItems.length > 0 && (
           <div className="space-y-3">
-            {group.incompleteItems.map((item, index) =>
-              renderNewDesignItem(item, index),
-            )}
+            {group.incompleteItems.map((item, index) => renderNewDesignItem(item, index))}
           </div>
         )}
 
@@ -1206,7 +1192,7 @@ export default function Today() {
             className="flex flex-col items-center justify-center mb-4 cursor-pointer hover:bg-secondary rounded-lg py-2 px-4 transition-colors duration-200 relative"
             onClick={() => setIsCalendarVisible(!isCalendarVisible)}
           >
-            <h1 className="text-4xl font-serif font-normal text-foreground mb-1">
+            <h1 className="text-6xl font-serif font-normal text-foreground mb-1">
               {(() => {
                 // Parse YYYY-MM-DD format in local timezone to avoid UTC conversion issues
                 const [year, month, day] = selectedDate.split("-").map(Number);
@@ -1313,42 +1299,38 @@ export default function Today() {
           )}
 
           {/* Done Section - only show for habits and focus tabs, not for shared */}
-          {activeTab !== "shared" &&
-            filteredItems.some((item) => isItemCompleted(item)) && (
-              <div className="mt-6">
-                <button
-                  onClick={() => setShowCompleted(!showCompleted)}
-                  className="flex items-center gap-2 w-full text-left mb-3"
-                >
-                  <span className="text-green-400 text-base">✓</span>
-                  <span className="text-white font-medium text-sm">Done</span>
-                  <span className="text-gray-400 text-xs ml-auto">
-                    {
-                      filteredItems.filter((item) => isItemCompleted(item))
-                        .length
-                    }{" "}
-                    completed
-                  </span>
-                  <ChevronDown
-                    className={`h-3 w-3 text-gray-400 transition-transform ${
-                      showCompleted ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
+          {activeTab !== "shared" && filteredItems.some((item) => isItemCompleted(item)) && (
+            <div className="mt-6">
+              <button
+                onClick={() => setShowCompleted(!showCompleted)}
+                className="flex items-center gap-2 w-full text-left mb-3"
+              >
+                <span className="text-green-400 text-base">✓</span>
+                <span className="text-white font-medium text-sm">Done</span>
+                <span className="text-gray-400 text-xs ml-auto">
+                  {filteredItems.filter((item) => isItemCompleted(item)).length}{" "}
+                  completed
+                </span>
+                <ChevronDown
+                  className={`h-3 w-3 text-gray-400 transition-transform ${
+                    showCompleted ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
 
-                {showCompleted && (
-                  <div className="space-y-2">
-                    {filteredItems
-                      .filter((item) => isItemCompleted(item))
-                      .map((item, index) => (
-                        <div key={item.id} className="opacity-60">
-                          {renderNewDesignItem(item, index)}
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </div>
-            )}
+              {showCompleted && (
+                <div className="space-y-2">
+                  {filteredItems
+                    .filter((item) => isItemCompleted(item))
+                    .map((item, index) => (
+                      <div key={item.id} className="opacity-60">
+                        {renderNewDesignItem(item, index)}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Empty state */}
           {filteredItems.length === 0 && (
