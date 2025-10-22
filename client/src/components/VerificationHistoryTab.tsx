@@ -160,7 +160,7 @@ export function VerificationHistoryTab({
   // Check if current user can review this item
   // Allow creator to review their own shared items (they assigned it to someone else)
   const canReview = currentUserId &&
-                   itemStatus === 'pending_manual_review';
+                   (itemStatus === 'pending_manual_review' || itemStatus === 'pending_review');
 
   // Show review result if completed
   const isReviewed = itemStatus === 'completed' || itemStatus === 'not_completed';
