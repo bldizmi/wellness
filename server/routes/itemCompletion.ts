@@ -279,14 +279,56 @@ router.post("/:id/complete", async (req, res) => {
       return res.status(404).json({ error: "Item not found or unauthorized" });
     }
 
-    // HYBRID COMPLETION CHECK: Check both new architecture and legacy systems
-    let alreadyCompleted = false;
-
-    // Use raw table names to match Phase 3 reading system
+    // AUTHORIZATION CHECK: Verify user is assigned to complete this item
+    // Fetch the item to check assigned_to field
     const isDevelopment = process.env.NODE_ENV === "development";
     const instancesTable = isDevelopment
       ? "dev_recurring_instances"
       : "recurring_instances";
+
+    let itemToComplete = null;
+
+    // Check new architecture first
+    try {
+      const instanceQuery = await db.execute(sql`
+        SELECT assigned_to FROM ${sql.raw(instancesTable)} WHERE id = ${itemId} LIMIT 1
+      `);
+      if (instanceQuery.rows && instanceQuery.rows.length > 0) {
+        itemToComplete = instanceQuery.rows[0];
+      }
+    } catch (error) {
+      console.log(`🔍 Item ${itemId} not in new architecture, checking legacy`);
+    }
+
+    // If not found in new architecture, check legacy items table
+    if (!itemToComplete) {
+      const [legacyItem] = await db
+        .select({ assigned_to: items.assigned_to })
+        .from(items)
+        .where(eq(items.id, itemId));
+
+      if (legacyItem) {
+        itemToComplete = legacyItem;
+      }
+    }
+
+    // Verify the user is authorized to complete this item
+    if (itemToComplete) {
+      const assignedTo = itemToComplete.assigned_to;
+
+      // Only the assigned user can complete the item (or if assigned_to is null, anyone can complete)
+      if (assignedTo && assignedTo !== user_id) {
+        console.log(`❌ COMPLETION DENIED: Item ${itemId} is assigned to ${assignedTo}, but user ${user_id} tried to complete it`);
+        return res.status(403).json({
+          error: "You do not have permission to complete this item. Only the assigned user can mark it as complete."
+        });
+      }
+
+      console.log(`✅ COMPLETION AUTHORIZED: User ${user_id} can complete item ${itemId} (assigned_to: ${assignedTo || 'open for anyone'})`);
+    }
+
+    // HYBRID COMPLETION CHECK: Check both new architecture and legacy systems
+    let alreadyCompleted = false;
 
     // First check if this is a new architecture item and if it's already complete
     try {
