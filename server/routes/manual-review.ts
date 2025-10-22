@@ -332,6 +332,7 @@ router.post("/:itemId/approve", authMiddleware, async (req, res) => {
     let item = null;
     let isNewArchitecture = false;
     let communityId = null;
+    let createdBy = null;
 
     try {
       const newArchitectureResult = await db
@@ -340,6 +341,7 @@ router.post("/:itemId/approve", authMiddleware, async (req, res) => {
           status: recurring_instances.status,
           assigned_to: recurring_instances.assigned_to,
           community_id: recurring_templates.community_id,
+          created_by: recurring_templates.created_by,
           template_id: recurring_instances.template_id,
         })
         .from(recurring_instances)
@@ -353,6 +355,7 @@ router.post("/:itemId/approve", authMiddleware, async (req, res) => {
       if (newArchitectureResult.length > 0) {
         item = newArchitectureResult[0];
         communityId = item.community_id;
+        createdBy = item.created_by;
         isNewArchitecture = true;
         console.log(
           `🔍 APPROVE HYBRID: Found item in NEW architecture (recurring_instances)`,
@@ -377,6 +380,7 @@ router.post("/:itemId/approve", authMiddleware, async (req, res) => {
         if (legacyResult.length > 0) {
           item = legacyResult[0];
           communityId = item.community_id;
+          createdBy = item.created_by;
           isNewArchitecture = false;
           console.log(
             `🔍 APPROVE HYBRID: Found item in LEGACY architecture (items table)`,
@@ -407,8 +411,16 @@ router.post("/:itemId/approve", authMiddleware, async (req, res) => {
 
     let canReview = isAdmin;
 
-    // If not admin, check if user is in the same community as the item
-    if (!isAdmin && communityId) {
+    // Allow the creator to review their own shared items
+    if (!canReview && createdBy === userId) {
+      canReview = true;
+      console.log(
+        `✅ APPROVE HYBRID: User ${userId} is the creator of item ${itemId}, allowing approval`,
+      );
+    }
+
+    // If not admin or creator, check if user is in the same community as the item
+    if (!canReview && communityId) {
       const membership = await db
         .select()
         .from(community_members)
@@ -426,7 +438,7 @@ router.post("/:itemId/approve", authMiddleware, async (req, res) => {
     if (!canReview) {
       return res
         .status(403)
-        .json({ error: "Not authorized to review this item" });
+        .json({ error: "Not authorized to review this item. Only admins, item creators, or community members can approve." });
     }
 
     // Record the review action
@@ -515,6 +527,7 @@ router.post("/:itemId/reject", authMiddleware, async (req, res) => {
     let item = null;
     let isNewArchitecture = false;
     let communityId = null;
+    let createdBy = null;
 
     try {
       const newArchitectureResult = await db
@@ -523,6 +536,7 @@ router.post("/:itemId/reject", authMiddleware, async (req, res) => {
           status: recurring_instances.status,
           assigned_to: recurring_instances.assigned_to,
           community_id: recurring_templates.community_id,
+          created_by: recurring_templates.created_by,
           template_id: recurring_instances.template_id,
         })
         .from(recurring_instances)
@@ -536,6 +550,7 @@ router.post("/:itemId/reject", authMiddleware, async (req, res) => {
       if (newArchitectureResult.length > 0) {
         item = newArchitectureResult[0];
         communityId = item.community_id;
+        createdBy = item.created_by;
         isNewArchitecture = true;
         console.log(
           `🔍 REJECT HYBRID: Found item in NEW architecture (recurring_instances)`,
@@ -560,6 +575,7 @@ router.post("/:itemId/reject", authMiddleware, async (req, res) => {
         if (legacyResult.length > 0) {
           item = legacyResult[0];
           communityId = item.community_id;
+          createdBy = item.created_by;
           isNewArchitecture = false;
           console.log(
             `🔍 REJECT HYBRID: Found item in LEGACY architecture (items table)`,
@@ -590,8 +606,16 @@ router.post("/:itemId/reject", authMiddleware, async (req, res) => {
 
     let canReview = isAdmin;
 
-    // If not admin, check if user is in the same community as the item
-    if (!isAdmin && communityId) {
+    // Allow the creator to review their own shared items
+    if (!canReview && createdBy === userId) {
+      canReview = true;
+      console.log(
+        `✅ REJECT HYBRID: User ${userId} is the creator of item ${itemId}, allowing rejection`,
+      );
+    }
+
+    // If not admin or creator, check if user is in the same community as the item
+    if (!canReview && communityId) {
       const membership = await db
         .select()
         .from(community_members)
@@ -609,7 +633,7 @@ router.post("/:itemId/reject", authMiddleware, async (req, res) => {
     if (!canReview) {
       return res
         .status(403)
-        .json({ error: "Not authorized to review this item" });
+        .json({ error: "Not authorized to review this item. Only admins, item creators, or community members can reject." });
     }
 
     // Record the review action
