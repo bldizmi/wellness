@@ -57,11 +57,14 @@ export function VerificationHistoryTab({
 
   const reviewMutation = useMutation({
     mutationFn: async ({ action, reason }: { action: 'approve' | 'reject', reason?: string }) => {
-      return await apiRequest(`/api/item/${itemId}/manual-review`, {
+      const endpoint = action === 'approve'
+        ? `/api/manual-review/${itemId}/approve`
+        : `/api/manual-review/${itemId}/reject`;
+
+      return await apiRequest(endpoint, {
         method: 'POST',
         body: JSON.stringify({
-          action,
-          reason: reason || `Community member ${action}d the verification`
+          message: reason || `Community member ${action}d the verification`
         })
       });
     },
@@ -155,8 +158,8 @@ export function VerificationHistoryTab({
   };
 
   // Check if current user can review this item
-  const canReview = currentUserId && 
-                   currentUserId !== itemCreatedBy && 
+  // Allow creator to review their own shared items (they assigned it to someone else)
+  const canReview = currentUserId &&
                    itemStatus === 'pending_manual_review';
 
   // Show review result if completed
