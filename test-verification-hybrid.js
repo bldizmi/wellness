@@ -30,8 +30,14 @@ async function makeRequest(method, endpoint, token, data = null) {
 async function testVerificationHybrid() {
   console.log('🧪 Testing Verification Hybrid Architecture Fix\n');
 
-  // Use a production Firebase token for real testing
-  const FIREBASE_TOKEN = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjVkNjNhOWY1ZjgyY2JjOTEzNzQxZGQ3NjBjYmUyNTJmMTI1NDNjYzciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vbWluZGRvdWJsZS04YzMwOCIsImF1ZCI6Im1pbmRkb3VibGUtOGMzMDgiLCJhdXRoX3RpbWUiOjE3MzU4MjI1NzEsInVzZXJfaWQiOiJmZXlrTGowb0JQUUxhYTdKVTBXcE5YeG9pejMzIiwic3ViIjoiZmV5a0xqMG9CUFFMYWE3SlUwV3BOWHhvaXozMyIsImlhdCI6MTczNTg0MDI1MCwiZXhwIjoxNzM1ODQzODUwLCJlbWFpbCI6ImFqZHB1cmNoYXNlc0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJhamRwdXJjaGFzZXNAZ21haWwuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.h5eSJbzDqzpVFjM1ZZjOlKlqILovNzTJH9g_6Yh-RuWjXLI78Rz39ZdQP5jfUQV4h6EBK-4kbOdtevGZY3Ei0HhBu8U4RDBR0ZtLOCUZUKN3J8_1X8--2SzETdMzUaXw0A_SUtcb7fOKVUQlKNgBLkhGqKnVXWaZ9KQeFNJ0xQ2s-IbVyOO_x3NJX6HYPFyEr6Q8T9OBJsJF8gJfKMxZY9hMT1_1I5e2fPd_jH7cN4xH4P_l3aSrZJCCh5O4CqF8sLGl7SjQ6s_MXrS2vE9_8Rj9vK0L3BuW1Jq4ZhM6xI7b8sU5gP6hK9TzO8nWXe7qP2jI3oQ7gSw_T0j';
+  // Use Firebase token from environment variable
+  const FIREBASE_TOKEN = process.env.TEST_FIREBASE_TOKEN;
+  
+  if (!FIREBASE_TOKEN) {
+    console.error('❌ ERROR: TEST_FIREBASE_TOKEN environment variable is not set');
+    console.error('Please add your Firebase authentication token as a secret in Replit');
+    return;
+  }
 
   console.log('1️⃣ Test: First update item #1000A to verify_required=true');
   
