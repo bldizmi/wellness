@@ -15,7 +15,7 @@ import {
   recurring_instances,
   recurring_templates,
 } from "@shared/schema";
-import { eq, inArray, and, desc, sql } from "drizzle-orm";
+import { eq, inArray, and, desc, sql, getTableName } from "drizzle-orm";
 import { userHasItemAccess } from "../services/itemVisibilityService";
 import { authMiddleware } from "../middleware/auth";
 import { cacheService } from "../services/cacheService";
@@ -2004,17 +2004,12 @@ router.delete("/:id", async (req, res) => {
     let itemTitle = "";
     let itemDisplayId = "";
 
-    // HYBRID DELETE: Use consistent environment-based table selection
-    const isDevelopment = process.env.NODE_ENV === "development";
-    const instancesTable = isDevelopment
-      ? "dev_recurring_instances"
-      : "recurring_instances";
-    const templatesTable = isDevelopment
-      ? "dev_recurring_templates"
-      : "recurring_templates";
+    // HYBRID DELETE: Get table names from schema (handles environment prefixes automatically)
+    const instancesTable = getTableName(recurring_instances);
+    const templatesTable = getTableName(recurring_templates);
 
     console.log(
-      `🔍 DELETE ENVIRONMENT: ${isDevelopment ? "development" : "production"}, using table: ${instancesTable}`,
+      `🔍 DELETE ENVIRONMENT: ${process.env.NODE_ENV || "production"}, using table: ${instancesTable}`,
     );
 
     try {
