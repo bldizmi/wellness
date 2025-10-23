@@ -1842,10 +1842,11 @@ router.post("/:id/manual-review", authMiddleware, async (req, res) => {
     }
 
     // Store the review action in manual_review_actions table using raw SQL
+    const reviewMessage = reason || `Community member ${action}d the verification`;
     await db.execute(sql`
       INSERT INTO ${sql.identifier(process.env.NODE_ENV === "production" ? "manual_review_actions" : "dev_manual_review_actions")}
       (id, item_id, reviewer_user_id, action, message, created_at)
-      VALUES (${nanoid()}, ${item_id}, ${reviewer_id}, ${action}, ${reason || `Community member ${action}d the verification`}, ${new Date().toISOString()})
+      VALUES (${nanoid()}, ${item_id}, ${reviewer_id}, ${action}, ${reviewMessage}, ${new Date().toISOString()})
     `);
 
     // STEP 3: Process approval/rejection based on architecture
