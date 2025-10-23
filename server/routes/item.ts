@@ -459,9 +459,9 @@ router.put("/:id", async (req, res) => {
       `🔍 HYBRID UPDATE: Checking if ${id} exists in new architecture (${instancesTable})`,
     );
 
-    // Use raw SQL to ensure we're using the correct table name
+    // Use sql.identifier to ensure we're using the correct table name
     const instanceQuery = await db.execute(sql`
-      SELECT * FROM ${sql.raw(instancesTable)} WHERE id = ${id} LIMIT 1
+      SELECT * FROM ${sql.identifier(instancesTable)} WHERE id = ${id} LIMIT 1
     `);
     const instanceItem = instanceQuery.rows[0] || null;
 
@@ -476,7 +476,7 @@ router.put("/:id", async (req, res) => {
 
       // Update the recurring instance using environment-aware table
       const updateResult = await db.execute(sql`
-        UPDATE ${sql.raw(instancesTable)}
+        UPDATE ${sql.identifier(instancesTable)}
         SET 
           due_time = ${
             validatedData.due_date
@@ -515,7 +515,7 @@ router.put("/:id", async (req, res) => {
         // Check if user has permission to modify the template using environment-aware table
         const templateQuery = await db.execute(sql`
           SELECT id, created_by, assigned_to, shared_with 
-          FROM ${sql.raw(templatesTable)} 
+          FROM ${sql.identifier(templatesTable)} 
           WHERE id = ${updatedInstance.template_id}
           LIMIT 1
         `);
@@ -557,7 +557,7 @@ router.put("/:id", async (req, res) => {
               "🔄 PHASE 5: Updating template - user has modification rights",
             );
             await db.execute(sql`
-              UPDATE ${sql.raw(templatesTable)}
+              UPDATE ${sql.identifier(templatesTable)}
               SET 
                 title = ${validatedData.title},
                 item_type = ${validatedData.item_type},
@@ -2021,8 +2021,8 @@ router.delete("/:id", async (req, res) => {
       // Use the SAME table that the access check uses
       let existingItem = await db.execute(sql`
         SELECT ri.*, rt.title 
-        FROM ${sql.raw(instancesTable)} ri
-        LEFT JOIN ${sql.raw(templatesTable)} rt ON ri.template_id = rt.id
+        FROM ${sql.identifier(instancesTable)} ri
+        LEFT JOIN ${sql.identifier(templatesTable)} rt ON ri.template_id = rt.id
         WHERE ri.id = ${id}
         LIMIT 1
       `);
@@ -2044,7 +2044,7 @@ router.delete("/:id", async (req, res) => {
 
         if (item.template_id) {
           const templateQuery = sql`
-            SELECT is_recurring, max_occurrences FROM ${sql.raw(templatesTable)} 
+            SELECT is_recurring, max_occurrences FROM ${sql.identifier(templatesTable)} 
             WHERE id = ${item.template_id}
             LIMIT 1
           `;
@@ -2069,7 +2069,7 @@ router.delete("/:id", async (req, res) => {
           if (templateId) {
             // Mark template as inactive instead of deleting to preserve historical data in insights
             const templateUpdateResult = await db.execute(sql`
-              UPDATE ${sql.raw(templatesTable)} 
+              UPDATE ${sql.identifier(templatesTable)} 
               SET is_active = false, updated_at = ${new Date().toISOString()}
               WHERE id = ${templateId}
             `);
@@ -2105,7 +2105,7 @@ router.delete("/:id", async (req, res) => {
 
           // Delete the current instance
           const result = await db.execute(sql`
-            DELETE FROM ${sql.raw(tableName)} 
+            DELETE FROM ${sql.identifier(tableName)} 
             WHERE id = ${id}
           `);
 
@@ -2123,7 +2123,7 @@ router.delete("/:id", async (req, res) => {
 
               // Delete all other instances of this template first (to clean up their completion data)
               const allInstancesQuery = sql`
-                SELECT id FROM ${sql.raw(instancesTable)} 
+                SELECT id FROM ${sql.identifier(instancesTable)} 
                 WHERE template_id = ${templateId} AND id != ${id}
               `;
               const allInstancesResult = await db.execute(allInstancesQuery);
@@ -2140,7 +2140,7 @@ router.delete("/:id", async (req, res) => {
 
               // Delete all other instances
               const instancesDeleteResult = await db.execute(sql`
-                DELETE FROM ${sql.raw(instancesTable)} 
+                DELETE FROM ${sql.identifier(instancesTable)} 
                 WHERE template_id = ${templateId} AND id != ${id}
               `);
 
@@ -2155,7 +2155,7 @@ router.delete("/:id", async (req, res) => {
 
               // Finally delete the template
               const templateDeleteResult = await db.execute(sql`
-                DELETE FROM ${sql.raw(templatesTable)} 
+                DELETE FROM ${sql.identifier(templatesTable)} 
                 WHERE id = ${templateId}
               `);
 
@@ -2171,7 +2171,7 @@ router.delete("/:id", async (req, res) => {
                 `🗑️ DELETE ALL ONE-TIME: Removing template for one-time item`,
               );
               await db.execute(sql`
-                DELETE FROM ${sql.raw(templatesTable)} 
+                DELETE FROM ${sql.identifier(templatesTable)} 
                 WHERE id = ${templateId}
               `);
             }
@@ -2238,7 +2238,7 @@ router.delete("/:id", async (req, res) => {
 
         // Check if there are other instances with the same display_id but different IDs
         const otherInstancesQuery = sql`
-          SELECT id, template_id FROM ${sql.raw(instancesTable)} 
+          SELECT id, template_id FROM ${sql.identifier(instancesTable)} 
           WHERE display_id = ${finalDisplayId} AND id != ${id}
         `;
         const otherInstances = await db.execute(otherInstancesQuery);
