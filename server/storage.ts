@@ -956,21 +956,18 @@ export class DatabaseStorage implements IStorage {
 
   // New recurring system methods (Phase 2 stubs)
   async getRecurringTemplate(templateId: string): Promise<any> {
-    const isDevelopment = process.env.NODE_ENV === "development";
-    const tableName = isDevelopment ? "dev_items" : "items";
+    const result = await db.select()
+      .from(items)
+      .where(
+        and(
+          eq(items.id, templateId),
+          sql`${items.recurrence_type} IS NOT NULL`,
+          sql`${items.recurrence_type} != 'once'`
+        )
+      )
+      .limit(1);
 
-    const query = `
-      SELECT * FROM ${tableName} 
-      WHERE id = $1 
-      AND recurrence_type IS NOT NULL 
-      AND recurrence_type != 'once'
-    `;
-
-    const result = await db.execute(
-      sql.raw(query.replace(/\$1/g, `'${templateId}'`)),
-    );
-
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       console.log(
         "🔄 NEW RECURRING: Template not found or not recurring:",
         templateId,
@@ -979,57 +976,30 @@ export class DatabaseStorage implements IStorage {
     }
 
     console.log("🔄 NEW RECURRING: Found template:", templateId);
-    return result.rows[0];
+    return result[0];
   }
 
   async createInstanceCompletion(completion: any): Promise<any> {
-    const isDevelopment = process.env.NODE_ENV === "development";
-    const tableName = isDevelopment
-      ? "dev_recurring_instances"
-      : "recurring_instances";
-
     const id = nanoid();
     const now = new Date().toISOString();
 
-    const query = `
-      INSERT INTO ${tableName} (
-        id, template_id, occurrence_date, status, 
-        completed_at, completed_by, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *
-    `;
-
-    const values = [
+    const result = await db.insert(recurring_instances).values({
       id,
-      completion.template_id,
-      completion.occurrence_date,
-      "completed",
-      now,
-      completion.completed_by,
-      now,
-      now,
-    ];
-
-    let finalQuery = query;
-    values.forEach((value, index) => {
-      finalQuery = finalQuery.replace(`$${index + 1}`, `'${value}'`);
-    });
-
-    const result = await db.execute(sql.raw(finalQuery));
+      template_id: completion.template_id,
+      occurrence_date: completion.occurrence_date,
+      status: "completed",
+      completed_at: now,
+      completed_by: completion.completed_by,
+      created_at: now,
+      updated_at: now,
+    }).returning();
 
     console.log("🔄 NEW RECURRING: Created instance completion:", id);
-    return result.rows[0];
+    return result[0];
   }
 
   async deleteInstanceCompletion(completionId: string): Promise<void> {
-    const isDevelopment = process.env.NODE_ENV === "development";
-    const tableName = isDevelopment
-      ? "dev_recurring_instances"
-      : "recurring_instances";
-
-    const query = `DELETE FROM ${tableName} WHERE id = '${completionId}'`;
-
-    await db.execute(sql.raw(query));
+    await db.delete(recurring_instances).where(eq(recurring_instances.id, completionId));
 
     console.log("🔄 NEW RECURRING: Deleted instance completion:", completionId);
   }
@@ -1038,26 +1008,22 @@ export class DatabaseStorage implements IStorage {
     templateId: string,
     instanceId: string,
   ): Promise<any[]> {
-    const isDevelopment = process.env.NODE_ENV === "development";
-    const tableName = isDevelopment
-      ? "dev_recurring_instances"
-      : "recurring_instances";
-
-    const query = `
-      SELECT * FROM ${tableName} 
-      WHERE template_id = '${templateId}' 
-      AND occurrence_date = '${instanceId}'
-      ORDER BY created_at DESC
-    `;
-
-    const result = await db.execute(sql.raw(query));
+    const result = await db.select()
+      .from(recurring_instances)
+      .where(
+        and(
+          eq(recurring_instances.template_id, templateId),
+          eq(recurring_instances.occurrence_date, instanceId)
+        )
+      )
+      .orderBy(recurring_instances.created_at);
 
     console.log(
       "🔄 NEW RECURRING: Found completion history:",
-      result.rows.length,
+      result.length,
       "records",
     );
-    return result.rows;
+    return result;
   }
 
   async generateRecurringInstances(
