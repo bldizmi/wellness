@@ -30,8 +30,8 @@ async function testVerificationHistoryPhase2() {
   console.log('\n🔬 PHASE 2 VERIFICATION HISTORY HYBRID ARCHITECTURE TEST');
   console.log('=' .repeat(70));
 
-  // Test tokens from our existing test suite
-  const token1 = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjVlY2I3MGRmNTJmNGE1ODBjMjgzNzA2NTJjMGZhMDM4NDUwOTdmNDQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vbWluZGRvdWJsZSIsImF1ZCI6Im1pbmRkb3VibGUiLCJhdXRoX3RpbWUiOjE3Mzc3MDgzNDcsInVzZXJfaWQiOiJmQU5QaDU5OFNOUjVjRDhtcHdCbzNBM1ZCVVMzIiwic3ViIjoiZkFOUGg1OThTTlI1Y0Q4bXB3Qm8zQTNWQlVTMyIsImlhdCI6MTczODg4NzI3NiwiZXhwIjoxNzM4ODkwODc2LCJlbWFpbCI6InVzZXIxQHRlc3QuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbInVzZXIxQHRlc3QuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.fIYfHp0MuQMNvxJXR5WYGKi5jrfqwqKEyJGOlGfY2Av9pJE3_7bK0PqnfLHjP5z8qYp5w2xVp3oZgJyNR1qGJ5xPvKLz8Rd_eJGf6Mp3SrqwL9FxG1_qPGhK5Lz7wNxJf8qYp5r2xVp3oZgJyNR1qGJ5xPvKLz8Rd_eJGf6Mp3SrqwL9FxG1_qPGhK5Lz7wNxJf8qYp5w2xVp3oZgJyNR1qGJ5xPvKLz8Rd_eJGf6Mp3SrqwL9FxG1_qPGhK5Lz7wNxJf8qYp5w2xVp3oZgJyNR1qGJ5xPvKLz8Rd_eJGf6Mp3SrqwL9FxG1_qPGhK5Lz7wNxJf8';
+  // Test tokens loaded from environment variables
+  const token1 = process.env.TEST_USER1_TOKEN || '';
 
   console.log('\n📋 Step 1: Test Legacy Item Verification History');
   console.log('-'.repeat(50));
@@ -113,7 +113,7 @@ async function testVerificationHistoryPhase2() {
     console.log('-'.repeat(50));
     
     // Test with a different user token (should be denied access)
-    const token2 = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjVlY2I3MGRmNTJmNGE1ODBjMjgzNzA2NTJjMGZhMDM4NDUwOTdmNDQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vbWluZGRvdWJsZSIsImF1ZCI6Im1pbmRkb3VibGUiLCJhdXRoX3RpbWUiOjE3Mzc3MDgzNDcsInVzZXJfaWQiOiJKd2c3aTJMeFp6bjNkUEdDd3MzUTIiLCJzdWIiOiJKd2c3aTJMeFp6bjNkUEdDd3MzUTIiLCJpYXQiOjE3Mzg4ODcyNzYsImV4cCI6MTczODg5MDg3NiwiZW1haWwiOiJ1c2VyMkB0ZXN0LmNvbSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJ1c2VyMkB0ZXN0LmNvbSJdfSwic2lnbl9pbl9wcm92aWRlciI6InBhc3N3b3JkIn19.fIYfHp0MuQMNvxJXR5WYGKi5jrfqwqKEyJGOlGfY2Av9pJE3_7bK0PqnfLHjP5z8qYp5w2xVp3oZgJyNR1qGJ5xPvKLz8Rd_eJGf6Mp3SrqwL9FxG1_qPGhK5Lz7wNxJf8qYp5r2xVp3oZgJyNR1qGJ5xPvKLz8Rd_eJGf6Mp3SrqwL9FxG1_qPGhK5Lz7wNxJf8qYp5w2xVp3oZgJyNR1qGJ5xPvKLz8Rd_eJGf6Mp3SrqwL9FxG1_qPGhK5Lz7wNxJf8qYp5w2xVp3oZgJyNR1qGJ5xPvKLz8Rd_eJGf6Mp3SrqwL9FxG1_qPGhK5Lz7wNxJf8';
+    const token2 = process.env.TEST_USER2_TOKEN || '';
     
     const { response: unauthorizedResponse, data: unauthorizedData } = await makeRequest(
       'GET', 
