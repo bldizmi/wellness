@@ -12,6 +12,7 @@ import {
 } from "@shared/schema";
 import { eq, and, or, inArray, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { cacheService } from "../services/cacheService";
 
 const router = Router();
 
@@ -469,6 +470,51 @@ router.post("/:itemId/approve", authMiddleware, async (req, res) => {
         .where(eq(recurring_instances.id, itemId));
 
       console.log(`✅ APPROVE HYBRID: Updated item in NEW architecture`);
+
+      // Get occurrence_date for cache invalidation
+      const instanceForCache = await db
+        .select({
+          occurrence_date: recurring_instances.occurrence_date,
+          assigned_to: recurring_instances.assigned_to,
+        })
+        .from(recurring_instances)
+        .where(eq(recurring_instances.id, itemId))
+        .limit(1);
+
+      if (instanceForCache.length > 0) {
+        const occurrenceDate = instanceForCache[0].occurrence_date;
+        const assignedTo = instanceForCache[0].assigned_to;
+
+        console.log(
+          `🗑️ APPROVE CACHE: Invalidating cache for occurrence_date ${occurrenceDate}`,
+        );
+
+        // Invalidate cache for assigned user (the one who completed it)
+        if (assignedTo) {
+          const personalCacheKey = "personal-progress-v2-" + occurrenceDate;
+          const sharedCacheKey = "shared-items-v2-" + occurrenceDate;
+
+          cacheService.invalidate(assignedTo, personalCacheKey);
+          cacheService.invalidate(assignedTo, sharedCacheKey);
+
+          console.log(
+            `🗑️ APPROVE CACHE: Invalidated cache for assigned user ${assignedTo}`,
+          );
+        }
+
+        // Invalidate cache for creator (if different from assigned user)
+        if (createdBy && createdBy !== assignedTo) {
+          const personalCacheKey = "personal-progress-v2-" + occurrenceDate;
+          const sharedCacheKey = "shared-items-v2-" + occurrenceDate;
+
+          cacheService.invalidate(createdBy, personalCacheKey);
+          cacheService.invalidate(createdBy, sharedCacheKey);
+
+          console.log(
+            `🗑️ APPROVE CACHE: Invalidated cache for creator ${createdBy}`,
+          );
+        }
+      }
     } else {
       // Update in legacy items table
       await db
@@ -665,6 +711,51 @@ router.post("/:itemId/reject", authMiddleware, async (req, res) => {
         .where(eq(recurring_instances.id, itemId));
 
       console.log(`✅ REJECT HYBRID: Updated item in NEW architecture`);
+
+      // Get occurrence_date for cache invalidation
+      const instanceForCache = await db
+        .select({
+          occurrence_date: recurring_instances.occurrence_date,
+          assigned_to: recurring_instances.assigned_to,
+        })
+        .from(recurring_instances)
+        .where(eq(recurring_instances.id, itemId))
+        .limit(1);
+
+      if (instanceForCache.length > 0) {
+        const occurrenceDate = instanceForCache[0].occurrence_date;
+        const assignedTo = instanceForCache[0].assigned_to;
+
+        console.log(
+          `🗑️ REJECT CACHE: Invalidating cache for occurrence_date ${occurrenceDate}`,
+        );
+
+        // Invalidate cache for assigned user
+        if (assignedTo) {
+          const personalCacheKey = "personal-progress-v2-" + occurrenceDate;
+          const sharedCacheKey = "shared-items-v2-" + occurrenceDate;
+
+          cacheService.invalidate(assignedTo, personalCacheKey);
+          cacheService.invalidate(assignedTo, sharedCacheKey);
+
+          console.log(
+            `🗑️ REJECT CACHE: Invalidated cache for assigned user ${assignedTo}`,
+          );
+        }
+
+        // Invalidate cache for creator (if different from assigned user)
+        if (createdBy && createdBy !== assignedTo) {
+          const personalCacheKey = "personal-progress-v2-" + occurrenceDate;
+          const sharedCacheKey = "shared-items-v2-" + occurrenceDate;
+
+          cacheService.invalidate(createdBy, personalCacheKey);
+          cacheService.invalidate(createdBy, sharedCacheKey);
+
+          console.log(
+            `🗑️ REJECT CACHE: Invalidated cache for creator ${createdBy}`,
+          );
+        }
+      }
     } else {
       // Update in legacy items table
       await db
