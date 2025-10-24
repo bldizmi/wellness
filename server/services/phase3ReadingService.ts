@@ -29,10 +29,10 @@ async function ensureInstancesExistForDates(userId: string, dates: string[]) {
     ? "dev_recurring_instances"
     : "recurring_instances";
 
-  // Get all active recurring templates assigned to user
+  // Get all active recurring templates assigned to user OR open for anyone
   const templatesQuery = sql`
     SELECT * FROM ${sql.raw(templatesTable)}
-    WHERE assigned_to = ${userId}
+    WHERE (assigned_to = ${userId} OR assigned_to IS NULL)
       AND is_active = true
       AND is_recurring = true
   `;
@@ -271,7 +271,7 @@ export async function getPersonalProgressItemsNew(
       LIMIT 1
     ) iva ON true
     WHERE ri.occurrence_date = ${targetDate}
-      AND ri.assigned_to = ${userId}
+      AND (ri.assigned_to = ${userId} OR ri.assigned_to IS NULL)
       AND rt.is_active = true
   `;
 

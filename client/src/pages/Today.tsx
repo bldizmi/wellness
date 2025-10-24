@@ -423,18 +423,18 @@ export default function Today() {
     if (!user?.uid) return [];
 
     if (activeTab === "habits") {
-      // Show habits assigned to the user from personal progress data
+      // Show habits assigned to the user OR open for anyone from personal progress data
       const habitsFromPersonal = personalProgressData?.habits || [];
-      return habitsFromPersonal.filter((item) => item.assigned_to === user.uid);
+      return habitsFromPersonal.filter((item) => item.assigned_to === user.uid || item.assigned_to === null);
     }
     if (activeTab === "focus") {
-      // Show tasks, goals, projects assigned to the user from personal progress data
+      // Show tasks, goals, projects assigned to the user OR open for anyone from personal progress data
       const focusItems = [
         ...(personalProgressData?.tasks || []),
         ...(personalProgressData?.goals || []),
         ...(personalProgressData?.projects || []),
       ];
-      return focusItems.filter((item) => item.assigned_to === user.uid);
+      return focusItems.filter((item) => item.assigned_to === user.uid || item.assigned_to === null);
     }
     if (activeTab === "shared") {
       // Use shared data endpoint for shared items - exclude habits as they are not shareable
@@ -458,7 +458,7 @@ export default function Today() {
 
     if (filterType === "habits") {
       categoryItems = allItems.filter(
-        (item) => item.item_type === "habit" && item.assigned_to === user?.uid,
+        (item) => item.item_type === "habit" && (item.assigned_to === user?.uid || item.assigned_to === null),
       );
     } else if (filterType === "focus") {
       categoryItems = allItems.filter(
@@ -466,7 +466,7 @@ export default function Today() {
           (item.item_type === "task" ||
             item.item_type === "goal" ||
             item.item_type === "project") &&
-          item.assigned_to === user?.uid,
+          (item.assigned_to === user?.uid || item.assigned_to === null),
       );
     } else if (filterType === "shared") {
       // Use shared data endpoint for shared items count - exclude habits as they are not shareable
