@@ -1241,7 +1241,7 @@ export function CreateOrEditItemModal({
                             Assigned to
                           </Label>
                           <Select
-                            value={formData.assigned_to || "creator"}
+                            value={formData.assigned_to === null ? "open" : (formData.assigned_to || "creator")}
                             onValueChange={(value) =>
                               updateField(
                                 "assigned_to",
