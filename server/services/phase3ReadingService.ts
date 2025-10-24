@@ -516,7 +516,7 @@ export async function getSharedItemsNew(userId: string, targetDate: string) {
     ) iva ON true
     WHERE ri.occurrence_date = ${targetDate}
       AND (rt.is_active = true OR rt.is_active IS NULL)
-      AND ri.assigned_to != ${userId}
+      AND (ri.assigned_to != ${userId} OR ri.assigned_to IS NULL)
       AND (
         (rt.created_by = ${userId})
         OR (${userId} = ANY(COALESCE(ri.shared_with, rt.shared_with)))
