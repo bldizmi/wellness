@@ -36,6 +36,7 @@ import { useLocation } from "wouter";
 import { useTheme, ThemeMode, ThemeVariant, THEME_COLORS, getThemeDisplayName } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import NotificationSettings from "@/components/NotificationSettings";
 
 export default function Profile() {
   const [, navigate] = useLocation();
@@ -54,6 +55,7 @@ export default function Profile() {
   const [showLeaveCommunityDialog, setShowLeaveCommunityDialog] = useState(false);
   const [selectedCommunityToLeave, setSelectedCommunityToLeave] = useState<any>(null);
   const [expandedCommunities, setExpandedCommunities] = useState<string[]>([]);
+  const [showNotificationSettingsDialog, setShowNotificationSettingsDialog] = useState(false);
 
   // Form states
   const [newCommunityName, setNewCommunityName] = useState("");
@@ -687,7 +689,10 @@ export default function Profile() {
               </div>
             )}
             
-            <div className="flex items-center justify-between p-3 rounded-lg hover:bg-card/30 transition-colors cursor-pointer">
+            <div
+              className="flex items-center justify-between p-3 rounded-lg hover:bg-card/30 transition-colors cursor-pointer"
+              onClick={() => setShowNotificationSettingsDialog(true)}
+            >
               <div className="flex items-center space-x-3">
                 <Bell className="h-4 w-4 text-muted-foreground" />
                 <div>
@@ -1480,6 +1485,34 @@ export default function Profile() {
                 )}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Notification Settings Dialog */}
+      <Dialog open={showNotificationSettingsDialog} onOpenChange={setShowNotificationSettingsDialog}>
+        <DialogContent className="max-w-full h-full sm:max-w-2xl sm:h-[90vh] p-0 gap-0">
+          {/* Custom Header */}
+          <div className="border-b border-border p-4 flex items-center justify-between bg-background sticky top-0 z-10">
+            <div className="flex items-center gap-3">
+              <Bell className="h-6 w-6 text-blue-500" />
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Notification Settings</h2>
+                <p className="text-sm text-muted-foreground">Manage how you receive notifications</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowNotificationSettingsDialog(false)}
+              className="rounded-md p-2 hover:bg-muted transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5 text-muted-foreground" />
+            </button>
+          </div>
+
+          {/* Scrollable Content */}
+          <div className="overflow-y-auto flex-1 bg-background">
+            <NotificationSettings />
           </div>
         </DialogContent>
       </Dialog>
