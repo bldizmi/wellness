@@ -18,6 +18,7 @@ import overdueRoutes from "./overdue";
 import rewardsRoutes from "./rewards";
 import recurringRoutes from "./recurring";
 import phase5SharingRoutes from "./phase5-sharing";
+import notificationPreferencesRoutes from "./notificationPreferences";
 
 const router = Router();
 
@@ -49,5 +50,6 @@ router.use("/api/overdue", overdueRoutes);
 router.use("/api/rewards", rewardsRoutes);
 router.use("/api/recurring", recurringRoutes);
 router.use("/api/phase5", phase5SharingRoutes);
+router.use("/api/notification-preferences", notificationPreferencesRoutes);
 
 export default router;

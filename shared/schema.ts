@@ -831,3 +831,71 @@ export const insertAiPromptSchema = aiPromptSchema.omit({
 });
 
 export type InsertAiPrompt = z.infer<typeof insertAiPromptSchema>;
+
+// Notification Preferences table - stores user notification settings
+export const notification_preferences = pgTable(
+  `${TABLE_PREFIX}notification_preferences`,
+  {
+    user_id: text("user_id").primaryKey(), // Firebase UID
+
+    // Push Notifications
+    push_enabled: boolean("push_enabled").default(false), // Master toggle for push notifications
+
+    // Shared Item Notifications
+    shared_item_completed: boolean("shared_item_completed").default(true), // When someone completes your shared item
+    shared_item_verification_request: boolean("shared_item_verification_request").default(true), // When manual verification is requested
+    shared_item_assigned: boolean("shared_item_assigned").default(true), // When you're assigned a shared item
+
+    // Daily Reminder
+    daily_reminder_enabled: boolean("daily_reminder_enabled").default(true), // Enable daily reminder
+    daily_reminder_time: text("daily_reminder_time").default("20:00"), // HH:MM format (8 PM default)
+
+    // Streak Alerts
+    streak_risk_alert: boolean("streak_risk_alert").default(true), // Alert when streak is at risk
+    streak_milestone_alert: boolean("streak_milestone_alert").default(true), // Alert on milestones (7, 30, 100 days)
+
+    // Community Notifications
+    community_invitation: boolean("community_invitation").default(true), // New community invitations
+    community_member_joined: boolean("community_member_joined").default(false), // Member joins community
+
+    // Verification Notifications
+    verification_approved: boolean("verification_approved").default(true), // Photo verification approved
+    verification_rejected: boolean("verification_rejected").default(true), // Photo verification rejected
+    manual_review_completed: boolean("manual_review_completed").default(true), // Manual review completed
+
+    created_at: text("created_at").notNull(),
+    updated_at: text("updated_at").notNull(),
+  },
+);
+
+// Notification Preferences schema
+export const notificationPreferencesSchema = z.object({
+  user_id: z.string(),
+  push_enabled: z.boolean().default(false),
+  shared_item_completed: z.boolean().default(true),
+  shared_item_verification_request: z.boolean().default(true),
+  shared_item_assigned: z.boolean().default(true),
+  daily_reminder_enabled: z.boolean().default(true),
+  daily_reminder_time: z.string().default("20:00"),
+  streak_risk_alert: z.boolean().default(true),
+  streak_milestone_alert: z.boolean().default(true),
+  community_invitation: z.boolean().default(true),
+  community_member_joined: z.boolean().default(false),
+  verification_approved: z.boolean().default(true),
+  verification_rejected: z.boolean().default(true),
+  manual_review_completed: z.boolean().default(true),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
+
+export const updateNotificationPreferencesSchema = notificationPreferencesSchema
+  .omit({
+    user_id: true,
+    created_at: true,
+    updated_at: true,
+  })
+  .partial();
+
+export type UpdateNotificationPreferences = z.infer<typeof updateNotificationPreferencesSchema>;
