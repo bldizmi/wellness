@@ -1340,6 +1340,7 @@ export function CreateOrEditItemModal({
                   currentUserId={user?.uid}
                   itemCreatedBy={item?.created_by}
                   itemStatus={item?.status}
+                  onClose={() => onOpenChange(false)}
                 />
               </TabsContent>
             )}

@@ -44,8 +44,6 @@ router.get("/collaborators", async (req, res) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    console.log(`🔍 COLLABORATORS: Fetching for user_id = ${user_id}`);
-
     // Use environment-specific table names
     const tablePrefix = process.env.NODE_ENV === "development" ? "dev_" : "";
 
@@ -81,11 +79,6 @@ router.get("/collaborators", async (req, res) => {
     );
 
     const collaborators = result.rows;
-
-    console.log(`🔍 COLLABORATORS: Found ${collaborators.length} total`);
-    collaborators.forEach(c => {
-      console.log(`  - user_id: ${c.user_id}, display_name: ${c.display_name}, email: ${c.email}, community: ${c.community_name}`);
-    });
 
     // Add caching headers for 15-minute cache
     res.set("Cache-Control", "private, max-age=900"); // 15 minutes

@@ -34,13 +34,15 @@ interface VerificationHistoryTabProps {
   currentUserId?: string;
   itemCreatedBy?: string;
   itemStatus?: string;
+  onClose?: () => void;
 }
 
-export function VerificationHistoryTab({ 
-  itemId, 
-  currentUserId, 
-  itemCreatedBy, 
-  itemStatus 
+export function VerificationHistoryTab({
+  itemId,
+  currentUserId,
+  itemCreatedBy,
+  itemStatus,
+  onClose
 }: VerificationHistoryTabProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -68,7 +70,7 @@ export function VerificationHistoryTab({
         })
       });
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       // Show confetti for approvals
       if (variables.action === 'approve') {
         confetti({
@@ -76,28 +78,117 @@ export function VerificationHistoryTab({
           spread: 70,
           origin: { y: 0.6 }
         });
-        
+
         toast({
           title: "Item Approved! 🎉",
           description: "Successfully approved the manual verification request.",
         });
-        
-        // Auto-close modal after confetti celebration
-        setTimeout(() => {
-          // UI will update automatically through React Query cache invalidation below
-          // No need for hard refresh which can cause state reversion
-        }, 2000);
       } else {
         toast({
           title: "Item Rejected",
           description: "Successfully rejected the manual verification request.",
         });
       }
-      
-      // Refresh verification history and items list
-      queryClient.invalidateQueries({ queryKey: ['/api/item', itemId, 'verification-history'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/items'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/today'] });
+
+      // COMPREHENSIVE CACHE INVALIDATION (same as CreateOrEditItemModal)
+      const calculateWeekStart = (date: Date) => {
+        const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const startDate = new Date(date);
+        startDate.setDate(date.getDate() - dayOfWeek); // Go back to Sunday
+        return startDate.toISOString().split("T")[0]; // YYYY-MM-DD format
+      };
+
+      // Get current date info
+      const today = new Date();
+      const todayString = today.toISOString().split("T")[0];
+      const currentWeekStart = calculateWeekStart(today);
+
+      // Calculate all potentially affected dates
+      const datesToInvalidate = new Set<string>();
+      const weeksToInvalidate = new Set<string>();
+
+      // Add today and current week
+      datesToInvalidate.add(todayString);
+      weeksToInvalidate.add(currentWeekStart);
+
+      // Add next 7 days to ensure calendar updates
+      for (let i = 0; i < 7; i++) {
+        const futureDate = new Date(today);
+        futureDate.setDate(today.getDate() + i);
+        const futureDateString = futureDate.toISOString().split("T")[0];
+        datesToInvalidate.add(futureDateString);
+        weeksToInvalidate.add(calculateWeekStart(futureDate));
+      }
+
+      // Cancel any in-flight queries to prevent race conditions
+      await Promise.all([
+        ...Array.from(datesToInvalidate).map((date) =>
+          queryClient.cancelQueries({
+            queryKey: ["/api/today/personal-progress", date],
+          }),
+        ),
+        ...Array.from(weeksToInvalidate).map((weekStart) =>
+          queryClient.cancelQueries({
+            queryKey: ["/api/today/personal-progress/week", weekStart],
+          }),
+        ),
+      ]);
+
+      // Invalidate all affected queries
+      const invalidationPromises = [
+        // Invalidate each specific date
+        ...Array.from(datesToInvalidate).map((date) =>
+          queryClient.invalidateQueries({
+            queryKey: ["/api/today/personal-progress", date],
+            exact: true,
+          }),
+        ),
+        // Invalidate each specific week
+        ...Array.from(weeksToInvalidate).map((weekStart) =>
+          queryClient.invalidateQueries({
+            queryKey: ["/api/today/personal-progress/week", weekStart],
+            exact: true,
+          }),
+        ),
+        // Invalidate shared data
+        ...Array.from(datesToInvalidate).map((date) =>
+          queryClient.invalidateQueries({
+            queryKey: ["/api/today/shared", date],
+            exact: true,
+          }),
+        ),
+        // Invalidate verification history
+        queryClient.invalidateQueries({
+          queryKey: ['/api/item', itemId, 'verification-history'],
+        }),
+      ];
+
+      await Promise.all(invalidationPromises);
+
+      // Force immediate refetch of critical data
+      const refetchPromises = [
+        // Refetch current week for calendar
+        queryClient.refetchQueries({
+          queryKey: ["/api/today/personal-progress/week", currentWeekStart],
+          exact: true,
+        }),
+        // Refetch today's data
+        queryClient.refetchQueries({
+          queryKey: ["/api/today/personal-progress", todayString],
+          exact: true,
+        }),
+      ];
+
+      await Promise.all(refetchPromises);
+
+      // Also invalidate general queries
+      queryClient.invalidateQueries({ queryKey: ["/api/items"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/overdue/count"] });
+
+      // Auto-close modal after brief delay
+      setTimeout(() => {
+        onClose?.();
+      }, variables.action === 'approve' ? 1500 : 500); // Longer delay for confetti
     },
     onError: (error: any) => {
       toast({
