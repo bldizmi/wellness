@@ -113,12 +113,13 @@ export async function getSharedItems(userId: string) {
 
     // Has access via assignment or sharing
     const hasAssignedAccess = item.assigned_to === userId;
+    const hasOpenAccess = item.assigned_to === null && item.shared_with && Array.isArray(item.shared_with) && item.shared_with.includes(userId); // Open for anyone + user is in shared_with
     const hasSharedAccess =
       item.shared_with &&
       Array.isArray(item.shared_with) &&
       item.shared_with.includes(userId);
 
-    return notCreatedByUser && (hasAssignedAccess || hasSharedAccess);
+    return notCreatedByUser && (hasAssignedAccess || hasOpenAccess || hasSharedAccess);
   });
 }
 
@@ -232,11 +233,14 @@ export async function userHasItemAccess(
           return Array.isArray(sharedWith) && sharedWith.includes(userId);
         })();
 
+        // Check if item is "open for anyone" (assigned_to is null) AND user is in shared_with
+        const hasOpenAccess = item.assigned_to === null && hasSharedAccess;
+
         console.log(
-          `🔍 HYBRID ACCESS: Checking permissions for item ${itemId} - owner: ${hasOwnerAccess}, assigned: ${hasAssignedAccess}, shared: ${hasSharedAccess}`,
+          `🔍 HYBRID ACCESS: Checking permissions for item ${itemId} - owner: ${hasOwnerAccess}, assigned: ${hasAssignedAccess}, shared: ${hasSharedAccess}, open: ${hasOpenAccess}`,
         );
 
-        if (hasOwnerAccess || hasAssignedAccess || hasSharedAccess) {
+        if (hasOwnerAccess || hasAssignedAccess || hasSharedAccess || hasOpenAccess) {
           newArchItem = item;
         }
       } else {
@@ -285,8 +289,9 @@ export async function userHasItemAccess(
         candidateItem.shared_with &&
         Array.isArray(candidateItem.shared_with) &&
         candidateItem.shared_with.includes(userId);
+      const hasOpenAccess = candidateItem.assigned_to === null && hasSharedAccess;
 
-      const hasAccess = hasOwnerAccess || hasAssignedAccess || hasSharedAccess;
+      const hasAccess = hasOwnerAccess || hasAssignedAccess || hasSharedAccess || hasOpenAccess;
       console.log(
         `🔄 HYBRID ACCESS: Fallback to legacy only for item ${itemId}: ${hasAccess}`,
       );
@@ -312,10 +317,12 @@ export async function filterVisibleItems(
 
   return itemsArray.filter((item) => {
     // Check basic visibility (assigned_to, shared_with, created_by)
-    const hasBasicAccess =
-      item.assigned_to === userId ||
-      (item.shared_with && item.shared_with.includes(userId)) ||
-      item.created_by === userId;
+    const hasAssignedAccess = item.assigned_to === userId;
+    const hasSharedAccess = item.shared_with && item.shared_with.includes(userId);
+    const hasOwnerAccess = item.created_by === userId;
+    const hasOpenAccess = item.assigned_to === null && hasSharedAccess; // Open for anyone + user is in shared_with
+
+    const hasBasicAccess = hasAssignedAccess || hasSharedAccess || hasOwnerAccess || hasOpenAccess;
 
     if (!hasBasicAccess) return false;
 
