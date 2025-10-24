@@ -289,7 +289,7 @@ router.post("/", authMiddleware, async (req, res) => {
       display_id: displayId,
       user_id: user_id,
       created_by: user_id,
-      assigned_to: validatedData.assigned_to || user_id, // Default to creator as owner
+      assigned_to: validatedData.assigned_to === undefined ? user_id : validatedData.assigned_to, // Default to creator only if undefined, allow null for "open for anyone"
       shared_with:
         validatedData.shared_with && validatedData.shared_with.length > 0
           ? validatedData.shared_with
