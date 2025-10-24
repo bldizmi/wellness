@@ -234,8 +234,8 @@ async function getSharedItemsForDate(userId: string, targetDate: string) {
         ON i.id = s.item_id AND s.skipped_date = ${targetDate} AND s.user_id = ${userId}
       WHERE i.item_type != 'habit'
       AND (
-        (i.created_by = ${userId} AND (i.assigned_to != ${userId} OR i.assigned_to IS NULL))
-        OR (i.shared_with::jsonb @> ${JSON.stringify([userId])}::jsonb AND (i.assigned_to != ${userId} OR i.assigned_to IS NULL))
+        (i.created_by = ${userId} AND i.assigned_to != ${userId})
+        OR (i.shared_with::jsonb @> ${JSON.stringify([userId])}::jsonb AND i.assigned_to != ${userId})
       )
       AND i.created_at::date <= ${targetDate}::date
     )
@@ -323,12 +323,12 @@ async function getSharedRecurringItemsForDate(
     : sql.identifier("item_skips");
 
   const sharedItemsQuery = sql`
-    SELECT * FROM ${itemsTable}
+    SELECT * FROM ${itemsTable} 
     WHERE (
-      (created_by = ${userId} AND (assigned_to != ${userId} OR assigned_to IS NULL))
-      OR (${itemsTable}.shared_with::jsonb @> ${JSON.stringify([userId])}::jsonb AND (assigned_to != ${userId} OR assigned_to IS NULL))
+      (created_by = ${userId} AND assigned_to != ${userId})
+      OR (${itemsTable}.shared_with::jsonb @> ${JSON.stringify([userId])}::jsonb AND assigned_to != ${userId})
     )
-    AND recurrence_type IS NOT NULL
+    AND recurrence_type IS NOT NULL 
     AND recurrence_type != 'once'
   `;
   const itemsResult = await db.execute(sharedItemsQuery);

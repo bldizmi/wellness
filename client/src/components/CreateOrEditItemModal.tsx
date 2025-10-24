@@ -1256,14 +1256,14 @@ export function CreateOrEditItemModal({
                             <SelectTrigger className="bg-background border-border text-foreground">
                               <SelectValue placeholder="Select assignee">
                                 {(() => {
-                                  if (formData.assigned_to === null) {
-                                    return "Open for anyone to complete";
-                                  }
                                   if (
                                     !formData.assigned_to ||
                                     formData.assigned_to === user?.uid
                                   ) {
                                     return `${user?.displayName || user?.email || "You"} (creator)`;
+                                  }
+                                  if (formData.assigned_to === null) {
+                                    return "Open for anyone to complete";
                                   }
                                   const assignedMember = communityMembers.find(
                                     (m: any) =>
@@ -1296,11 +1296,6 @@ export function CreateOrEditItemModal({
                             </SelectContent>
                           </Select>
                           <div className="mt-2 text-xs text-muted-foreground">
-                            {formData.assigned_to === null && selectedMembers.length > 0 && (
-                              <p className="text-xs text-muted-foreground">
-                                Anyone who can see this item can mark it as complete
-                              </p>
-                            )}
                             {formData.assigned_to === user?.uid && (
                               <p className="text-xs text-muted-foreground">
                                 Only you can mark this as complete
@@ -1310,6 +1305,13 @@ export function CreateOrEditItemModal({
                               formData.assigned_to !== user?.uid && (
                                 <p className="text-xs text-muted-foreground">
                                   Only the assigned person can mark this as
+                                  complete
+                                </p>
+                              )}
+                            {!formData.assigned_to &&
+                              selectedMembers.length > 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                  Anyone who can see this item can mark it as
                                   complete
                                 </p>
                               )}

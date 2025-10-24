@@ -289,7 +289,7 @@ router.post("/", authMiddleware, async (req, res) => {
       display_id: displayId,
       user_id: user_id,
       created_by: user_id,
-      assigned_to: validatedData.assigned_to === null ? null : (validatedData.assigned_to || user_id), // null = open for anyone, undefined/empty = default to creator
+      assigned_to: validatedData.assigned_to || user_id, // Default to creator as owner
       shared_with:
         validatedData.shared_with && validatedData.shared_with.length > 0
           ? validatedData.shared_with
@@ -558,13 +558,13 @@ router.put("/:id", async (req, res) => {
             );
             await db.execute(sql`
               UPDATE ${sql.identifier(templatesTable)}
-              SET
+              SET 
                 title = ${validatedData.title},
                 item_type = ${validatedData.item_type},
                 verify_required = ${validatedData.verify_required || false},
                 time_frame = ${validatedData.time_frame || null},
                 why_it_matters = ${validatedData.why_it_matters || null},
-                assigned_to = ${validatedData.assigned_to === null ? null : (validatedData.assigned_to || null)},
+                assigned_to = ${validatedData.assigned_to || null},
                 shared_with = ${
                   validatedData.shared_with &&
                   validatedData.shared_with.length > 0
@@ -615,7 +615,7 @@ router.put("/:id", async (req, res) => {
         verify_required: validatedData.verify_required || false,
         why_it_matters: validatedData.why_it_matters,
         completed_at: req.body.completed_at || null,
-        assigned_to: validatedData.assigned_to === null ? null : (validatedData.assigned_to || null), // null = open for anyone, undefined/empty = no change (keep existing)
+        assigned_to: validatedData.assigned_to,
         shared_with:
           validatedData.shared_with && validatedData.shared_with.length > 0
             ? validatedData.shared_with
