@@ -12,7 +12,6 @@ import {
 } from "@shared/schema";
 import { eq, and, or, inArray, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { cacheService } from "../services/cacheService";
 
 const router = Router();
 
@@ -491,41 +490,6 @@ router.post("/:itemId/approve", authMiddleware, async (req, res) => {
       `🎉 APPROVE HYBRID: Item ${itemId} approved successfully using ${isNewArchitecture ? "NEW" : "LEGACY"} architecture`,
     );
 
-    // CACHE INVALIDATION: Invalidate cache for all users who can see this item
-    try {
-      const usersToInvalidate = new Set<string>();
-
-      // Add assigned user
-      if (item.assigned_to) {
-        usersToInvalidate.add(item.assigned_to);
-      }
-
-      // Add creator
-      if (createdBy) {
-        usersToInvalidate.add(createdBy);
-      }
-
-      // Add reviewer
-      usersToInvalidate.add(userId);
-
-      // Get current date for cache invalidation
-      const today = new Date().toISOString().split("T")[0];
-
-      console.log(`🗑️ APPROVE CACHE: Invalidating cache for ${usersToInvalidate.size} users`);
-
-      // Invalidate cache for all affected users
-      for (const user of usersToInvalidate) {
-        cacheService.invalidate(user, `personal-progress-v2-${today}`);
-        cacheService.invalidate(user, `shared-items-v2-${today}`);
-        cacheService.invalidate(user, "/api/items");
-      }
-
-      console.log(`✅ APPROVE CACHE: Cache invalidated successfully`);
-    } catch (cacheError) {
-      console.error(`⚠️ APPROVE CACHE ERROR:`, cacheError);
-      // Don't fail the request if cache invalidation fails
-    }
-
     res.json({
       success: true,
       message: "Item approved and marked complete",
@@ -720,41 +684,6 @@ router.post("/:itemId/reject", authMiddleware, async (req, res) => {
     console.log(
       `🔄 REJECT HYBRID: Item ${itemId} rejected successfully using ${isNewArchitecture ? "NEW" : "LEGACY"} architecture`,
     );
-
-    // CACHE INVALIDATION: Invalidate cache for all users who can see this item
-    try {
-      const usersToInvalidate = new Set<string>();
-
-      // Add assigned user
-      if (item.assigned_to) {
-        usersToInvalidate.add(item.assigned_to);
-      }
-
-      // Add creator
-      if (createdBy) {
-        usersToInvalidate.add(createdBy);
-      }
-
-      // Add reviewer
-      usersToInvalidate.add(userId);
-
-      // Get current date for cache invalidation
-      const today = new Date().toISOString().split("T")[0];
-
-      console.log(`🗑️ REJECT CACHE: Invalidating cache for ${usersToInvalidate.size} users`);
-
-      // Invalidate cache for all affected users
-      for (const user of usersToInvalidate) {
-        cacheService.invalidate(user, `personal-progress-v2-${today}`);
-        cacheService.invalidate(user, `shared-items-v2-${today}`);
-        cacheService.invalidate(user, "/api/items");
-      }
-
-      console.log(`✅ REJECT CACHE: Cache invalidated successfully`);
-    } catch (cacheError) {
-      console.error(`⚠️ REJECT CACHE ERROR:`, cacheError);
-      // Don't fail the request if cache invalidation fails
-    }
 
     res.json({
       success: true,
