@@ -153,7 +153,20 @@ export default function NotificationSettings() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 relative">
+      {/* Coming Soon Overlay */}
+      <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-10 rounded-lg flex items-center justify-center">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center px-6 py-3 bg-primary/10 border-2 border-primary/30 rounded-full">
+            <Bell className="h-5 w-5 mr-2 text-primary" />
+            <span className="text-lg font-semibold text-primary">Coming Soon</span>
+          </div>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Push notifications are currently being developed and will be available in a future update.
+          </p>
+        </div>
+      </div>
+
       {/* Push Notifications Master Toggle */}
       <div className="bg-card/30 rounded-xl p-5 border border-border">
         <div className="flex items-start justify-between mb-4">
