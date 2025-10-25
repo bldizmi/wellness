@@ -1702,6 +1702,68 @@ router.post("/:id/request-manual-review", authMiddleware, async (req, res) => {
       `📋 REQUEST MANUAL REVIEW HYBRID: Manual review requested for "${updatedItem.title}" using ${isNewArchitecture ? "NEW" : "LEGACY"} architecture`,
     );
 
+    // CACHE INVALIDATION FIX: Invalidate caches for creator and assigned user
+    // This ensures the creator sees the manual review request immediately without reload
+    try {
+      console.log(
+        `🗑️ REQUEST MANUAL REVIEW CACHE: Invalidating caches for creator and assigned user`,
+      );
+
+      const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
+      let createdBy = null;
+      let assignedTo = updatedItem.assigned_to;
+
+      // Get creator from template if using new architecture
+      if (isNewArchitecture && updatedItem.template_id) {
+        try {
+          const [template] = await db
+            .select({ created_by: recurring_templates.created_by })
+            .from(recurring_templates)
+            .where(eq(recurring_templates.id, updatedItem.template_id))
+            .limit(1);
+
+          if (template) {
+            createdBy = template.created_by;
+          }
+        } catch (templateError) {
+          console.log(
+            `⚠️ REQUEST MANUAL REVIEW CACHE: Error fetching template creator:`,
+            templateError.message,
+          );
+        }
+      } else {
+        // For legacy items, created_by is on the item itself
+        createdBy = updatedItem.created_by;
+      }
+
+      // Invalidate cache for creator (the person who needs to see the manual review request)
+      if (createdBy) {
+        cacheService.invalidate(createdBy, `personal-progress-v2-${today}`);
+        cacheService.invalidate(createdBy, `shared-items-v2-${today}`);
+        console.log(
+          `🗑️ REQUEST MANUAL REVIEW CACHE: Invalidated cache for creator ${createdBy}`,
+        );
+      }
+
+      // Invalidate cache for assigned user (the person who requested manual review)
+      if (assignedTo && assignedTo !== createdBy) {
+        cacheService.invalidate(assignedTo, `personal-progress-v2-${today}`);
+        cacheService.invalidate(assignedTo, `shared-items-v2-${today}`);
+        console.log(
+          `🗑️ REQUEST MANUAL REVIEW CACHE: Invalidated cache for assigned user ${assignedTo}`,
+        );
+      }
+
+      console.log(
+        `✅ REQUEST MANUAL REVIEW CACHE: Successfully invalidated caches`,
+      );
+    } catch (cacheError) {
+      console.log(
+        `⚠️ REQUEST MANUAL REVIEW CACHE ERROR: ${cacheError.message}`,
+      );
+      // Don't fail the request if cache invalidation fails
+    }
+
     res.status(200).json({
       success: true,
       message: "Manual review requested successfully",

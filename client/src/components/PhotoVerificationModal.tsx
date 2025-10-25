@@ -253,6 +253,11 @@ export function PhotoVerificationModal({
         exact: false,
       });
 
+      // CRITICAL FIX: Invalidate verification history so creator sees the manual review request
+      queryClient.invalidateQueries({
+        queryKey: ["/api/item", item?.id, "verification-history"],
+      });
+
       // Legacy cache invalidation for backward compatibility
       queryClient.invalidateQueries({ queryKey: ["/api/today"] });
       queryClient.invalidateQueries({ queryKey: ["items"] });
