@@ -80,6 +80,10 @@ router.get("/collaborators", async (req, res) => {
 
     const collaborators = result.rows;
 
+    console.log(
+      `🔍 COLLABORATORS: Found ${collaborators.length} for user ${user_id}`,
+    );
+
     // Add caching headers for 15-minute cache
     res.set("Cache-Control", "private, max-age=900"); // 15 minutes
 
@@ -233,7 +237,10 @@ router.get("/", async (req, res) => {
 
         // Only fetch pending invitations for owner/admin
         let pendingInvitations = [];
-        if (community.user_role === "owner" || community.user_role === "admin") {
+        if (
+          community.user_role === "owner" ||
+          community.user_role === "admin"
+        ) {
           const invitationQuery = `
             SELECT
               ci.id,
@@ -249,7 +256,9 @@ router.get("/", async (req, res) => {
             ORDER BY ci.created_at DESC
           `;
 
-          const invitationResult = await pool.query(invitationQuery, [community.id]);
+          const invitationResult = await pool.query(invitationQuery, [
+            community.id,
+          ]);
           pendingInvitations = invitationResult.rows;
         }
 
