@@ -341,6 +341,7 @@ router.post("/:itemId/approve", authMiddleware, async (req, res) => {
           id: recurring_instances.id,
           status: recurring_instances.status,
           assigned_to: recurring_instances.assigned_to,
+          shared_with: recurring_instances.shared_with,
           community_id: recurring_templates.community_id,
           created_by: recurring_templates.created_by,
           template_id: recurring_instances.template_id,
@@ -420,26 +421,44 @@ router.post("/:itemId/approve", authMiddleware, async (req, res) => {
       );
     }
 
-    // If not admin or creator, check if user is in the same community as the item
-    if (!canReview && communityId) {
-      const membership = await db
-        .select()
-        .from(community_members)
-        .where(
-          and(
-            eq(community_members.community_id, communityId),
-            eq(community_members.user_id, userId),
-          ),
-        )
-        .limit(1);
+    // If not admin or creator, check if user is in shared_with array or community
+    if (!canReview) {
+      // Check if user is in shared_with array
+      if (item.shared_with && Array.isArray(item.shared_with)) {
+        canReview = item.shared_with.includes(userId);
+        if (canReview) {
+          console.log(
+            `✅ APPROVE HYBRID: User ${userId} is in shared_with array for item ${itemId}, allowing approval`,
+          );
+        }
+      }
 
-      canReview = membership.length > 0;
+      // If still can't review, check community membership
+      if (!canReview && communityId) {
+        const membership = await db
+          .select()
+          .from(community_members)
+          .where(
+            and(
+              eq(community_members.community_id, communityId),
+              eq(community_members.user_id, userId),
+            ),
+          )
+          .limit(1);
+
+        canReview = membership.length > 0;
+        if (canReview) {
+          console.log(
+            `✅ APPROVE HYBRID: User ${userId} is a community member, allowing approval`,
+          );
+        }
+      }
     }
 
     if (!canReview) {
       return res
         .status(403)
-        .json({ error: "Not authorized to review this item. Only admins, item creators, or community members can approve." });
+        .json({ error: "Not authorized to review this item. Only admins, item creators, shared users, or community members can approve." });
     }
 
     // Record the review action
@@ -581,6 +600,7 @@ router.post("/:itemId/reject", authMiddleware, async (req, res) => {
           id: recurring_instances.id,
           status: recurring_instances.status,
           assigned_to: recurring_instances.assigned_to,
+          shared_with: recurring_instances.shared_with,
           community_id: recurring_templates.community_id,
           created_by: recurring_templates.created_by,
           template_id: recurring_instances.template_id,
@@ -660,26 +680,44 @@ router.post("/:itemId/reject", authMiddleware, async (req, res) => {
       );
     }
 
-    // If not admin or creator, check if user is in the same community as the item
-    if (!canReview && communityId) {
-      const membership = await db
-        .select()
-        .from(community_members)
-        .where(
-          and(
-            eq(community_members.community_id, communityId),
-            eq(community_members.user_id, userId),
-          ),
-        )
-        .limit(1);
+    // If not admin or creator, check if user is in shared_with array or community
+    if (!canReview) {
+      // Check if user is in shared_with array
+      if (item.shared_with && Array.isArray(item.shared_with)) {
+        canReview = item.shared_with.includes(userId);
+        if (canReview) {
+          console.log(
+            `✅ REJECT HYBRID: User ${userId} is in shared_with array for item ${itemId}, allowing rejection`,
+          );
+        }
+      }
 
-      canReview = membership.length > 0;
+      // If still can't review, check community membership
+      if (!canReview && communityId) {
+        const membership = await db
+          .select()
+          .from(community_members)
+          .where(
+            and(
+              eq(community_members.community_id, communityId),
+              eq(community_members.user_id, userId),
+            ),
+          )
+          .limit(1);
+
+        canReview = membership.length > 0;
+        if (canReview) {
+          console.log(
+            `✅ REJECT HYBRID: User ${userId} is a community member, allowing rejection`,
+          );
+        }
+      }
     }
 
     if (!canReview) {
       return res
         .status(403)
-        .json({ error: "Not authorized to review this item. Only admins, item creators, or community members can reject." });
+        .json({ error: "Not authorized to review this item. Only admins, item creators, shared users, or community members can reject." });
     }
 
     // Record the review action

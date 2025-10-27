@@ -280,6 +280,60 @@ router.post("/", authMiddleware, async (req, res) => {
     const validatedData = insertItemSchema.parse(requestData);
     console.log("validated shared_with:", validatedData.shared_with);
 
+    // AUTO-DETECT community_id from shared_with users
+    let auto_community_id = null;
+    if (validatedData.shared_with && validatedData.shared_with.length > 0) {
+      console.log(
+        `🏘️ AUTO-DETECT: Attempting to detect community_id from ${validatedData.shared_with.length} shared users`,
+      );
+
+      try {
+        // Get all communities for the creator
+        const creatorCommunities = await db
+          .select({ community_id: community_members.community_id })
+          .from(community_members)
+          .where(eq(community_members.user_id, user_id));
+
+        console.log(
+          `🏘️ AUTO-DETECT: Creator is in ${creatorCommunities.length} communities`,
+        );
+
+        // For each creator community, check if all shared users are members
+        for (const { community_id } of creatorCommunities) {
+          const membersInCommunity = await db
+            .select({ user_id: community_members.user_id })
+            .from(community_members)
+            .where(eq(community_members.community_id, community_id));
+
+          const memberIds = membersInCommunity.map((m) => m.user_id);
+
+          // Check if all shared users are in this community
+          const allSharedUsersInCommunity = validatedData.shared_with.every(
+            (uid) => memberIds.includes(uid),
+          );
+
+          if (allSharedUsersInCommunity) {
+            auto_community_id = community_id;
+            console.log(
+              `✅ AUTO-DETECT: Found common community ${community_id} for all shared users`,
+            );
+            break; // Use first matching community
+          }
+        }
+
+        if (!auto_community_id) {
+          console.log(
+            `⚠️ AUTO-DETECT: No common community found for all shared users. Item will be created with community_id: null`,
+          );
+        }
+      } catch (autoDetectError) {
+        console.log(
+          `⚠️ AUTO-DETECT ERROR: ${autoDetectError.message}. Continuing with community_id: null`,
+        );
+        // Continue with null community_id if auto-detection fails
+      }
+    }
+
     // Generate globally unique display ID
     const displayId = await generateNextDisplayId();
 
@@ -294,6 +348,7 @@ router.post("/", authMiddleware, async (req, res) => {
         validatedData.shared_with && validatedData.shared_with.length > 0
           ? validatedData.shared_with
           : null,
+      community_id: auto_community_id, // Auto-detected community ID from shared users
       title: validatedData.title,
       item_type: validatedData.item_type,
       recurrence_type: validatedData.recurrence_type,
