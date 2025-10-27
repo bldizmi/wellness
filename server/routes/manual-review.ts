@@ -533,6 +533,19 @@ router.post("/:itemId/approve", authMiddleware, async (req, res) => {
             `🗑️ APPROVE CACHE: Invalidated cache for creator ${createdBy}`,
           );
         }
+
+        // Invalidate cache for reviewer (community member who approved)
+        if (userId && userId !== assignedTo && userId !== createdBy) {
+          const personalCacheKey = "personal-progress-v2-" + occurrenceDate;
+          const sharedCacheKey = "shared-items-v2-" + occurrenceDate;
+
+          cacheService.invalidate(userId, personalCacheKey);
+          cacheService.invalidate(userId, sharedCacheKey);
+
+          console.log(
+            `🗑️ APPROVE CACHE: Invalidated cache for reviewer ${userId}`,
+          );
+        }
       }
     } else {
       // Update in legacy items table
@@ -791,6 +804,19 @@ router.post("/:itemId/reject", authMiddleware, async (req, res) => {
 
           console.log(
             `🗑️ REJECT CACHE: Invalidated cache for creator ${createdBy}`,
+          );
+        }
+
+        // Invalidate cache for reviewer (community member who rejected)
+        if (userId && userId !== assignedTo && userId !== createdBy) {
+          const personalCacheKey = "personal-progress-v2-" + occurrenceDate;
+          const sharedCacheKey = "shared-items-v2-" + occurrenceDate;
+
+          cacheService.invalidate(userId, personalCacheKey);
+          cacheService.invalidate(userId, sharedCacheKey);
+
+          console.log(
+            `🗑️ REJECT CACHE: Invalidated cache for reviewer ${userId}`,
           );
         }
       }
