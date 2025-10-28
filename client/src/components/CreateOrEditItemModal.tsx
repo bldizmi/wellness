@@ -136,7 +136,7 @@ export function CreateOrEditItemModal({
 
   // Fetch collaborators using optimized single-query endpoint
   // This replaces the N+1 anti-pattern with a single database call
-  const { data: collaboratorsData } = useQuery({
+  const { data: collaboratorsData, refetch: refetchCollaborators } = useQuery({
     queryKey: ["/api/community/collaborators"],
     enabled:
       isOpen &&
@@ -149,6 +149,14 @@ export function CreateOrEditItemModal({
   const communityMembers = Array.isArray(collaboratorsData?.collaborators)
     ? collaboratorsData.collaborators
     : [];
+
+  // Refetch collaborators when share popover opens
+  const handleSharePopoverChange = (open: boolean) => {
+    setSharePopoverOpen(open);
+    if (open) {
+      refetchCollaborators(); // Fetch fresh data when opening
+    }
+  };
 
   // Initialize form data when editing
   useEffect(() => {
@@ -1151,7 +1159,7 @@ export function CreateOrEditItemModal({
                   <>
                     <Popover
                       open={sharePopoverOpen}
-                      onOpenChange={setSharePopoverOpen}
+                      onOpenChange={handleSharePopoverChange}
                     >
                       <PopoverTrigger asChild>
                         <Button
@@ -1172,7 +1180,7 @@ export function CreateOrEditItemModal({
                             Select community members
                           </h4>
                         </div>
-                        <div className="max-h-64 overflow-y-auto">
+                        <div className="max-h-64 overflow-y-auto overscroll-contain touch-pan-y">
                           {communityMembers.length > 0 ? (
                             communityMembers.map((member: any) => (
                               <div
