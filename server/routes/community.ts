@@ -70,7 +70,6 @@ router.get("/collaborators", async (req, res) => {
         JOIN ${tablePrefix}communities c ON cm.community_id = c.id
         WHERE cm.community_id IN (SELECT community_id FROM user_communities)
           AND cm.removed_at IS NULL
-          AND u.firebase_uid != $1  -- Exclude self at database level
         ORDER BY u.display_name
       )
       SELECT * FROM all_collaborators;
