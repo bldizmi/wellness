@@ -1174,13 +1174,13 @@ export function CreateOrEditItemModal({
                           <ChevronDown className="h-4 w-4" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-80 p-0" align="start">
-                        <div className="p-3 border-b border-border">
+                      <PopoverContent className="w-80 p-0 max-h-[60vh]" align="start">
+                        <div className="p-3 border-b border-border flex-shrink-0">
                           <h4 className="font-medium text-sm text-foreground">
                             Select community members
                           </h4>
                         </div>
-                        <div className="max-h-64 overflow-y-auto overscroll-contain touch-pan-y">
+                        <div className="max-h-[50vh] overflow-y-auto overscroll-contain touch-pan-y">
                           {communityMembers.length > 0 ? (
                             communityMembers.map((member: any) => (
                               <div
